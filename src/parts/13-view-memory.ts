@@ -25,14 +25,20 @@ function drawMemory(n) {
   }
   if (used < cap) { fillKind(x, 'free', cx, BY, W - cx, BH); hit(id, [cx, BY, W - cx, BH], { k: 'part', id: 'free' }); tags.push([L('Free', 'Libre'), fmtGB(cap - used), (cx + W) / 2, C.dim]); }
   else tags.push([L('Over by', 'Se pasa en'), fmtGB(used - cap), W - 30, C.red]);
-  // One row of labels, spread so none touch: each sits as close to its part as it can, and a thin elbow ties it back.
-  { const LY = 34; x.font = `400 10.5px ${FONT}`;
-    const it = tags.map(([nm, val, mid, col]) => { const nw = x.measureText(nm + ' ').width; x.font = `650 10.5px ${FONT}`; const lw = nw + x.measureText(dec(val)).width + 4; x.font = `400 10.5px ${FONT}`; return { nm, val, mid, col, nw, lw, x0: 0 }; }).sort((p1, p2) => p1.mid - p2.mid);
-    const gap = 14; it.forEach((q, i) => { q.x0 = Math.max(0, Math.min(W - q.lw, q.mid - q.lw / 2)); if (i) q.x0 = Math.max(q.x0, it[i - 1].x0 + it[i - 1].lw + gap); });
-    for (let i = it.length - 1; i >= 0; i--) { const lim = i === it.length - 1 ? W - it[i].lw : it[i + 1].x0 - it[i].lw - gap; if (it[i].x0 > lim) it[i].x0 = Math.max(0, lim); }
-    for (const q of it) {
-      const ax = Math.max(q.x0 + 2, Math.min(q.x0 + q.lw - 2, q.mid));
-      x.strokeStyle = q.col; x.globalAlpha = .8; x.beginPath(); x.moveTo(Math.round(q.mid) + .5, BY - .5); x.lineTo(Math.round(q.mid) + .5, LY + 7); x.lineTo(Math.round(ax) + .5, LY + 7); x.lineTo(Math.round(ax) + .5, LY + 4); x.stroke(); x.beginPath(); x.moveTo(q.x0, LY + 3.5); x.lineTo(q.x0 + q.lw, LY + 3.5); x.stroke(); x.globalAlpha = 1;
+  // Labels spread so none touch, each as close to its part as it can, tied back by a thin elbow. One row when they fit;
+  // two alternating rows when they do not; short names when even that is too tight.
+  { const SHORT: Record<string, string> = { [L('Other apps', 'Otras apps')]: L('Apps', 'Apps'), [L('DeltaNet state', 'Estado DeltaNet')]: L('State', 'Estado'), [L('KV cache', 'Caché KV')]: 'KV', [L('Over by', 'Se pasa en')]: L('Over', 'Exceso') };
+    const gap = 12, meas = (short: boolean) => tags.map(([nm0, val, mid, col]: any) => { const nm = short ? SHORT[nm0] || nm0 : nm0; x.font = `400 10.5px ${FONT}`; const nw = x.measureText(nm + ' ').width; x.font = `650 10.5px ${FONT}`; return { nm, val, mid, col, nw, lw: nw + x.measureText(dec(val)).width + 4, x0: 0, y: 0 }; }).sort((p1: any, p2: any) => p1.mid - p2.mid);
+    const spread = (row: any[]) => { row.forEach((q, i) => { q.x0 = Math.max(0, Math.min(W - q.lw, q.mid - q.lw / 2)); if (i) q.x0 = Math.max(q.x0, row[i - 1].x0 + row[i - 1].lw + gap); });
+      for (let i = row.length - 1; i >= 0; i--) { const lim = i === row.length - 1 ? W - row[i].lw : row[i + 1].x0 - row[i].lw - gap; if (row[i].x0 > lim) row[i].x0 = lim; }
+      return row.every(q => q.x0 >= 0); };
+    const total = (it: any[]) => it.reduce((a2, q) => a2 + q.lw + gap, 0);
+    let it = meas(false), rows: any[][];
+    if (total(it) <= W) rows = [it]; else { it = total(it) <= W * 1.9 ? it : meas(true); rows = [it.filter((_: any, i: number) => i % 2 === 0), it.filter((_: any, i: number) => i % 2 === 1)]; if (!rows.every(spread)) { it = meas(true); rows = [it.filter((_: any, i: number) => i % 2 === 0), it.filter((_: any, i: number) => i % 2 === 1)]; } }
+    rows.forEach((row, r) => { spread(row); row.forEach(q => { q.x0 = Math.max(0, q.x0); q.y = rows.length === 1 ? 34 : r === 0 ? 26 : 41; }); });
+    for (const q of rows.flat()) {
+      const ax = Math.max(q.x0 + 2, Math.min(q.x0 + q.lw - 2, q.mid)), LY = q.y;
+      x.strokeStyle = q.col; x.globalAlpha = .8; x.beginPath(); x.moveTo(Math.round(q.mid) + .5, BY - .5); x.lineTo(Math.round(q.mid) + .5, LY + 6); x.lineTo(Math.round(ax) + .5, LY + 6); x.lineTo(Math.round(ax) + .5, LY + 4); x.stroke(); x.beginPath(); x.moveTo(q.x0, LY + 3.5); x.lineTo(q.x0 + q.lw, LY + 3.5); x.stroke(); x.globalAlpha = 1;
       x.font = `400 10.5px ${FONT}`; x.fillStyle = C.mid; x.textAlign = 'left'; x.fillText(q.nm, q.x0, LY); x.font = `650 10.5px ${FONT}`; x.fillStyle = q.col === C.mid || q.col === C.dim ? C.ink : q.col; x.fillText(dec(q.val), q.x0 + q.nw, LY);
     } }
   const gy = 128, bins = Math.max(8, Math.min(96, Math.floor(W / 8))), per = R.ctx / bins, gw = W, cw = gw / bins;
