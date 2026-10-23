@@ -2,7 +2,7 @@
   <a href="https://infraphysics.net/lab/projects/llm-inference-console"><img src="docs/assets/infraphysics.svg" width="72" alt="InfraPhysics"></a>
 </p>
 
-<h1 align="center">tokenwalk</h1>
+<h1 align="center"><img src="docs/assets/tokenwalk.svg" width="34" alt="" align="top"> tokenwalk</h1>
 
 <p align="center">
   Watch one LLM request walk through a local machine.<br>
@@ -24,7 +24,7 @@
 
 ---
 
-You pick a machine, a model and a prompt; tokenwalk plays the request pass by pass. Connect it to your own Ollama or llama.cpp and it runs the same request for real, next to its estimate (see [Live mode](#live-mode)).
+You pick a machine, a model and a prompt; tokenwalk plays the request pass by pass. Connect it to your own Ollama or llama.cpp and it runs the same request for real, next to its estimate (see [Real machine mode](#real-machine-mode)).
 
 ![tokenwalk: the model as a grid of tokens across and layers up, mid-way through writing the answer](docs/screenshot.png)
 
@@ -43,7 +43,7 @@ There is no framework and nothing at runtime: one HTML page, a canvas, and about
 
 Nothing here runs a neural network. tokenwalk is a cost model, and it is honest about which of its numbers are which:
 
-- **Calibrated.** The laptop preset (a ThinkPad with a Radeon 860M iGPU, 64 GB of shared LPDDR5X, Qwen3.6 35B-A3B at Q4_K_M under Ollama) is fitted to measured runs: about 76 s to the first token for a 6,500-token prompt, then about 12 tokens a second without MTP drafting (see [Live mode](#live-mode) for what drafting changes).
+- **Calibrated.** The laptop preset (a ThinkPad with a Radeon 860M iGPU, 64 GB of shared LPDDR5X, Qwen3.6 35B-A3B at Q4_K_M under Ollama) is fitted to measured runs: about 76 s to the first token for a 6,500-token prompt, then about 12 tokens a second without MTP drafting (see [Real machine mode](#live-mode) for what drafting changes).
 - **Read from the files.** Layer counts, heads, experts and which layers keep KV come from the GGUF headers.
 - **Estimated.** Every other machine is the same formulas with that machine's bandwidth and compute; the console marks them as estimates.
 - **Illustrative.** The answer text, the logits and the values inside a row of weights are made up. Their sizes are not.
@@ -66,7 +66,8 @@ index.html            the markup
 src/styles.css        the look
 src/parts/00-*.ts …   the script, in order: data and formulas, language, state, the request computed,
                       sampling, playback, history, drawing kit, entities, the four views, zoom,
-                      explainers, alerts, timeline, monitor, run, configure, loadout, glossary, wiring
+                      explainers, alerts, timeline, monitor, run, configure, loadout, glossary, wiring,
+                      the real-server connection and the Simulated / Real machine mode
 src/globals.d.ts      types shared by the parts
 tests/unit/           the cost model in node, no browser
 tests/browser/        a small CDP client and the regression checks (overflow, zoom, fit, sampling, links)
@@ -75,9 +76,9 @@ tools/                split-legacy.mjs (the port from the original single file),
 
 The data, language, state, cost model, sampling, playback, history, drawing and entity parts are type-checked; the DOM-heavy UI parts still carry `@ts-nocheck` and are next to type.
 
-## Live mode
+## Real machine mode
 
-tokenwalk can send the same request to a real server on your machine and put the measured numbers next to its estimate. It is optional: without a server everything is simulated.
+tokenwalk can send a request to a real server on your machine and put the measured numbers next to its estimate. It is optional: without a server everything is simulated.
 
 ### 1. Start a server the browser is allowed to reach
 
@@ -135,14 +136,23 @@ curl http://localhost:8080/props               # llama-server answers with its s
 
 ### 3. Use it
 
-Open **Live: a real server** (the row in Configure, or the *Simulated* badge in the top bar). Enter the address (`http://localhost:11434` for Ollama, `http://localhost:8080` for llama-server) and press **Detect**. Pick a model; **Draw this model in the console** reads its real GGUF header and draws it in every view; **Run live** sends one request.
+The top bar has a switch, left of the setup line: **Simulated | Real machine**. The console is in one mode at a time.
 
-- **Monitor, Estimate vs measured:** load, time to first token, prefill and decode speed, total, with the ratio. **Calibrate this machine to the run** fits the machine's effective bandwidth (from decode, with MTP drafting taken out first) and compute (from prefill, if the prompt has 256 tokens or more); kept per machine in your browser, with Reset.
-- **Tokens view:** the live answer as tokens with their arrival times. Click one to see what the server chose it from (Ollama `logprobs`, llama-server `n_probs`), when the server sends that.
-- **Trends:** the measured time of every token as dots over *Time / token*.
-- **The top bar** shows a pulsing LIVE dot, the server, and its model with the quantization.
+- **Simulated** (yellow): every number comes from the cost model, and the request plays at any speed, pauses, steps and jumps.
+- **Real machine** (cyan, a laptop with a soft glow; its tooltip names the server, the address and the model): the console is a window on the server. The setup line reads *this machine (real) / server model and quantization / prompt + max tokens / num_ctx*, which is exactly what is sent.
 
-What is sent: num_ctx, temperature, top_p, top_k, seed, keep_alive and MTP drafting (`draft_num_predict`) for Ollama; the sampling settings and `cache_prompt` for llama-server. The window lists the exact options of each run. Settings the server does not take per request (the machine, the model's size, the request lengths, KV type, KV to disk, cold start, a separate draft model) are marked **sim** in Configure, with the reason on hover: they still drive the simulation, not the real run.
+Switching to Real machine with no server connected opens the connect window, with the address (`http://localhost:11434` for Ollama, `http://localhost:8080` for llama-server), **Connect**, and the setup steps with copy buttons. It names every state: not connected, connecting, blocked by CORS (with the fix), nothing answered. When the server answers the console enters Real; if it fails, or you close the window, the simulation stays as it was. Once connected the window says **Connected**, with the model picker, **Change server** and **Disconnect**; none of them can be used while a request runs, and they say why.
+
+In Real machine:
+
+- **Setup** shows only what applies to the server. *Request to the server*: the model (the server's list), the prompt (short question, a long history or your own text), max tokens, and MTP drafts when it is Ollama. *Engine*: num_ctx and keep_alive. *Sampling*: temperature, top-k, top-p, seed. *This machine* shows the server version and address, and **Estimate as**, the machine preset the estimate is drawn on. The simulation-only sections (request token sliders, KV type, KV to disk, cold start, a separate draft model, scenarios) are hidden.
+- **Request** (the Playback zone) has **Send** and **Stop**. Speed, jumps, steps, pause-after and the timeline scale are greyed: a real server cannot be slowed, paused or stepped. The timeline draws the run as it arrives (load, prefill, decode with a tick for each token) on a real-time axis and keeps it as the record of that run; the clock shows its wall time.
+- **Observatory:** Tokens shows the real answer with each token's arrival time; click one to see what the server chose it from (Ollama `logprobs`, llama-server `n_probs`), when the server sends that. System, Model and Memory draw the cost model's estimate for the server's model on the Estimate as machine, tagged **estimate**.
+- **Monitor:** *Estimate vs measured* comes first: load, time to first token, prefill and decode speed, total, with the ratio. **Calibrate the estimate to this machine** fits the preset's effective bandwidth (from decode, with MTP drafting taken out first) and compute (from prefill, if the prompt has 256 tokens or more); kept per machine in your browser, with Reset.
+
+Switching back to Simulated restores the simulation exactly; the two keep separate settings and both are saved. If a real request is running, it asks first (*Keep running* is the default). While in Real the page checks the server every 10 s; if it is gone a banner says **Lost the server at …** with **Retry** and **Back to simulation**. On the next visit the console resumes Real only when the server answers within about 1.5 s; otherwise it starts in the simulation, with no connected look.
+
+What is sent: num_ctx, temperature, top_p, top_k, seed, keep_alive and MTP drafting (`draft_num_predict`) for Ollama; the sampling settings and `cache_prompt` for llama-server. The connect window lists the exact options of each request, and the settings that are sent are marked *sent* in Setup.
 
 ### MTP, and why the laptop is not simply "12 tokens a second"
 
@@ -159,13 +169,13 @@ A guess costs a read of one block plus the output head (0.35 GB, about a fifth o
 ### When it does not connect
 
 - **"Blocked by CORS"**: the server is running but refuses this page's origin. Set `OLLAMA_ORIGINS` as above and restart Ollama completely (the tray app, not just a terminal).
-- **"Not running"**: nothing answers at that address. Start Ollama (`ollama serve`) or llama-server, and check the port.
+- **"Nothing answered"**: nothing answers at that address. Start Ollama (`ollama serve`) or llama-server, and check the port.
 - **The browser asks about local network access**: allow it; a public page reaching `localhost` needs that permission in recent Chrome.
 - **The first run is slow**: the server loads the model from disk first (Load in the table); the next run is warm until keep_alive runs out.
 
 ### What stays simulated
 
-Everything inside a pass: which layer, which matrix, the KV cache filling, the sampling chain of a simulated token. A server reports totals and the tokens it sent, not what happens per layer; the live run gives the console real totals to be held against.
+Everything inside a pass: which layer, which matrix, the KV cache filling, the sampling chain of a simulated token. A server reports totals and the tokens it sent, not what happens per layer; the real run gives the console real totals to hold the estimate against.
 
 Tests: `npm test` runs the cost-model, MTP and live-parsing unit tests (on responses recorded from Ollama, in `tests/fixtures/`) and the browser checks, which include live mode against a mocked server. `npm run test:live` runs one real request against a local Ollama and skips when none answers.
 
