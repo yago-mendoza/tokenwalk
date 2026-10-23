@@ -1,6 +1,6 @@
 // @ts-nocheck: DOM-heavy UI, to be typed in a later pass
 // The play button, inline in a sentence: it looks like the transport's button and starts the run.
-const PLAY_GLYPH = () => `<button type="button" class="playg" title="${esc(L('Play', 'Reproducir'))}" onclick="if (!fitGate()) setPlaying(true)">${ICON('play', 's')}</button>`;
+const PLAY_GLYPH = () => `<button type="button" class="playg" title="${esc(L('Play', 'Reproducir'))}" onclick="if (!fitGate()) setPlaying(true)">${ICON('play', 's')}<span>${esc(L('play', 'reproducir'))}</span></button>`;
 // ===== Tokens lens: prompt, stream, and logits only when they exist =====
 let streamKey = '';
 function logitState(n) {
@@ -29,8 +29,10 @@ function drawTokens(n) {
     if (v > 0) { const X = (acc / totalP) * W; if (X < W - 30) textFit(x, lbl, X + 2, 11, Math.max(30, (v / totalP) * W - 6), C.mid, 'left', 9); x.strokeStyle = C.line2; x.beginPath(); x.moveTo(Math.round(X) + .5, 3); x.lineTo(Math.round(X) + .5, 26); x.stroke(); }
     acc += v;
   }
-  text(x, L(`${num(R.prompt)} prompt tokens · 1 square = ${num(Math.round(per))}${R.startAt ? ` · hatched: ${num(R.startAt)} cached, no prefill` : ''}`, `${num(R.prompt)} tokens de prompt · 1 cuadrado = ${num(Math.round(per))}${R.startAt ? ` · rayados: ${num(R.startAt)} en caché, sin prefill` : ''}`), 0, 44, C.dim, 'left', 9);
-  text(x, L(`${num(gen)} of ${num(S.ans)} written`, `${num(gen)} de ${num(S.ans)} escritos`), W, 44, C.hot, 'right', 9);
+  // The scale, drawn: a real square of the strip, then how many tokens it stands for.
+  { x.font = `400 10px ${FONT}`; const a = L(`${num(R.prompt)} prompt tokens · `, `${num(R.prompt)} tokens de prompt · `), aw = x.measureText(a).width; text(x, a, 0, 44, C.dim, 'left', 10);
+    chipSq(x, aw + 1, 36, cs, TOKCOL.docs); text(x, L(` = ${num(Math.round(per))} tokens${R.startAt ? ` · underlined: ${num(R.startAt)} cached, no prefill` : ''}`, ` = ${num(Math.round(per))} tokens${R.startAt ? ` · subrayados: ${num(R.startAt)} en caché, sin prefill` : ''}`), aw + cs + 3, 44, C.dim, 'left', 10); }
+  { const wt = L(`${num(gen)} / ${num(S.ans)} written`, `${num(gen)} / ${num(S.ans)} escritos`); if ($('tokHint').textContent !== wt) $('tokHint').textContent = wt; }
   drawHover(id, x);
   const shown = gen + (ls.on && n.seg && n.seg.k !== 'prefill' ? 1 : 0);
   const key = `${shown}|${lang}|${S.temp}|${S.topk}|${S.topp}|${S.seed}|${P.t > 0 && P.t < R.ttft}|${UI.logitTok}`;
@@ -39,7 +41,7 @@ function drawTokens(n) {
     const from = Math.max(0, shown - 220);
     let h = from ? '… ' : '';
     for (let i = from; i < shown && i < SAMPLED.length; i++) { const s = SAMPLED[i]; h += `<span class="g${s.script ? '' : ' alt'}${i === shown - 1 && ls.on ? ' now' : ''}${UI.logitTok === i ? ' sel' : ''}" data-tok="${i}" title="${esc(L(`token ${i + 1}: “${s.word}”`, `token ${i + 1}: “${s.word}”`))}">${esc(i === from ? s.word.trimStart() : s.word)}</span>`; }
-    if (!shown) h = `<span class="ph">${P.t > 0 && P.t < R.ttft ? L('Waiting for the first token: the prompt is being read.', 'Esperando el primer token: se está leyendo el prompt.') : L(`Press ${PLAY_GLYPH()}: the answer appears here, one token per pass.`, `Pulsa ${PLAY_GLYPH()}: aquí aparece la respuesta, un token por pasada.`)}</span>`;
+    if (!shown) h = `<span class="ph">${P.t > 0 && P.t < R.ttft ? L('Waiting for the first token: the prompt is being read.', 'Esperando el primer token: se está leyendo el prompt.') : L(`Press ${PLAY_GLYPH()} and the answer appears here, one token per pass.`, `Pulsa ${PLAY_GLYPH()} y aquí aparece la respuesta, un token por pasada.`)}</span>`;
     $('stream').innerHTML = h; $('stream').scrollTop = $('stream').scrollHeight;
     const fl = UI.flash; if (fl && fl.canvas === 'cPrompt' && fl.tok !== undefined && !fl.done) { fl.done = true; const els = fl.tok === 'all' ? [...$('stream').querySelectorAll('.g')] : [...$('stream').querySelectorAll(`[data-tok="${fl.tok}"]`)]; els.forEach(el => el.classList.add('flash')); if (els[0] && fl.tok !== 'all') els[0].scrollIntoView({ block: 'nearest' }); }
   }
