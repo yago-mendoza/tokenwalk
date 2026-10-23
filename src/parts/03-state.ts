@@ -36,6 +36,7 @@ function readUrl() {
   if (qp.has('speed')) UI.speed = qp.get('speed');
 }
 function writeUrl() {
+  if (isReal()) return; // the address keeps the simulation; the real settings live in tw.realS
   const d = defaults(), u = new URL(location.href), qp = new URLSearchParams();
   if (lang === 'es') qp.set('lang', 'es');
   for (const [name, k, kind] of PARAMS) { if (S[k] === d[k]) continue; qp.set(name, kind === 'b' ? (S[k] ? '1' : '0') : String(S[k])); }

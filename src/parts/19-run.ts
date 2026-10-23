@@ -31,7 +31,7 @@ function nowText(n) {
   const gate = fitGate(); if (gate) return [gate.reason, true];
   if (UI.stale && P.t === 0) return [L('Configuration changed: press play to run it again.', 'Configuración cambiada: pulsa reproducir para volver a ejecutar.'), true];
   const seg = n.seg, m = R.m;
-  if (!seg) return [P.t >= R.total && R.total ? L(`Done: ${num(S.ans)} tokens in ${S_(R.total)}. The model stays loaded until keep_alive runs out.`, `Hecho: ${num(S.ans)} tokens en ${S_(R.total)}. El modelo sigue cargado hasta que se agote keep_alive.`) : KEEP.unloaded ? L('The model was unloaded by keep_alive: the next run loads it from disk first.', 'keep_alive descargó el modelo: la próxima ejecución lo carga antes del disco.') : L('Ready. Press play, or step one token at a time. Configuration locks while it runs.', 'Listo. Pulsa reproducir, o avanza token a token. La configuración se bloquea mientras corre.'), false];
+  if (!seg) return [P.t >= R.total && R.total ? L(`Done: ${num(S.ans)} tokens in ${S_(R.total)}. The model stays loaded until keep_alive runs out.`, `Hecho: ${num(S.ans)} tokens en ${S_(R.total)}. El modelo sigue cargado hasta que se agote keep_alive.`) : KEEP.unloaded ? L('The model was unloaded by keep_alive: the next run loads it from disk first.', 'keep_alive descargó el modelo: la próxima ejecución lo carga antes del disco.') : L('Ready. Press play, or step one token at a time. Setup locks while it runs.', 'Listo. Pulsa reproducir, o avanza token a token. La configuración se bloquea mientras corre.'), false];
   if (seg.k === 'load') return [L(`Loading the model: ${dec(fmtGB(R.weights))} from the SSD into memory, once.`, `Cargando el modelo: ${dec(fmtGB(R.weights))} del SSD a la memoria, una vez.`), false];
   if (seg.k === 'restore') return [L('Restoring the prefix KV cache from disk instead of recomputing it.', 'Restaurando del disco la caché KV del prefijo en vez de recalcularla.'), false];
   const lname = n.head ? L('the output head', 'la cabeza de salida') : L(`layer ${n.layer + 1} of ${m.layers} (${R.kinds[n.layer] === 'attn' ? L('attention', 'atención') : 'DeltaNet'})`, `la capa ${n.layer + 1} de ${m.layers} (${R.kinds[n.layer] === 'attn' ? 'atención' : 'DeltaNet'})`);
@@ -41,6 +41,7 @@ function nowText(n) {
 }
 let runT = 0;
 function renderRun(n) {
+  if (isReal()) { renderRealRun(); return; }
   const nowT = performance.now(); if (nowT - runT < 90) return; runT = nowT;
   $('clock').textContent = dec(`${P.t.toFixed(6)} s`);
   const r = UI.speed === 'fit' ? speedNow(n) : Number(UI.speed);
@@ -61,6 +62,7 @@ function renderRun(n) {
   document.querySelectorAll('.sc').forEach(b => { b.disabled = lk; });
 }
 function renderTransport() {
+  if (isReal()) return;
   $('play').innerHTML = `${ICON(P.on ? 'pause' : atEnd() && R.total && P.t > 0 ? 'replay' : 'play', 'l')}`; renderJump();
   $('play').title = P.on ? L('Pause (space)', 'Pausa (espacio)') : P.t >= R.total && R.total ? L('Run again (space)', 'Ejecutar otra vez (espacio)') : L('Play (space)', 'Reproducir (espacio)');
   $('play').setAttribute('aria-label', $('play').title);

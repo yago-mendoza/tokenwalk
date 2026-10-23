@@ -3,14 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>One request, end to end</title>
+<title>tokenwalk · One request, end to end</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Crect x='1' y='1' width='30' height='30' rx='7' fill='#15151c' stroke='#33333f'/%3E%3Cg fill='#9d8cf0'%3E%3Crect x='6' y='21.5' width='20' height='3' rx='1.5'/%3E%3Crect x='6' y='14.5' width='20' height='3' rx='1.5' opacity='.72'/%3E%3Crect x='6' y='7.5' width='13' height='3' rx='1.5' opacity='.5'/%3E%3C/g%3E%3Cg fill='#7fe3ff'%3E%3Ccircle cx='10' cy='19' r='1.4'/%3E%3Ccircle cx='15' cy='12' r='1.4' opacity='.8'/%3E%3C/g%3E%3Ccircle cx='23' cy='9' r='3.4' fill='#ffd43b'/%3E%3C/svg%3E">
 <meta name="description" content="A control console for one local language model request: the machine, the model and the request, run token by token.">
 <!-- tokenwalk:style -->
 </head>
 <body data-zone="watch">
 <div id="app">
   <header id="top">
-    <div class="brand"><span class="mark"></span><span class="t" data-t="title">One request, end to end</span><button type="button" id="engineBadge"></button></div>
+    <div class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20" class="logo" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="7" fill="#15151c" stroke="#33333f"/><g fill="#9d8cf0"><rect x="6" y="21.5" width="20" height="3" rx="1.5"/><rect x="6" y="14.5" width="20" height="3" rx="1.5" opacity=".72"/><rect x="6" y="7.5" width="13" height="3" rx="1.5" opacity=".5"/></g><g fill="#7fe3ff"><circle cx="10" cy="19" r="1.4"/><circle cx="15" cy="12" r="1.4" opacity=".8"/></g><circle cx="23" cy="9" r="3.4" fill="#ffd43b"/></svg><b class="nm">tokenwalk</b><span class="t" data-t="title">One request, end to end</span></div>
+    <div id="modeSw" role="group" aria-label="Mode"></div>
     <div id="chip" role="button" tabindex="0"></div>
     <span id="pill" class="pill idle"><i></i><span id="pillTxt">IDLE</span></span>
     <button type="button" class="tbtn" id="alertBtn"><span id="alertIc"></span><span class="cnt" id="alertCnt">0</span></button>
@@ -19,6 +21,8 @@
     <button type="button" class="tbtn" id="gear"></button>
     <button type="button" class="tbtn" id="helpBtn"></button>
   </header>
+  <div id="lostBar" role="alert" hidden></div>
+  <div id="modeAsk" role="alertdialog" hidden></div>
   <nav id="ztabs">
     <button type="button" data-z="cfg"></button><button type="button" data-z="watch"></button><button type="button" data-z="mon"></button>
   </nav>
@@ -31,6 +35,10 @@
       <div id="shield"></div>
       <div class="acc" data-acc="scen"><button type="button"><span class="ic-slot" data-ic="bolt"></span><span class="ttl" data-t="scenarios"></span><span class="val" id="vScen"></span><span class="chev" data-ic="chev"></span></button>
         <div class="in"><div class="scen" id="scen"></div></div></div>
+      <div class="acc realonly" data-acc="realmach"><button type="button"><span class="ic-slot" data-ic="laptop"></span><span class="ttl" data-t="aRealMach"></span><span class="val" id="vRealMach"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in" id="realMachIn"></div></div>
+      <div class="acc realonly" data-acc="realreq"><button type="button"><span class="ic-slot" data-ic="notes"></span><span class="ttl" data-t="aRealReq"></span><span class="val" id="vRealReq"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in" id="realReqIn"></div></div>
       <div class="acc" data-acc="machine"><button type="button"><span class="ic-slot" data-ic="memory"></span><span class="ttl" data-t="aMachine"></span><span class="val" id="vMachine"></span><span class="chev" data-ic="chev"></span></button>
         <div class="in">
           <div class="ch" id="chMachine"></div>
@@ -92,7 +100,7 @@
   <div class="split v" id="sp1" title=""></div>
 
   <main id="watch" class="zone">
-    <div class="zh"><span class="zn">3</span><span class="zt" data-t="zWatch"></span><span class="zx"><button type="button" class="tbtn" id="scaleBtn"></button><span class="seg" id="lensSeg"></span><span class="seg" id="mmodeSeg"></span><button type="button" class="tbtn" id="aboutBtn"></button></span></div>
+    <div class="zh"><span class="zn">3</span><span class="zt" data-t="zWatch"></span><span class="esttag" id="estTag" hidden></span><span class="zx"><button type="button" class="tbtn" id="scaleBtn"></button><span class="seg" id="lensSeg"></span><span class="seg" id="mmodeSeg"></span><button type="button" class="tbtn" id="aboutBtn"></button></span></div>
     <div id="stageWrap"><div id="stage"><nav id="zbar" hidden><button type="button" id="zUp"></button><ol id="zCrumbs"></ol><span id="zStat"></span><button type="button" class="zb2" id="zJump"></button><button type="button" class="zb2" id="zInfo"></button></nav>
       <canvas class="lens" id="cSystem" data-lens="system"></canvas>
       <canvas class="lens" id="cModel" data-lens="model"></canvas>

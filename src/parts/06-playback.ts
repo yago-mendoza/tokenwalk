@@ -97,6 +97,7 @@ const JUMPS: any[] = [
 function doJump(k) { const j = JUMPS.find(x => x[0] === k) || JUMPS[4]; if (j[7]()) return; if (fitGate()) return; UI.stale = false; KEEP.idle = 0; j[6](); renderJump(); }
 let jumpKey = '';
 function renderJump() {
+  if (isReal()) return;
   const j = JUMPS.find(x => x[0] === UI.jump) || JUMPS[4], why = j[7]();
   $('jumpGo').innerHTML = `${ICON(j[1], 's')}<span>${esc(j[2]())}</span>`; $('jumpGo').title = why || `${j[3]()}${j[4] ? ` (${j[4]})` : ''}. ${L('The arrow picks another stop.', 'La flecha elige otra parada.')}`;
   $('jumpGo').classList.toggle('na', !!why);

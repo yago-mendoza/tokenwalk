@@ -1,5 +1,5 @@
 // @ts-nocheck: DOM-heavy UI, to be typed in a later pass
-// ===== Configure: scenarios, sections, values =====
+// ===== Setup (zone 1): scenarios, sections, values =====
 const SCEN = [
   { id: 'laptop', ic: 'memory', t: () => L('Article’s laptop', 'Portátil del artículo'), s: () => L('Qwen3.6 MoE on the 860M iGPU', 'Qwen3.6 MoE en la iGPU 860M'), set: {} },
   { id: 'dense', ic: 'layers', t: () => L('Dense 27B, same laptop', 'Denso 27B, mismo portátil'), s: () => L('every weight read per token', 'todos los pesos leídos por token'), set: { model: 'qwen38' } },
@@ -46,7 +46,11 @@ function syncControls() {
   $('vEngine').textContent = `${num(Math.min(S.ctx, m.ctxMax) / 1024)}k · ${S.kv} · ${S.keepalive}m`;
   $('vSamp').textContent = `T ${dec(S.temp.toFixed(2))} · k ${S.topk >= 6 ? L('off', 'no') : S.topk} · p ${dec(S.topp.toFixed(2))}`; if (document.activeElement !== $('seed')) $('seed').value = S.seed;
   $('vAdv').textContent = [S.cached ? L('prefix', 'prefijo') : '', S.disk ? 'KV disk' : '', S.spec ? `spec γ${S.gamma}` : '', !S.spec && S.mtp && MODELS[S.model].mtp ? 'MTP' : ''].filter(Boolean).join(' · ') || L('off', 'apagado');
-  $('chip').innerHTML = `${ICON('memory', 's')}<b>${esc(R.mc.short)}</b><span class="sep">/</span>${(() => { try { return S.model === 'live' && LIVE.status === 'ok' && m.tag === LIVE.pick ? `<span class="lvseg" title="${esc(L('Drawn from the live server', 'Leído del servidor en vivo'))}">${ICON('server', 's')}<i class="livedot${LIVE.running ? ' run' : ''}"></i>` : ''; } catch (e) { return ''; } })()}<b>${esc(m.name)}</b> ${esc(S.quant)}${(() => { try { return S.model === 'live' && LIVE.status === 'ok' && m.tag === LIVE.pick ? '</span>' : ''; } catch (e) { return ''; } })()}<span class="sep">/</span>${num(R.prompt)} + ${num(S.ans)} ${L('tokens', 'tokens')}<span class="sep">/</span>num_ctx ${num(R.ctx)}${typeof liveChipHtml === 'function' ? liveChipHtml() : ''}`;
+  // the setup line says which mode the console is in: the simulated setup, or what is really sent to the server
+  $('chip').innerHTML = isReal() ? (() => { const mm = LIVE.models.find(q => q.name === LIVE.pick), run = LIVE.run && LIVE.run.prompt === livePrompt() ? LIVE.run : null;
+    return `${ICON('laptop', 's')}<b>${esc(L('this machine', 'esta máquina'))}</b> <small>${esc(L('real', 'real'))}</small><span class="sep">/</span><b>${esc(LIVE.pick)}</b>${mm && mm.quant ? ` ${esc(mm.quant)}` : ''}<span class="sep">/</span>${run ? num(run.promptN) : `≈ ${num(promptTokGuess())}`} + ${num(LIVE.maxTok)} ${L('tokens', 'tokens')}<span class="sep">/</span>num_ctx ${num(Math.min(S.ctx, m.ctxMax))}`; })()
+    : `${ICON('memory', 's')}<b>${esc(R.mc.short)}</b><span class="sep">/</span><b>${esc(m.name)}</b> ${esc(S.quant)}<span class="sep">/</span>${num(R.prompt)} + ${num(S.ans)} ${L('tokens', 'tokens')}<span class="sep">/</span>num_ctx ${num(R.ctx)}`;
+  $('chip').title = isReal() ? L('What is sent to the server. Click to see the connection.', 'Lo que se envía al servidor. Pulsa para ver la conexión.') : L('The simulated machine, model and request. Click to change them.', 'La máquina, el modelo y la petición simulados. Pulsa para cambiarlos.');
   $('pauseTok').checked = UI.pauseTok; $('pauseLayer').checked = UI.pauseLayer;
   renderScen();
 }
@@ -137,11 +141,11 @@ function buildLegend() {
 
 // ===== Help =====
 const HELP = [
-  ['#cfg', 1, () => L('Configure', 'Configurar'), () => L('Pick a scenario or open a section to set the machine, the model and the request. It locks while a run is going.', 'Elige un escenario o abre una sección para fijar la máquina, el modelo y la petición. Se bloquea mientras corre.')],
-  ['#run', 2, () => L('Run', 'Ejecutar'), () => L('Play, pause, step one token or one layer, set the speed. The clock is simulated time; the track says where the run is.', 'Reproduce, pausa, avanza un token o una capa, ajusta la velocidad. El reloj es tiempo simulado; la pista dice dónde va.')],
-  ['#watch', 3, () => L('Watch', 'Observar'), () => L('One lens at a time: the computer, the model, the memory, the tokens. The thumbnails switch lens.', 'Una lente cada vez: el ordenador, el modelo, la memoria, los tokens. Las miniaturas cambian de lente.')],
+  ['#cfg', 1, () => L('Setup', 'Configuración'), () => L('Pick a scenario or open a section to set the machine, the model and the request. It locks while a run is going.', 'Elige un escenario o abre una sección para fijar la máquina, el modelo y la petición. Se bloquea mientras corre.')],
+  ['#run', 2, () => L('Playback', 'Ejecución'), () => L('Play, pause, step one token or one layer, set the speed. The clock is simulated time; the track says where the run is.', 'Reproduce, pausa, avanza un token o una capa, ajusta la velocidad. El reloj es tiempo simulado; la pista dice dónde va.')],
+  ['#watch', 3, () => L('Observatory', 'Observatorio'), () => L('One lens at a time: the computer, the model, the memory, the tokens. The thumbnails switch lens.', 'Una lente cada vez: el ordenador, el modelo, la memoria, los tokens. Las miniaturas cambian de lente.')],
   ['#legend', 4, () => L('Legend', 'Leyenda'), () => L('What this view draws: each colour and texture means one thing everywhere, and the list changes with the view. Hover an item for its definition.', 'Lo que dibuja esta vista: cada color y textura significa una sola cosa en todas partes, y la lista cambia con la vista. Pasa el ratón por un elemento para su definición.')],
-  ['#kpis', 5, () => L('Monitor', 'Monitorizar'), () => L('Four numbers that matter, with health colours, and one line saying what limits the run now.', 'Cuatro números que importan, con colores de estado, y una línea que dice qué limita la ejecución ahora.')],
+  ['#kpis', 5, () => L('Monitor', 'Monitor'), () => L('Four numbers that matter, with health colours, and one line saying what limits the run now.', 'Cuatro números que importan, con colores de estado, y una línea que dice qué limita la ejecución ahora.')],
   ['#mbody', 6, () => L('Alerts and instruments', 'Alertas e instrumentos'), () => L('Hover anything to see its name; click it, here or in any view, and an explainer opens: what it is, what it holds now and why it matters.', 'Pasa el ratón por cualquier cosa para ver su nombre; haz clic, aquí o en cualquier vista, y se abre una explicación: qué es, qué guarda ahora y por qué importa.')],
 ];
 let helpI = -1;
@@ -197,7 +201,7 @@ function loadLayout() { try { if (localStorage.getItem('llmc.noFoot') === '1') d
 function applyText() {
   document.querySelectorAll('[data-t]').forEach(el => { el.textContent = T(el.dataset.t); });
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ICON(el.dataset.ic, el.dataset.ic === 'chev' ? 's' : ''); });
-  document.title = T('title'); document.documentElement.lang = lang;
+  document.title = `tokenwalk · ${T('title')}`; document.documentElement.lang = lang;
   $('reset').innerHTML = `${ICON('restart', 's')}<span>${esc(L('Article’s laptop', 'Portátil del artículo'))}</span>`;
   $('gear').innerHTML = ICON('settings'); $('gear').title = L('Settings', 'Ajustes'); $('helpBtn').innerHTML = ICON('help'); $('helpBtn').title = L('Wizard (?)', 'Wizard (?)');
   $('monBtn').innerHTML = `${ICON('eq', 's')}<span>${esc(L('Monitor', 'Monitor'))}</span>`; $('monClose').innerHTML = ICON('close', 's');

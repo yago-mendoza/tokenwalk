@@ -27,7 +27,7 @@ function bind() {
   $('undoBtn').addEventListener('click', undo);
   { const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'tbtn'; rb.id = 'redoBtn'; rb.innerHTML = ICON('restart', 's'); rb.querySelector('.ic').style.transform = 'scaleX(-1)'; $('undoBtn').after(rb); rb.addEventListener('click', redo); renderUndo(); }
  
-  $('play').addEventListener('click', () => { if (fitGate()) return; UI.stale = false; setPlaying(!P.on); });
+  $('play').addEventListener('click', () => { if (isReal()) { realSend(); return; } if (fitGate()) return; UI.stale = false; setPlaying(!P.on); });
   $('jumpGo').addEventListener('click', () => doJump(UI.jump));
   // The lock card sits in the flow after the sections, so it never covers a row (Sampling and Live stay usable above it).
   $('cfgBody').appendChild($('lock')); renderMmode();
@@ -61,7 +61,7 @@ function bind() {
   $('jumpPop').addEventListener('click', e => { const b = e.target.closest('[data-j]'); if (!b || b.getAttribute('aria-disabled') === 'true') return; UI.jump = b.dataset.j; try { localStorage.setItem('llmc.jump', UI.jump); } catch (er) {} jumpPop(false); renderJump(); doJump(UI.jump); });
   $('jumpPop').addEventListener('keydown', e => { const bs = [...$('jumpPop').querySelectorAll('button')], i = bs.indexOf(document.activeElement); if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); bs[(i + (e.key === 'ArrowDown' ? 1 : bs.length - 1)) % bs.length].focus(); } else if (e.key === 'Escape') { e.stopPropagation(); jumpPop(false); $('jumpMenu').focus(); } });
   document.addEventListener('click', e => { if (!$('jumpPop').hidden && !e.target.closest('#jump')) jumpPop(false); });
-  $('stop').addEventListener('click', () => stopEdit());
+  $('stop').addEventListener('click', () => { if (isReal()) liveStop(); else stopEdit(); });
   $('stopEdit').addEventListener('click', () => stopEdit());
   const stepRate = d => { const cur = UI.speed === 'fit' ? speedNow(now()) : Number(UI.speed); let i = RATES.findIndex(r => r >= cur * .999); if (i < 0) i = RATES.length - 1; if (d < 0 && RATES[i] > cur * 1.001) i--; i = Math.max(0, Math.min(RATES.length - 1, i + (UI.speed === 'fit' ? (d > 0 ? 1 : 0) : d))); UI.speed = String(RATES[i]); writeUrl(); runT = 0; };
   $('slower').addEventListener('click', () => stepRate(-1)); $('faster').addEventListener('click', () => stepRate(1));
@@ -75,7 +75,7 @@ function bind() {
   $('alertBtn').addEventListener('click', () => { openMon(); $('mbody').scrollTop = 0; });
   $('monBtn').addEventListener('click', () => document.body.classList.toggle('monOpen'));
   $('monClose').addEventListener('click', () => document.body.classList.remove('monOpen'));
-  $('chip').addEventListener('click', () => openLoadout('machine'));
+  $('chip').addEventListener('click', () => { if (isReal()) liveOpen(true); else openLoadout('machine'); });
   document.querySelectorAll('#ztabs button').forEach(b => b.addEventListener('click', () => setZone(b.dataset.z)));
   for (const id2 of ['stream', 'outStream']) $(id2).addEventListener('click', e => { const lt = e.target.closest('[data-ltok]'); if (lt) { const i = +lt.dataset.ltok; UI.liveTok = UI.liveTok === i ? null : i; streamKey = ''; return; } const t = e.target.closest('[data-tok]'); if (!t) return; const i = +t.dataset.tok; UI.logitTok = UI.logitTok === i ? null : i; if (UI.lens !== 'tokens') setLens('tokens'); streamKey = ''; outKey = ''; });
   const tip = $('tip');
@@ -112,7 +112,9 @@ function bind() {
   document.addEventListener('keydown', e => {
     const t = e.target, tagn = (t && t.tagName) || '';
     if ((tagn === 'INPUT' && !['checkbox', 'range'].includes(t.type)) || tagn === 'SELECT' || tagn === 'TEXTAREA') return;
-    if (e.key === ' ' && tagn !== 'BUTTON') { e.preventDefault(); if (!fitGate()) { UI.stale = false; setPlaying(!P.on); } }
+    if (isReal() && e.key === ' ' && tagn !== 'BUTTON') { e.preventDefault(); realSend(); }
+    else if (isReal() && ['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) { /* real time: nothing to step or jump */ }
+    else if (e.key === ' ' && tagn !== 'BUTTON') { e.preventDefault(); if (!fitGate()) { UI.stale = false; setPlaying(!P.on); } }
     else if (e.key === 'ArrowRight' && e.shiftKey) { e.preventDefault(); if (!fitGate()) stepLayer(); }
     else if (e.key === 'ArrowRight' && tagn !== 'INPUT') { e.preventDefault(); if (!fitGate()) stepToken(); }
     else if (e.key === 'End' && tagn !== 'INPUT') { e.preventDefault(); doJump('end'); }
@@ -142,7 +144,7 @@ function frame(t0) {
     const n = now();
     if (UI.follow && n.layer >= 0 && n.seg && UI.layer !== n.layer) UI.layer = n.layer; // follow moves Model's focus, never the selection (which would open an explainer every frame)
     if (UI.lens === 'system') drawSystem(n, dt); else if (UI.lens === 'model') drawModel(n); else if (UI.lens === 'memory') drawMemory(n); else drawTokens(n);
-    drawTimeline(n); drawCtx(n); renderOutput(n);
+    if (isReal()) drawRealTimeline(); else drawTimeline(n); drawCtx(n); renderOutput(n);
     renderRun(n); renderKpis(n);
     if (t0 - slowT > 250) { slowT = t0; drawRuler(n); renderAlerts(); renderGate(); renderChoice(); renderUndo(); renderJump(); renderDetails(); renderTrends(); renderLive(); if (!$('logPop').hidden) renderLog(n); }
     renderInspector(); renderThumbs(n); renderCap();

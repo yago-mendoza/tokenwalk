@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- tokenwalk: a token climbing the layers of a model; the dots are its walk -->
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="#15151c" stroke="#33333f"/>
+  <g fill="#9d8cf0">
+    <rect x="6" y="21.5" width="20" height="3" rx="1.5"/>
+    <rect x="6" y="14.5" width="20" height="3" rx="1.5" opacity=".72"/>
+    <rect x="6" y="7.5" width="13" height="3" rx="1.5" opacity=".5"/>
+  </g>
+  <g fill="#7fe3ff"><circle cx="10" cy="19" r="1.4"/><circle cx="15" cy="12" r="1.4" opacity=".8"/></g>
+  <circle cx="23" cy="9" r="3.4" fill="#ffd43b"/>
+</svg>

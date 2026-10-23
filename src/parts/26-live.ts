@@ -1,7 +1,6 @@
 // @ts-nocheck: DOM-heavy UI, to be typed in a later pass
-// ===== Live mode: one real request to a local server, measured next to the simulator's estimate =====
-// Optional and separate from the simulated run: nothing here blocks or changes the simulator until the user
-// chooses to use the live model or to calibrate the machine to the measured run.
+// ===== Real machine: the connection to a local server and one real request, measured next to the estimate =====
+// The mode itself (Simulated or Real machine, and every switch between them) is in 27-mode.ts.
 const LIVE = {
   ep: (() => { try { return localStorage.getItem('tw.liveEp') || 'http://localhost:11434'; } catch (e) { return 'http://localhost:11434'; } })(),
   kind: null, status: 'idle', version: '', error: '', fix: '', models: [], pick: '', caps: {},
@@ -51,7 +50,7 @@ async function liveDetect() {
       if (!(p && p.ok)) {
         const there = await liveReachable();
         LIVE.status = there ? 'cors' : 'down'; LIVE.fix = there ? liveCorsFix(LIVE.ep.includes(':8080') ? 'llama' : 'ollama') : L('Nothing answered. Start Ollama (ollama serve) or llama-server, or check the address.', 'Nadie respondió. Arranca Ollama (ollama serve) o llama-server, o revisa la dirección.');
-        renderLive(true); return;
+        renderLive(true); modeAfterDetect(); return;
       }
       LIVE.kind = 'llama'; const props = await p.json(); LIVE.version = props.build_info || '';
       const models = await (await liveFetch('/v1/models')).json(); LIVE.llamaInfo = { props, models };
@@ -59,16 +58,7 @@ async function liveDetect() {
     }
     LIVE.status = 'ok'; if (!LIVE.models.some(m => m.name === LIVE.pick)) LIVE.pick = (LIVE.models.find(m => MODELS[S.model] && m.name === MODELS[S.model].tag) || LIVE.models[0] || {}).name || '';
   } catch (e) { LIVE.status = 'error'; LIVE.error = String(e && e.message || e); }
-  renderLive(true);
-}
-
-// The picked server model becomes the console's 'live' model, so every view draws it.
-async function liveUseModel() {
-  if (locked()) return;
-  let p;
-  if (LIVE.kind === 'ollama') p = modelFromOllama(await (await liveFetch('/api/show', { method: 'POST', body: JSON.stringify({ model: LIVE.pick }) }, 15000)).json(), LIVE.pick);
-  else p = modelFromLlama(LIVE.llamaInfo.models, LIVE.llamaInfo.props);
-  pushUndo(); registerLiveModel(p); fillSelects(); S.model = 'live'; S.quant = p.quant; S.ctx = Math.min(S.ctx, p.model.ctxMax); UI.layer = -1; KEEP.unloaded = false; changed(); renderLive(true);
+  renderLive(true); modeAfterDetect();
 }
 
 async function liveRun() {
@@ -96,8 +86,9 @@ async function liveRun() {
     if (!parsed.final) throw new Error(L('the stream ended without timings', 'el flujo terminó sin tiempos'));
     LIVE.run = (LIVE.kind === 'ollama' ? ollamaRun : llamaRun)(parsed.final, LIVE.pick, LIVE.text, first === null ? null : first / 1000, arrivals);
     if (LIVE.run.totalS === null || LIVE.kind === 'llama') LIVE.run.totalS = (performance.now() - LIVE.t0) / 1000;
+    LIVE.run.prompt = prompt;
     LIVE.est = liveEstimate(LIVE.run);
-  } catch (e) { if (!(LIVE.ctl && LIVE.ctl.signal.aborted)) LIVE.error = String(e && e.message || e); }
+  } catch (e) { if (!(LIVE.ctl && LIVE.ctl.signal.aborted)) { LIVE.error = String(e && e.message || e); LIVE.running = false; realPoll(true); } }
   LIVE.running = false; LIVE.ctl = null; TCURVE = { r: null, d: {} }; renderLive(true);
 }
 function liveStop() { if (LIVE.ctl) LIVE.ctl.abort(new Error('stopped')); }
@@ -149,54 +140,28 @@ function liveTop(o) {
   const alts = lp.top_logprobs || lp.probs || [];
   return { tok: lp.token || lp.content || '', p: lp.logprob !== undefined ? Math.exp(lp.logprob) : lp.prob, alts: alts.map(a => ({ tok: a.token || a.tok_str || '', p: a.logprob !== undefined ? Math.exp(a.logprob) : a.prob })) };
 }
-// What each Configure control means for the real run: honoured (sent with the request), or simulation only, with why.
-function liveScope() {
-  if (LIVE.status !== 'ok') return null;
-  const srv = L('the server decides this', 'esto lo decide el servidor'), ol = LIVE.kind === 'ollama';
-  const sim = { machine: L('Simulation only: the real machine is the one running the server', 'Solo simulación: la máquina real es la que ejecuta el servidor'), model: L(`Simulation only: the server runs ${LIVE.pick}`, `Solo simulación: el servidor ejecuta ${LIVE.pick}`),
-    request: L('Simulation only: the live prompt and Max tokens in the live window decide this', 'Solo simulación: el prompt en vivo y los tokens máx. de la ventana en vivo deciden esto'),
-    kv: ol ? L('Simulation only: set on the server (OLLAMA_KV_CACHE_TYPE)', 'Solo simulación: se fija en el servidor (OLLAMA_KV_CACHE_TYPE)') : L('Simulation only: set when llama-server starts (-ctk / -ctv)', 'Solo simulación: se fija al arrancar llama-server (-ctk / -ctv)'),
-    cached: ol ? L(`Simulation only: Ollama keeps its own prompt cache; ${srv}`, `Solo simulación: Ollama gestiona su propia caché de prompt; ${srv}`) : null,
-    disk: L(`Simulation only: ${srv}`, `Solo simulación: ${srv}`), cold: L(`Simulation only: ${srv}`, `Solo simulación: ${srv}`),
-    spec: ol ? L('Simulation only: Ollama has no separate draft model', 'Solo simulación: Ollama no tiene modelo borrador aparte') : L('Simulation only: a draft model is set when llama-server starts (-md)', 'Solo simulación: el modelo borrador se fija al arrancar llama-server (-md)'),
-    mtp: ol ? (liveHasMtp() ? null : L('Simulation only: this server model has no MTP block', 'Solo simulación: este modelo del servidor no tiene bloque MTP')) : L('Simulation only: not a per-request option of llama-server', 'Solo simulación: no es una opción por petición de llama-server'),
-    ctx: ol ? null : L('Simulation only: set when llama-server starts (-c)', 'Solo simulación: se fija al arrancar llama-server (-c)'),
-    keepalive: ol ? null : L('Simulation only: llama-server keeps the model loaded until it stops', 'Solo simulación: llama-server mantiene el modelo cargado hasta que se para') };
-  return sim;
-}
-const SCOPE_IDS = { machine: ['machine', 'mts', 'bus', 'vbw', 'ram', 'tflops'], model: ['model', 'quant'], request: ['sys', 'docs', 'q', 'ans'], kv: ['kv'], cached: ['cached'], disk: ['disk'], cold: ['cold'], spec: ['spec', 'gamma', 'alpha'], mtp: ['mtp'], ctx: ['ctx'], keepalive: ['keepalive'] };
-const LIVE_HONOURED = ['temp', 'topk', 'topp', 'seed', 'ctx', 'keepalive', 'mtp', 'cached'];
+// In Real, the settings that are sent with each request are marked; the simulation-only ones are hidden (styles, body.real).
+const LIVE_HONOURED = ['temp', 'topk', 'topp', 'seed', 'ctx', 'keepalive'];
 let scopeKey = '';
 function liveSyncScope() {
-  const sc = liveScope(), key = sc ? JSON.stringify(sc) : '';
+  const on = isReal() && LIVE.status === 'ok', key = on ? LIVE.kind + lang : '';
   if (key === scopeKey) return; scopeKey = key;
-  document.querySelectorAll('.simonly, .livehon').forEach(el => { el.classList.remove('simonly', 'livehon'); if (el.dataset.lvTitle !== undefined) { el.title = el.dataset.lvTitle; delete el.dataset.lvTitle; } });
-  if (!sc) return;
-  const box = id => { const el = $(id); return el ? el.closest('.fld, label.sw, .row2 > .fld') || el : null; };
-  for (const [k, ids] of Object.entries(SCOPE_IDS)) { const why = sc[k]; for (const id of ids) { const b = box(id); if (!b) continue; if (why) { b.dataset.lvTitle = b.title || ''; b.title = why; b.classList.add('simonly'); } } }
-  for (const [acc, k] of [['machine', 'machine'], ['model', 'model'], ['request', 'request']]) { const b = document.querySelector(`[data-acc=${acc}] > button`); if (b && sc[k]) { b.dataset.lvTitle = b.title || ''; b.title = sc[k]; b.classList.add('simonly'); } }
-  for (const id of LIVE_HONOURED) { const b = box(id); if (b && !b.classList.contains('simonly')) { b.dataset.lvTitle = b.title || ''; b.title = L('Sent with the live run', 'Se envía con la ejecución en vivo'); b.classList.add('livehon'); } }
+  document.querySelectorAll('.livehon').forEach(el => { el.classList.remove('livehon'); if (el.dataset.lvTitle !== undefined) { el.title = el.dataset.lvTitle; delete el.dataset.lvTitle; } });
+  if (!on) return;
+  const ids = LIVE.kind === 'ollama' ? LIVE_HONOURED : ['temp', 'topk', 'topp', 'seed'];
+  for (const id of ids) { const el = $(id), b = el && (el.closest('.fld, label.sw') || el); if (!b) continue; b.dataset.lvTitle = b.title || ''; b.title = L('Sent with each real request', 'Se envía con cada petición real'); b.classList.add('livehon'); }
 }
-// The breadcrumb's live segment: the server's model and its quantization, behind a server icon.
-function liveChipHtml() {
-  // called by the setup line during start-up, before this part has run: LIVE does not exist yet then
-  try { if (LIVE.status !== 'ok' || !LIVE.pick) return ''; } catch (e) { return ''; }
-  // the console already draws the server's model: mark that segment instead of repeating it
-  if (S.model === 'live' && MODELS.live && MODELS.live.tag === LIVE.pick) return '';
-  const mm = LIVE.models.find(q => q.name === LIVE.pick);
-  return `<span class="sep">/</span><span class="lvseg" title="${esc(L('The model on the live server', 'El modelo en el servidor en vivo'))}">${ICON('server', 's')}<i class="livedot${LIVE.running ? ' run' : ''}"></i><b>${esc(LIVE.pick)}</b>${mm && mm.quant ? ` ${esc(mm.quant)}` : ''}</span>`;
-}
-function liveOpen(on) { $('liveWin').hidden = !on; if (on) { renderLive(true); const f = $('lvDetect'); if (f && LIVE.status !== 'ok') f.focus(); } }
+function liveOpen(on) { $('liveWin').hidden = !on; if (on) { renderLive(true); const f = $('lvDetect'); if (f && LIVE.status !== 'ok') f.focus(); } else { MODE.editEp = false; } }
 $('liveOpen').addEventListener('click', e => { e.stopPropagation(); liveOpen(true); }, true);
 $('liveClose').innerHTML = ICON('close', 's'); $('liveClose').addEventListener('click', () => liveOpen(false));
 $('liveWin').querySelector('.scrim').addEventListener('click', () => liveOpen(false));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('liveWin').hidden) { e.stopPropagation(); liveOpen(false); } }, true);
 // Tokens view: the live answer as tokens, each with its arrival time and, when the server sends them, its top alternatives.
-const liveShowing = () => LIVE.showOut && (LIVE.running || LIVE.toks.length > 0);
+const liveShowing = () => isReal() && (LIVE.running || LIVE.toks.length > 0);
 function liveStreamHtml() {
   const tk = LIVE.toks, from = Math.max(0, tk.length - 240);
-  let h = `<span class="lv-tag">${esc(L('live', 'en vivo'))}</span>${from ? '… ' : ''}`;
-  for (let i = from; i < tk.length; i++) h += `<span class="g live${UI.liveTok === i ? ' sel' : ''}" data-ltok="${i}" title="${esc(L(`live token ${i + 1} · ${Math.round(tk[i].t)} ms`, `token en vivo ${i + 1} · ${Math.round(tk[i].t)} ms`))}">${esc(i === from ? tk[i].s.trimStart() : tk[i].s)}</span>`;
+  let h = `<span class="lv-tag">${esc(L('real', 'real'))}</span>${from ? '… ' : ''}`;
+  for (let i = from; i < tk.length; i++) h += `<span class="g live${UI.liveTok === i ? ' sel' : ''}" data-ltok="${i}" title="${esc(L(`real token ${i + 1} · ${Math.round(tk[i].t)} ms`, `token real ${i + 1} · ${Math.round(tk[i].t)} ms`))}">${esc(i === from ? tk[i].s.trimStart() : tk[i].s)}</span>`;
   if (!tk.length) h += `<span class="ph">${esc(L('Waiting for the first token…', 'Esperando el primer token…'))}</span>`;
   return h;
 }
@@ -212,7 +177,7 @@ function drawLiveChain(id2, W, H2) {
   tk.top.alts.forEach((a, j) => { const Y = 48 + j * rh, chosen = a.tok === tk.top.tok; if (chosen) chipRound(x2, 2, Y + rh / 2 - 4, 8, '#ff5d6c'); textFit(x2, a.tok.replace(/\n/g, '⏎') || '∅', 16, Y + rh / 2 + 4, lw - 20, chosen ? '#ffd2d7' : C.ink, 'left', 11, chosen ? 700 : 500); x2.fillStyle = 'rgba(255,255,255,.04)'; x2.fillRect(lw, Y + 4, bw, rh - 9); x2.fillStyle = chosen ? '#ff5d6c' : 'rgba(255,93,108,.45)'; x2.fillRect(lw, Y + 4, Math.max(1.5, bw * (a.p || 0)), rh - 9); text(x2, pct(a.p || 0), lw + bw + 8, Y + rh / 2 + 4, C.mid, 'left', 10); });
 }
 let chipLive = '';
-setInterval(() => { liveSyncScope(); const c = liveChipHtml(); if (c !== chipLive) { chipLive = c; syncControls(); } }, 400);
+setInterval(() => { liveSyncScope(); const c = [isReal(), LIVE.status, LIVE.pick, LIVE.running, LIVE.maxTok, LIVE.run && LIVE.run.promptN, LIVE.promptMode, lang].join('|'); if (c !== chipLive) { chipLive = c; syncControls(); } }, 400);
 
 // Setup, the way an empty GitHub repo shows it: numbered steps, each command in a block with a copy button.
 // The commands are for this page's origin and the visitor's system (tabs switch it).
@@ -230,41 +195,53 @@ function liveSetupHtml() {
     <ol>${step(1, L('Install Ollama from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> and pull the article’s model:', 'Instala Ollama desde <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> y descarga el modelo del artículo:'), block('ollama pull qwen3.6:35b-a3b'))}
     ${local ? step(2, L('This page is on localhost, which Ollama already allows. Nothing to change.', 'Esta página está en localhost, que Ollama ya permite. No hay nada que cambiar.'), '') : step(2, L(`Allow this page (${esc(o)}) to talk to Ollama:`, `Permite que esta página (${esc(o)}) hable con Ollama:`), block(allow) + (restart ? `<p class="lv-note">${esc(restart)}</p>` : ''))}
     ${step(3, L('Check it: it prints 204 when allowed, 403 when not.', 'Compruébalo: imprime 204 si está permitido, 403 si no.'), block(check))}
-    ${step(4, L('Press Detect above.', 'Pulsa Detectar arriba.'), '')}</ol></details>`;
+    ${step(4, L('Press Connect above.', 'Pulsa Conectar arriba.'), '')}</ol></details>`;
 }
 document.addEventListener('click', e => {
   const c = e.target.closest('.lv-copy'); if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.copy).then(() => { c.classList.add('done'); c.querySelector('span').textContent = L('Copied', 'Copiado'); setTimeout(() => { c.classList.remove('done'); c.querySelector('span').textContent = L('Copy', 'Copiar'); }, 1400); }); return; }
   const b = e.target.closest('.lv-os [data-os]'); if (b) { LIVE_OS = b.dataset.os; const d = b.closest('details'); const open = d && d.open; renderLive(true); if (open) { const nd = document.querySelector('.lv-setup'); if (nd) nd.open = true; } }
 });
 let liveKey = '', liveCmpKey = '';
+// The connect window, one state at a time: not connected, connecting, blocked by CORS (with the steps), nothing
+// answering, connected (Change server / Disconnect), running (changes wait for the request), lost.
 function renderLive(force) {
-  const st = LIVE.status, chip = { idle: [L('not connected', 'sin conectar'), ''], busy: [L('detecting…', 'detectando…'), ''], ok: [`${LIVE.kind === 'ollama' ? 'Ollama' : 'llama.cpp'}${LIVE.version ? ` · ${LIVE.version}` : ''}`, 'ok'], cors: [L('blocked by CORS', 'bloqueado por CORS'), 'warn'], down: [L('not running', 'no responde'), 'bad'], error: [L('error', 'error'), 'bad'] }[st];
-  $('vLive').textContent = LIVE.running ? L('running…', 'en marcha…') : st === 'ok' ? (LIVE.kind === 'ollama' ? 'Ollama' : 'llama.cpp') : chip[0];
-  const h = `<div class="lv-row"><input type="text" id="lvEp" value="${esc(LIVE.ep)}" spellcheck="false" aria-label="${esc(L('Server address', 'Dirección del servidor'))}"><button type="button" class="tbtn" id="lvDetect">${esc(L('Detect', 'Detectar'))}</button></div>
-    <div class="lv-st"><span class="lv-chip ${chip[1]}">${esc(chip[0])}</span>${st === 'ok' ? `<small>${esc(L(`${LIVE.models.length} models`, `${LIVE.models.length} modelos`))}</small>` : ''}</div>
-    ${LIVE.fix ? `<div class="lv-fix">${esc(LIVE.fix)}</div>` : ''}${LIVE.error ? `<div class="lv-fix bad">${esc(LIVE.error)}</div>` : ''}
-    ${st === 'ok' ? `<div class="fld"><label for="lvModel"><span>${esc(L('Model on the server', 'Modelo en el servidor'))}</span></label><select id="lvModel">${LIVE.models.map(m => `<option value="${esc(m.name)}" ${m.name === LIVE.pick ? 'selected' : ''}>${esc(m.name)}${m.params ? ` · ${esc(m.params)}` : ''}${m.quant ? ` · ${esc(m.quant)}` : ''}</option>`).join('')}</select></div>
-      <button type="button" class="tbtn" id="lvUse" ${locked() ? 'disabled' : ''}>${ICON('layers', 's')}<span>${esc(S.model === 'live' && MODELS.live && MODELS.live.tag === LIVE.pick ? L('In use in the console', 'En uso en la consola') : L('Draw this model in the console', 'Dibujar este modelo en la consola'))}</span></button>
-      <div class="fld"><label for="lvPrompt"><span>${esc(L('Prompt', 'Prompt'))}</span></label><select id="lvPrompt"><option value="short" ${LIVE.promptMode === 'short' ? 'selected' : ''}>${esc(L('Short question', 'Pregunta corta'))}</option><option value="long" ${LIVE.promptMode === 'long' ? 'selected' : ''}>${esc(L('Long history · ≈ 3,500 tok', 'Historia larga · ≈ 3.500 tok'))}</option><option value="own" ${LIVE.promptMode === 'own' ? 'selected' : ''}>${esc(L('My own', 'El mío'))}</option></select></div>
-      ${LIVE.promptMode === 'own' ? `<textarea id="lvOwn" rows="4" placeholder="${esc(L('Paste a prompt', 'Pega un prompt'))}">${esc(LIVE.own)}</textarea>` : ''}
-      <div class="lv-row"><label class="lv-n">${esc(L('Max tokens', 'Tokens máx.'))}<input type="number" id="lvMax" min="8" max="2048" step="8" value="${LIVE.maxTok}"></label>
-      ${LIVE.running ? `<button type="button" class="btnp" id="lvStop">${ICON('stop', 's')}<span>${esc(L('Stop', 'Parar'))}</span></button>` : `<button type="button" class="btnp" id="lvRun">${ICON('play', 's')}<span>${esc(L('Run live', 'Ejecutar en vivo'))}</span></button>`}</div>` : ''}
-    ${st !== 'ok' ? liveSetupHtml() : ''}
-    <div class="hint">${esc(L('Sends one real request to the server and measures it; the simulated run is not touched. Sampling settings are shared.', 'Envía una petición real al servidor y la mide; la ejecución simulada no se toca. Los ajustes de muestreo se comparten.'))}</div>`;
-  const key = h + (LIVE.running ? Math.floor(performance.now() / 500) : '');
+  const st = LIVE.status, run = LIVE.running, real = isReal(), name = LIVE.kind === 'llama' ? 'llama.cpp' : 'Ollama', ok = st === 'ok';
+  const head = {
+    idle: [L('Not connected', 'Sin conectar'), '', L('Connect to a local Ollama or llama.cpp server. Nothing is sent until you press Send in the request zone.', 'Conecta con un servidor local de Ollama o llama.cpp. No se envía nada hasta que pulses Enviar en la zona de petición.')],
+    busy: [L('Connecting…', 'Conectando…'), '', L(`Asking ${LIVE.ep} which server it is and which models it has.`, `Preguntando a ${LIVE.ep} qué servidor es y qué modelos tiene.`)],
+    cors: [L('Blocked by CORS', 'Bloqueado por CORS'), 'warn', L('The server is there but refuses this page. Allow it with the steps below, then Connect again.', 'El servidor está, pero rechaza esta página. Permítela con los pasos de abajo y vuelve a Conectar.')],
+    down: [L('Nothing answered', 'Nadie respondió'), 'bad', L('Start Ollama (ollama serve) or llama-server, or check the address.', 'Arranca Ollama (ollama serve) o llama-server, o revisa la dirección.')],
+    error: [L('Could not connect', 'No se pudo conectar'), 'bad', ''],
+    ok: [L('Connected', 'Conectado'), 'ok', L(`${name} ${LIVE.version} at ${LIVE.ep} · ${LIVE.models.length} models`, `${name} ${LIVE.version} en ${LIVE.ep} · ${LIVE.models.length} modelos`)],
+  }[st];
+  if (ok && real && MODE.lost) { head[0] = L('Lost the server', 'Se perdió el servidor'); head[1] = 'bad'; head[2] = L(`${LIVE.ep} stopped answering. Retry, or go back to the simulation.`, `${LIVE.ep} dejó de responder. Reintenta o vuelve a la simulación.`); }
+  $('vLive').textContent = run ? L('running…', 'en marcha…') : ok ? (real ? name : L(`${name} · not in use`, `${name} · sin usar`)) : st === 'busy' ? L('connecting…', 'conectando…') : L('not connected', 'sin conectar');
+  const why = L('Wait for the real request to finish, or stop it', 'Espera a que termine la petición real, o párala'), dis = run ? `disabled title="${esc(why)}"` : '';
+  const epRow = `<div class="lv-row"><input type="text" id="lvEp" value="${esc(LIVE.ep)}" spellcheck="false" aria-label="${esc(L('Server address', 'Dirección del servidor'))}" ${st === 'busy' ? 'disabled' : ''}><button type="button" class="btnp" id="lvDetect" ${st === 'busy' ? 'disabled' : ''}>${esc(st === 'busy' ? L('Connecting…', 'Conectando…') : ok ? L('Connect here', 'Conectar aquí') : L('Connect', 'Conectar'))}</button>${ok ? `<button type="button" class="tbtn quiet" id="lvEpCancel">${esc(L('Cancel', 'Cancelar'))}</button>` : ''}</div>`;
+  let h = `<div class="lv-st"><span class="lv-chip ${head[1]}">${esc(head[0])}</span>${head[2] ? `<small>${esc(head[2])}</small>` : ''}</div>`;
+  if (!ok) h += epRow + (LIVE.fix && st === 'cors' ? `<div class="lv-fix">${esc(LIVE.fix)}</div>` : '') + (LIVE.error ? `<div class="lv-fix bad">${esc(LIVE.error)}</div>` : '') + liveSetupHtml()
+    + `<div class="hint">${esc(L('Connecting switches the console to Real machine. Your simulation is kept and comes back exactly when you switch back.', 'Conectar pasa la consola a Máquina real. Tu simulación se guarda y vuelve tal cual al volver.'))}</div>`;
+  else {
+    h += `<div class="fld"><label for="lvModel"><span>${esc(L('Model on the server', 'Modelo en el servidor'))}</span></label><select id="lvModel" ${dis}>${LIVE.models.map(m => `<option value="${esc(m.name)}" ${m.name === LIVE.pick ? 'selected' : ''}>${esc(m.name)}${m.params ? ` · ${esc(m.params)}` : ''}${m.quant ? ` · ${esc(m.quant)}` : ''}</option>`).join('')}</select></div>`;
+    if (MODE.editEp) h += epRow;
+    h += `<div class="lv-act">${real ? '' : `<button type="button" class="btnp" id="lvEnter">${ICON('laptop', 's')}<span>${esc(L('Use the real machine', 'Usar la máquina real'))}</span></button>`}${real && MODE.lost ? `<button type="button" class="btnp" id="lvRetry">${esc(L('Retry', 'Reintentar'))}</button>` : ''}<button type="button" class="tbtn" id="lvChange" ${dis}>${ICON('edit', 's')}<span>${esc(L('Change server', 'Cambiar de servidor'))}</span></button><button type="button" class="tbtn" id="lvDisc" ${dis}>${ICON('close', 's')}<span>${esc(L('Disconnect', 'Desconectar'))}</span></button></div>`;
+    if (run) h += `<div class="hint">${esc(why)}: ${esc(L('the server and the model cannot change mid-request.', 'el servidor y el modelo no pueden cambiar a mitad de petición.'))}</div>`;
+    else h += `<div class="hint">${esc(real ? L('Prompt, max tokens and sampling are in Setup; Send is in the Request zone.', 'El prompt, los tokens máx. y el muestreo están en Configuración; Enviar está en la zona Petición.') : L('You are in the simulation. Use the real machine to send requests to this server.', 'Estás en la simulación. Usa la máquina real para enviar peticiones a este servidor.'))}</div>`;
+  }
+  const key = h + lang;
   if (force || key !== liveKey) {
     const ae = document.activeElement && document.activeElement.id; liveKey = key; $('liveIn').innerHTML = h;
-    $('lvEp').addEventListener('change', e => { LIVE.ep = e.target.value.trim(); }); $('lvEp').addEventListener('keydown', e => { if (e.key === 'Enter') { LIVE.ep = e.target.value.trim(); liveDetect(); } });
-    $('lvDetect').addEventListener('click', () => { LIVE.ep = $('lvEp').value.trim(); liveDetect(); });
-    if ($('lvModel')) $('lvModel').addEventListener('change', e => { LIVE.pick = e.target.value; renderLive(true); });
-    if ($('lvUse')) $('lvUse').addEventListener('click', () => liveUseModel().catch(e => { LIVE.error = String(e.message || e); renderLive(true); }));
-    if ($('lvPrompt')) $('lvPrompt').addEventListener('change', e => { LIVE.promptMode = e.target.value; renderLive(true); });
-    if ($('lvOwn')) $('lvOwn').addEventListener('input', e => { LIVE.own = e.target.value; });
-    if ($('lvMax')) $('lvMax').addEventListener('change', e => { LIVE.maxTok = Math.max(8, Math.min(2048, Math.round(+e.target.value) || 64)); });
-    if ($('lvRun')) $('lvRun').addEventListener('click', liveRun); if ($('lvStop')) $('lvStop').addEventListener('click', liveStop);
+    const go = () => { LIVE.ep = $('lvEp').value.trim(); if (!isReal()) MODE.connecting = true; liveDetect(); };
+    if ($('lvEp')) { $('lvEp').addEventListener('keydown', e => { if (e.key === 'Enter') go(); }); $('lvDetect').addEventListener('click', go); }
+    if ($('lvEpCancel')) $('lvEpCancel').addEventListener('click', () => { MODE.editEp = false; renderLive(true); });
+    if ($('lvModel')) $('lvModel').addEventListener('change', e => { LIVE.pick = e.target.value; LIVE.run = null; LIVE.est = null; LIVE.toks = []; LIVE.text = ''; if (isReal()) realApplyModel().then(() => { realSizeRequest(); saveReal(); changed(); renderMode(true); }).catch(er => { LIVE.error = String(er.message || er); }); renderLive(true); });
+    if ($('lvEnter')) $('lvEnter').addEventListener('click', () => enterReal());
+    if ($('lvRetry')) $('lvRetry').addEventListener('click', () => realPoll(true));
+    if ($('lvChange')) $('lvChange').addEventListener('click', () => { MODE.editEp = true; renderLive(true); const f = $('lvEp'); if (f) { f.focus(); f.select(); } });
+    if ($('lvDisc')) $('lvDisc').addEventListener('click', realDisconnect);
     if (ae && $(ae)) $(ae).focus();
   }
-  const sentH = LIVE.sent ? `<b>${esc(L('Sent with the last live run', 'Enviado con la última ejecución en vivo'))}:</b> ${LIVE.sent.map(([k, v]) => `${esc(k)} ${esc(String(v))}`).join(' · ')}` : (LIVE.status === 'ok' ? `<b>${esc(L('Will be sent', 'Se enviará'))}:</b> ${liveSentList(liveBody('')).map(([k, v]) => `${esc(k)} ${esc(String(v))}`).join(' · ')}` : '');
+  const sentH = LIVE.sent ? `<b>${esc(L('Sent with the last real request', 'Enviado con la última petición real'))}:</b> ${LIVE.sent.map(([k, v]) => `${esc(k)} ${esc(String(v))}`).join(' · ')}` : (LIVE.status === 'ok' && isReal() ? `<b>${esc(L('Will be sent', 'Se enviará'))}:</b> ${liveSentList(liveBody('')).map(([k, v]) => `${esc(k)} ${esc(String(v))}`).join(' · ')}` : '');
   if ($('liveSent').innerHTML !== sentH) $('liveSent').innerHTML = sentH;
   renderLiveCompare();
 }
@@ -272,8 +249,9 @@ function renderLive(force) {
 // Monitor: estimate against measurement, with the ratio, and the calibration controls.
 function renderLiveCompare() {
   const sec = $('liveSec'), run = LIVE.run, est = LIVE.est;
-  if (!run && !LIVE.running) { if (!sec.hidden) sec.hidden = true; return; }
+  if (!isReal()) { if (!sec.hidden) sec.hidden = true; liveCmpKey = ''; return; }
   sec.hidden = false;
+  if (!run && !LIVE.running) { const h0 = `<div class="lv-note">${esc(L('No real run yet. Press Send in the Request zone: the estimate and the measurement appear here side by side.', 'Aún no hay ejecución real. Pulsa Enviar en la zona Petición: la estimación y la medida aparecen aquí lado a lado.'))}</div>`; if (h0 !== liveCmpKey) { liveCmpKey = h0; $('liveCmp').innerHTML = h0; } return; }
   const f = (v, kind) => (v === null || v === undefined || !Number.isFinite(v) ? '—' : kind === 's' ? S_(v) : `${dec(v.toFixed(v < 10 ? 1 : 0))} tok/s`);
   const rows = run && est ? [
     [L('Load', 'Carga'), est.loadS, run.loadS, 's'], [L('First token', 'Primer token'), est.ttftS, run.ttftS, 's'],
@@ -284,7 +262,7 @@ function renderLiveCompare() {
   const h = LIVE.running ? `<div class="lv-wait">${ICON('bolt', 's')}${esc(L(`Running on ${LIVE.pick}… ${num(LIVE.run ? 0 : (LIVE.text ? LIVE.text.length : 0))} characters so far`, `En marcha en ${LIVE.pick}… ${num(LIVE.text ? LIVE.text.length : 0)} caracteres`))}</div>`
     : `<div class="lv-h"><span>${esc(L('Same request', 'Misma petición'))}</span><span>${esc(L('Estimate', 'Estimación'))}</span><span>${esc(L('Measured', 'Medido'))}</span><span>×</span></div>` +
     rows.map(([l, e, m, k]) => { const ratio = e && m ? (k === 's' ? m / e : m / e) : null; const bad = ratio && (ratio > 1.5 || ratio < 0.67); return `<div class="lv-r"><span>${esc(l)}</span><b class="num">${f(e, k)}</b><b class="num m">${f(m, k)}</b><i class="num ${bad ? 'off' : ''}">${ratio ? `${dec(ratio.toFixed(2))}` : '—'}</i></div>`; }).join('') +
-    `<div class="lv-act"><button type="button" class="tbtn" id="lvCal" ${locked() ? 'disabled' : ''}>${ICON('tune', 's')}<span>${esc(L('Calibrate this machine to the run', 'Calibrar esta máquina a la ejecución'))}</span></button>${cal ? `<button type="button" class="tbtn quiet" id="lvUncal">${esc(L('Reset', 'Restablecer'))}</button>` : ''}</div>` +
+    `<div class="lv-act"><button type="button" class="tbtn" id="lvCal" ${locked() ? 'disabled' : ''}>${ICON('tune', 's')}<span>${esc(L('Calibrate the estimate to this machine', 'Calibrar la estimación a esta máquina'))}</span></button>${cal ? `<button type="button" class="tbtn quiet" id="lvUncal">${esc(L('Reset', 'Restablecer'))}</button>` : ''}</div>` +
     (cal ? `<div class="lv-note">${esc(L(`${R.mc.name}: bandwidth ×${dec(cal.bw.toFixed(2))}, compute ×${dec(cal.fl.toFixed(2))}`, `${R.mc.name}: ancho de banda ×${dec(cal.bw.toFixed(2))}, cómputo ×${dec(cal.fl.toFixed(2))}`))}${LIVE.calNotes && LIVE.calNotes.length ? ` · ${esc(LIVE.calNotes.join('; '))}` : ''}</div>` : '') +
     `<div class="lv-note">${esc(L(`${run.kind === 'ollama' ? 'Ollama' : 'llama-server'} timings for ${run.model}; first token measured by this page.`, `Tiempos de ${run.kind === 'ollama' ? 'Ollama' : 'llama-server'} para ${run.model}; el primer token lo mide esta página.`))}</div>`;
   if (h !== liveCmpKey) { liveCmpKey = h; $('liveCmp').innerHTML = h; const c = $('lvCal'), u = $('lvUncal'); if (c) c.addEventListener('click', liveCalibrate); if (u) u.addEventListener('click', liveResetCal); }
@@ -292,29 +270,12 @@ function renderLiveCompare() {
 
 // Output box: the live answer while it streams (and after), marked as live; the simulated answer otherwise.
 function liveOutput() {
-  if (!LIVE.showOut || (!LIVE.running && !LIVE.text)) return false;
-  const h = `<span class="lv-tag">${esc(L('live', 'en vivo'))}</span>${esc(LIVE.text) || `<span class="ph">${esc(L('Waiting for the first token…', 'Esperando el primer token…'))}</span>`}`;
+  if (!isReal()) return false;
+  const h = `<span class="lv-tag">${esc(L('real', 'real'))}</span>${esc(LIVE.text) || `<span class="ph">${esc(LIVE.running ? L('Waiting for the first token…', 'Esperando el primer token…') : L('The real answer appears here. Press Send in the Request zone.', 'La respuesta real aparece aquí. Pulsa Enviar en la zona Petición.'))}</span>`}`;
   if ($('outStream').dataset.live !== h) { $('outStream').dataset.live = h; $('outStream').innerHTML = h; $('outStream').scrollTop = $('outStream').scrollHeight; outKey = ''; }
-  $('outCnt').textContent = LIVE.run ? `${num(LIVE.run.evalN)} ${L('tokens', 'tokens')}` : L('live', 'en vivo');
-  const lt = LIVE.running ? L(`Streaming from ${LIVE.pick}`, `Recibiendo de ${LIVE.pick}`) : L('Live answer · click to go back to the simulated one', 'Respuesta en vivo · pulsa para volver a la simulada');
+  $('outCnt').textContent = LIVE.run ? `${num(LIVE.run.evalN)} ${L('tokens', 'tokens')}` : L('real', 'real');
+  const lt = LIVE.running ? L(`Streaming from ${LIVE.pick}`, `Recibiendo de ${LIVE.pick}`) : LIVE.text ? L(`Real answer from ${LIVE.pick}`, `Respuesta real de ${LIVE.pick}`) : L('Real machine', 'Máquina real');
   if ($('outLogit').textContent !== lt) $('outLogit').textContent = lt;
   return true;
 }
-$('outStream').addEventListener('click', () => { if (LIVE.showOut && !LIVE.running && LIVE.text) { LIVE.showOut = false; $('outStream').dataset.live = ''; outKey = ''; } });
 renderLive(true);
-
-// The engine badge in the top bar: what is producing the numbers now. Simulated by default; a click opens live mode.
-let engineKey = '';
-function renderEngineBadge() {
-  const on = LIVE.status === 'ok', name = LIVE.kind === 'llama' ? 'llama.cpp' : 'Ollama';
-  const h = on ? `${ICON('server', 's')}<span>${esc(name)}${LIVE.version ? ` ${esc(String(LIVE.version).slice(0, 12))}` : ''}</span><i class="livedot${LIVE.running ? ' run' : ''}"></i><b>LIVE</b>`
-    : `${ICON('memory', 's')}<span>${esc(L('Simulated', 'Simulado'))}</span>`;
-  const b = $('engineBadge'); if (!b) return;
-  if (h !== engineKey) { engineKey = h; b.innerHTML = h; b.classList.toggle('on', on); b.title = on ? L('Connected to a real server. Click to open live mode.', 'Conectado a un servidor real. Pulsa para abrir el modo en vivo.') : L('Numbers come from the cost model. Click to connect a real Ollama or llama.cpp server.', 'Los números salen del modelo de costes. Pulsa para conectar un servidor real de Ollama o llama.cpp.'); }
-}
-setInterval(renderEngineBadge, 500);
-document.addEventListener('click', e => { if (!e.target.closest('#engineBadge')) return; liveOpen(true); });
-
-// On start, look for a local server quietly: if one answers, the badge, the red dot and the server model appear by themselves.
-// Nothing is shown when nothing answers; a blocked origin still shows its fix when the window is opened.
-setTimeout(() => { try { if (LIVE.status === 'idle') liveDetect().catch(() => {}); } catch (e) {} }, 1200);

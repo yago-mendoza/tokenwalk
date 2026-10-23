@@ -119,7 +119,7 @@ function renderLoadout() {
 }
 function openLoadout(tab) { LOAD.tab = tab || LOAD.tab; renderLoadout(); $('loadout').classList.add('on'); }
 // The panel drops down from the header just pressed, which never moves; it may run past the column's foot
-// over the Run zone, so it never has to rise or scroll.
+// over the Playback zone, so it never has to rise or scroll.
 function placeFlyout(acc) {
   const r = acc.querySelector('button').getBoundingClientRect(), col = $('cfg').getBoundingClientRect(), st = document.documentElement.style;
   const old = acc.querySelector('.in > .flyhead'); if (old) old.remove();
@@ -154,6 +154,7 @@ function fitGate() {
   return { reason: L(`Does not fit: model, KV and buffers need ${dec(fmtGB(need))} on top of ${sysGB()} GB of apps, in ${dec(fmtGB(mc.ramGB))}. Play is blocked: the system would page to disk.`, `No cabe: modelo, KV y buffers necesitan ${dec(fmtGB(need))} además de ${sysGB()} GB de apps, en ${dec(fmtGB(mc.ramGB))}. Reproducir está bloqueado: el sistema paginaría a disco.`), fixes };
 }
 function renderGate() {
+  if (isReal()) { $('nowFix').dataset.k = ''; return null; }
   const g = fitGate(), el = $('nowFix');
   $('play').disabled = !!g; $('jumpGo').disabled = !!g; $('jumpMenu').disabled = !!g;
   const h = g ? g.fixes.map(([l], i) => `<button type="button" class="fixb" data-fix="${i}">${ICON('tune', 's')}${esc(l)}</button>`).join('') : '';
@@ -162,8 +163,8 @@ function renderGate() {
 }
 const UNDO = [], REDO = [];
 function pushUndo() { UNDO.push(JSON.stringify(S)); if (UNDO.length > 40) UNDO.shift(); REDO.length = 0; renderUndo(); }
-function undo() { if (!UNDO.length || locked()) return; REDO.push(JSON.stringify(S)); S = JSON.parse(UNDO.pop()); KEEP.unloaded = false; changed(); renderUndo(); }
-function redo() { if (!REDO.length || locked()) return; UNDO.push(JSON.stringify(S)); S = JSON.parse(REDO.pop()); KEEP.unloaded = false; changed(); renderUndo(); }
+function undo() { if (!UNDO.length || locked() || isReal()) return; REDO.push(JSON.stringify(S)); S = JSON.parse(UNDO.pop()); KEEP.unloaded = false; changed(); renderUndo(); }
+function redo() { if (!REDO.length || locked() || isReal()) return; UNDO.push(JSON.stringify(S)); S = JSON.parse(REDO.pop()); KEEP.unloaded = false; changed(); renderUndo(); }
 let tlScaleKey = '';
 function renderTlScale() {
   const shown = UI.tlPeek != null ? 'token' : UI.scale, items = [['request', L('Request', 'Petición')], ['token', L('Pass', 'Pasada')], ['layer', L('Layer', 'Capa')], ['op', L('Op', 'Op')]], h = items.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${shown === k}" title="${esc(L('Timeline zoom', 'Zoom de la línea de tiempo'))}">${esc(l)}</button>`).join('');

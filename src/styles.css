@@ -51,7 +51,9 @@ button { cursor: pointer; }
 @media (min-width: 1101px) { #alertBtn { display: none !important; } }
 #top { display: flex; align-items: center; gap: 12px; padding: 0 12px; background: #0d0d11; border-bottom: 1px solid var(--line); min-width: 0; }
 .brand { display: flex; align-items: center; gap: 8px; color: var(--ink); font: 600 13px/1 var(--sans); white-space: nowrap; }
-.brand .mark { width: 18px; height: 18px; border-radius: 4px; background: linear-gradient(135deg, var(--hot) 0 50%, #2a2a33 50%); }
+.brand .logo { flex: none; width: 20px; height: 20px; display: block; }
+.brand .nm { font: 800 13.5px/1 var(--sans); letter-spacing: -.01em; color: var(--ink); }
+.brand .t { color: var(--dim); font-weight: 400; font-size: 12px; }
 .brand small { font: 400 var(--f1)/1 var(--mono); color: var(--dim); letter-spacing: .04em; }
 #chip { min-width: 0; flex: 1 1 auto; display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 10px; border: 1px solid var(--line); border-radius: 3px; background: var(--p1); color: var(--mid); font: 400 11.5px/1 var(--mono); white-space: nowrap; overflow: hidden; cursor: pointer; }
 #chip b { color: var(--ink); font-weight: 500; }
@@ -641,15 +643,8 @@ body.reduced * { transition: none !important; animation: none !important; }
 .playg { display: inline-flex; align-items: center; gap: 4px; height: 19px; margin: 0 1px; padding: 0 6px 0 4px; vertical-align: 0; border: 1px solid var(--line2); border-radius: 4px; background: var(--p3); color: var(--ink); font: 500 11.5px/1 var(--mono); cursor: pointer; }
 .playg:hover { border-color: var(--hl); } .playg .ic { width: 11px; height: 11px; color: var(--mid); }
 
-#engineBadge { display: inline-flex; align-items: center; gap: 6px; height: 22px; margin-left: 10px; padding: 0 9px 0 7px; border: 1px solid var(--line2); border-radius: 11px; background: transparent; color: var(--dim); font: 600 10.5px/1 var(--mono); letter-spacing: .04em; cursor: pointer; white-space: nowrap; }
-#engineBadge:hover { color: var(--ink); border-color: var(--hl); } #engineBadge .ic { width: 12px; height: 12px; }
-#engineBadge.on { color: var(--ink); border-color: rgb(255 77 109 / .55); background: rgb(255 77 109 / .08); }
-#engineBadge b { color: #ff6b84; font-weight: 800; letter-spacing: .1em; }
-#engineBadge .livedot { width: 7px; height: 7px; border-radius: 50%; background: #ff4d6d; box-shadow: 0 0 6px #ff4d6d; animation: livepulse 1.6s ease-in-out infinite; }
-#engineBadge .livedot.run { animation-duration: .7s; }
 @keyframes livepulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
-body.reduced #engineBadge .livedot { animation: none; }
-
+body.reduced 
 /* Live mode window */
 #liveWin .card { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 80px); }
 #liveWin .lw-body { overflow: auto; padding: 16px 18px 14px; display: grid; gap: 10px; scrollbar-width: thin; }
@@ -658,13 +653,8 @@ body.reduced #engineBadge .livedot { animation: none; }
 #liveSent b { color: var(--mid); font-weight: 600; } #liveSent:empty { display: none; }
 .lvrow > button .chev .ic { transform: none !important; }
 /* Configure controls the live server does not honour: still usable for the simulation, marked */
-.simonly { opacity: .45; position: relative; }
-.simonly::after { content: 'sim'; position: absolute; top: 2px; right: 0; font: 700 8.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); border: 1px solid var(--line2); border-radius: 3px; padding: 1px 3px; pointer-events: none; }
-label.sw.simonly::after { top: 50%; transform: translateY(-50%); }
-.livehon > label span:first-child::after, label.sw.livehon > span::after { content: ' · live'; color: var(--cy); font: 600 9.5px/1 var(--mono); }
+label.sw.livehon > label span:first-child::after, label.sw.livehon > span::after { content: ' · sent'; color: var(--cy); font: 600 9.5px/1 var(--mono); }
 /* Breadcrumb: the server segment */
-#chip .lvseg { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
-#chip .lvseg .ic { color: #ff5d6c; } #chip .lvseg b { color: #ffd2d7 !important; }
 /* Tokens view: live tokens */
 .g.live { background: rgb(255 93 108 / .1); box-shadow: inset 0 -1.5px 0 rgb(255 93 108 / .55); }
 .g.live:nth-of-type(even) { background: rgb(255 93 108 / .05); }
@@ -682,3 +672,46 @@ label.sw.simonly::after { top: 50%; transform: translateY(-50%); }
 .lv-cmd { position: relative; } .lv-cmd pre { margin: 0; padding: 8px 76px 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #08080b; color: var(--ink); font: 400 11.5px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; }
 .lv-copy { position: absolute; top: 5px; right: 5px; display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border: 1px solid var(--line2); border-radius: 3px; background: var(--p2); color: var(--mid); font: 500 10.5px/1 var(--sans); }
 .lv-copy:hover { color: var(--ink); border-color: var(--hl); } .lv-copy.done { color: var(--ok); border-color: var(--ok); } .lv-copy .ic { width: 11px; height: 11px; }
+
+/* ===== Mode: Simulated or Real machine ===== */
+#modeSw { flex: none; display: inline-flex; height: 26px; padding: 2px; gap: 2px; border: 1px solid var(--line2); border-radius: 4px; background: var(--p1); }
+#modeSw button { display: inline-flex; align-items: center; gap: 6px; height: 20px; padding: 0 9px 0 7px; border: 0; border-radius: 3px; background: transparent; color: var(--dim); font: 600 11px/1 var(--sans); white-space: nowrap; cursor: pointer; }
+#modeSw button .ic { width: 13px; height: 13px; }
+#modeSw button:hover { color: var(--ink); background: var(--p2); }
+#modeSw button[data-mode=sim][aria-pressed=true] { background: rgb(255 212 59 / .14); color: var(--hot); box-shadow: inset 0 0 0 1px rgb(255 212 59 / .45); }
+#modeSw button[data-mode=real][aria-pressed=true] { background: rgb(127 227 255 / .12); color: var(--cy); box-shadow: inset 0 0 0 1px rgb(127 227 255 / .5); }
+#modeSw .halo { position: relative; display: inline-grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; }
+#modeSw .halo.on { color: var(--cy); }
+#modeSw .halo.on::before { content: ''; position: absolute; inset: -3px; border-radius: 50%; background: radial-gradient(circle, rgb(127 227 255 / .55), rgb(127 227 255 / 0) 70%); animation: halo 2.4s ease-in-out infinite; }
+#modeSw .halo.on.run::before { animation-duration: .9s; }
+@keyframes halo { 0%, 100% { opacity: .35; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.15); } }
+body.reduced #modeSw .halo.on::before { animation: none; opacity: .7; }
+@media (prefers-reduced-motion: reduce) { #modeSw .halo.on::before { animation: none; opacity: .7; } }
+body.real #chip { border-color: rgb(127 227 255 / .5) !important; background: rgb(127 227 255 / .05) !important; }
+body.real #chip b { color: var(--cy) !important; } body.real #chip small { color: var(--cy); opacity: .7; font: 600 9.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+body.real #chip:hover { border-color: var(--cy) !important; background: rgb(127 227 255 / .1) !important; }
+/* what the simulation alone has: hidden in Real, not greyed */
+.realonly { display: none; }
+body.real .realonly { display: block; }
+body.real :is([data-acc=scen], [data-acc=machine], [data-acc=model], [data-acc=request], [data-acc=adv]),
+body.real #cfgBody :is(.fld:has(> #kv), label.sw:has(> #cold)), body.real #shield, body.real #lock, body.real #out .oh [data-t=illus] { display: none !important; }
+body.real .tp #play { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px 0 8px; background: rgb(127 227 255 / .14); border-color: rgb(127 227 255 / .7); color: #dff8ff; font: 600 12px/1 var(--sans); }
+body.real .tp #play:hover:not(:disabled) { background: rgb(127 227 255 / .24); }
+body.real :is(#kpis, #reset) { display: none !important; }
+#liveWin .band { background: repeating-linear-gradient(-45deg, var(--cy) 0 10px, #62cbe6 10px 20px) !important; } #liveWin .band b { color: #061318 !important; }
+:is(#jumpGo, #jumpMenu, #slower, #faster, #tlScale button):disabled { opacity: .4; cursor: not-allowed; }
+body.real .swrow label.sw { opacity: .45; cursor: not-allowed; }
+#realMachIn .rm { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; margin: 0 0 10px; font: 400 11.5px/1.3 var(--sans); }
+#realMachIn .rm dt { color: var(--dim); } #realMachIn .rm dd { margin: 0; color: var(--ink); font-family: var(--mono); overflow-wrap: anywhere; }
+#realMachIn, #realReqIn { display: grid; gap: 10px; }
+#realReqIn textarea { width: 100%; box-sizing: border-box; min-height: 64px; padding: 6px 8px; border: 1px solid var(--line2); border-radius: 3px; background: var(--p1); color: var(--ink); font: 400 11.5px/1.4 var(--mono); resize: vertical; }
+#realReqIn input[type=number] { width: 100%; box-sizing: border-box; }
+.esttag { margin-left: 8px; padding: 3px 6px; border: 1px solid rgb(127 227 255 / .45); border-radius: 3px; color: var(--cy); font: 700 9.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; cursor: help; }
+.esttag[hidden] { display: none; }
+#lostBar { position: fixed; top: 46px; left: 50%; transform: translateX(-50%); z-index: 57; display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 32px); padding: 8px 10px 8px 12px; border: 1px solid rgb(255 77 109 / .6); border-radius: 4px; background: #24121a; color: #ffd2da; font: 500 12px/1.3 var(--sans); box-shadow: 0 8px 24px rgb(0 0 0 / .5); }
+#lostBar[hidden] { display: none; } #lostBar .ic { flex: none; width: 14px; height: 14px; color: #ff6b84; } #lostBar .tbtn { flex: none; height: 24px; }
+#modeAsk { position: fixed; top: 46px; left: 50%; transform: translateX(-50%); z-index: 59; width: min(420px, calc(100vw - 32px)); padding: 14px 16px; border: 1px solid rgb(127 227 255 / .5); border-radius: 4px; background: #10161a; color: var(--ink); font: 500 12.5px/1.4 var(--sans); box-shadow: 0 12px 32px rgb(0 0 0 / .6); }
+#modeAsk[hidden] { display: none; } #modeAsk p { margin: 0 0 12px; } #modeAsk div { display: flex; gap: 8px; justify-content: flex-end; } #modeAsk button { height: 28px; }
+#liveIn .lv-st { display: grid; gap: 4px; justify-items: start; } #liveIn .lv-st small { color: var(--mid); font: 400 11.5px/1.4 var(--sans); }
+#liveIn .lv-act { display: flex; flex-wrap: wrap; gap: 6px; } #liveIn .lv-act button { height: 28px; display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 1180px) { .brand .t { display: none; } }

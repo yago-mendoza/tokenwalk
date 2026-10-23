@@ -1,10 +1,10 @@
 // ===== Language =====
 const STR = {
   title: ['One request, end to end', 'Una petición, de principio a fin'],
-  zCfg: ['Configure', 'Configurar'], zRun: ['Run', 'Ejecutar'], zWatch: ['Watch', 'Observar'], zMon: ['Monitor', 'Monitorizar'],
+  zCfg: ['Setup', 'Configuración'], zRun: ['Playback', 'Ejecución'], zWatch: ['Observatory', 'Observatorio'], zMon: ['Monitor', 'Monitor'],
   secAlerts: ['Alerts', 'Alertas'], secInst: ['Trends', 'Tendencias'], secInstSub: ['solid to now · faint ahead', 'sólido hasta ahora · tenue por delante'], logT: ['Event history', 'Historial de eventos'], lsBand: ['Explainer', 'Explicación'], chainT: ['Sampling chain', 'Cadena de muestreo'], fsT: ['Use full screen', 'Usa pantalla completa'], fsS: ['The console is built for the whole screen. In a smaller window some panels get cramped and parts may not display well. Press F11 (Fn+F11 on many laptops), or go full screen here.', 'La consola está hecha para la pantalla entera. En una ventana más pequeña algunos paneles quedan apretados y hay partes que pueden verse mal. Pulsa F11 (Fn+F11 en muchos portátiles), o ponla a pantalla completa aquí.'], tlScaleL: ['Timeline', 'Línea de tiempo'], scaleT: ['Size ladder', 'Escalera de tamaños'],
   scenarios: ['Scenarios', 'Escenarios'], aMachine: ['Machine', 'Máquina'], aModel: ['Model and weights', 'Modelo y pesos'],
-  aRequest: ['Request, in tokens', 'Petición, en tokens'], aSamp: ['Sampling', 'Muestreo'], aLive: ['Live: a real server', 'En vivo: un servidor real'], secLive: ['Estimate vs measured', 'Estimación frente a medida'], secLiveSub: ['one real request', 'una petición real'],
+  aRequest: ['Request, in tokens', 'Petición, en tokens'], aSamp: ['Sampling', 'Muestreo'], aLive: ['Server connection', 'Conexión al servidor'], aRealMach: ['This machine', 'Esta máquina'], aRealReq: ['Request to the server', 'Petición al servidor'], secLive: ['Estimate vs measured', 'Estimación frente a medida'], secLiveSub: ['one real request', 'una petición real'],
   sampLive: ['In this order, to every token. Live during the run: only unwritten tokens change.', 'En este orden, a cada token. En vivo durante la ejecución: solo cambian los tokens sin escribir.'],
   tempHint: ['Divides the logits: below 1 sharpens toward the favourite, above 1 flattens toward the rest.', 'Divide los logits: por debajo de 1 afila hacia el favorito, por encima de 1 aplana hacia el resto.'],
   topkHint: ['Keeps only the k likeliest tokens and renormalizes.', 'Se queda solo con los k tokens más probables y renormaliza.'],
@@ -19,7 +19,7 @@ const STR = {
   cold: ['Cold start, model not loaded', 'Arranque en frío, modelo sin cargar'],
   cached: ['Prefix already cached in memory', 'Prefijo ya en caché en memoria'], disk: ['Restore the prefix KV from disk', 'Restaurar la KV del prefijo desde disco'],
   spec: ['Speculative decoding, 0.6B draft', 'Speculative decoding, borrador de 0,6B'],
-  liveT: ['Live: a real server', 'En vivo: un servidor real'],
+  liveT: ['Real machine: connect a server', 'Máquina real: conectar un servidor'],
   mtp: ['MTP, the model drafts its own next tokens (k = 2)', 'MTP, el modelo propone sus propios siguientes tokens (k = 2)'],
   gamma: ['Draft tokens per round', 'Tokens del borrador por ronda'], alpha: ['Acceptance rate', 'Tasa de aceptación'],
   temp: ['Temperature', 'Temperatura'], inspL: ['Inspector', 'Inspector'],
