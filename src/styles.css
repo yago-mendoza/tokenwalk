@@ -116,6 +116,7 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border-radius: 
 .formula b { color: var(--hot); font-weight: 500; }
 .note { font-size: 11px; color: var(--dim); }
 .sw { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11.5px; color: var(--mid); user-select: none; }
+.sw.sw2 { align-items: flex-start; } .sw.sw2 i { margin-top: 2px; flex: none; } .sw.sw2 span { display: grid; gap: 2px; } .sw.sw2 b { color: var(--ink); font-weight: 600; font-size: 12px; } .sw.sw2 small { color: var(--dim); font-size: 11px; line-height: 1.4; }
 .sw input { display: none; }
 .sw i { width: 26px; height: 14px; border-radius: 7px; background: var(--line2); position: relative; flex: none; transition: background .2s var(--ease); }
 .sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--mid); transition: transform .2s var(--ease), background .2s var(--ease); }
@@ -352,8 +353,8 @@ body.noFoot #wfoot { display: none; }
 #alertList li.okrow { cursor: default; color: var(--mid); } #alertList li.okrow .ic { color: var(--ok); }
 /* Explainer: a window over a light scrim, with a band that says what it is */
 #lesson { position: fixed; inset: 0; z-index: 60; }
-#fsTip { position: fixed; z-index: 70; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(300px, calc(100vw - 32px)); display: grid; grid-template-columns: 1fr 1fr; justify-items: stretch; text-align: center; gap: 8px; padding: 18px 16px 14px; box-shadow: 0 0 0 100vmax rgb(4 4 7 / .6), 0 24px 60px rgb(0 0 0 / .7) !important; border: 1px solid var(--line2); border-top: 2px solid var(--hot); border-radius: 6px; background: var(--p1); box-shadow: 0 18px 50px rgb(0 0 0 / .6); animation: popIn .2s var(--ease); }
-#fsTip[hidden] { display: none; } #fsTip > .ic-slot { grid-column: 1 / -1; justify-self: center; } #fsTip .ic { color: var(--hot); width: 22px; height: 22px; } #fsTip > div { grid-column: 1 / -1; margin-bottom: 6px; } #fsTip b { display: block; color: var(--ink); font: 650 13.5px/1.3 var(--sans); margin-bottom: 4px; } #fsTip small { display: block; color: var(--dim); font-size: 11.5px; line-height: 1.4; }
+#fsTip { position: fixed; z-index: 70; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100vw - 32px)); display: grid; grid-template-columns: 1fr 1fr; justify-items: stretch; text-align: center; gap: 8px; padding: 18px 16px 14px; box-shadow: 0 0 0 100vmax rgb(4 4 7 / .6), 0 24px 60px rgb(0 0 0 / .7) !important; border: 1px solid var(--line2); border-top: 2px solid var(--hot); border-radius: 6px; background: var(--p1); box-shadow: 0 18px 50px rgb(0 0 0 / .6); animation: popIn .2s var(--ease); }
+#fsTip[hidden] { display: none; } #fsTip > .ic-slot { grid-column: 1 / -1; justify-self: center; } #fsTip .ic { color: var(--amber); width: 24px; height: 24px; } #fsTip > div { grid-column: 1 / -1; margin-bottom: 6px; } #fsTip b { display: block; color: var(--ink); font: 650 13.5px/1.3 var(--sans); margin-bottom: 4px; } #fsTip small { display: block; color: var(--dim); font-size: 11.5px; line-height: 1.4; }
 #fsTip #fsGo { grid-column: 1 / -1; justify-content: center; } #fsTip .tbtn { justify-content: center; font-size: 11px; }
 #fsTip .btnp, #fsTip .tbtn { height: 28px; white-space: nowrap; }
 #chainWin, #scaleWin { position: fixed; inset: 0; z-index: 58; } #chainWin[hidden], #scaleWin[hidden] { display: none; }
