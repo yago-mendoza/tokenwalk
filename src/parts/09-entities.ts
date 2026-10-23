@@ -108,13 +108,28 @@ function goTo(where) {
 }
 const LENS_CV = { system: 'cSystem', model: 'cModel', memory: 'cMemory', tokens: 'cPrompt' };
 function brushEntity(e) { if (!e) { UI.brush = null; return; } const row = ENTITY[e[0]](e[1]), m = row.in && row.in[UI.lens]; UI.brush = typeof m === 'function' ? { canvas: LENS_CV[UI.lens], match: m } : null; }
+// Legend hover: each item outlines exactly the marks it names in the current view (not the whole entity behind it).
+const P_ = (...ids) => q => q.k === 'part' && ids.includes(q.id);
+const LEGEND_MATCH = {
+  weights: { system: P_('weights'), model: q => q.k === 'layer' || q.k === 'mat' || q.k === 'gcol', memory: P_('weights') },
+  kv: { system: P_('kv'), model: q => q.k === 'kvlayer', memory: q => P_('kv')(q) || q.k === 'kvbin' },
+  kvres: { system: P_('kv'), memory: q => P_('kv')(q) || q.k === 'kvbin' }, kvby: { memory: q => q.k === 'kvbin' || q.k === 'kvtok' },
+  state: { system: P_('state'), model: q => q.k === 'state', memory: P_('state') },
+  flight: { system: P_('bus', 'link'), model: q => q.k === 'mat' }, busy: { system: q => q.k === 'cu' || q.k === 'core' },
+  sys: { system: P_('sys'), memory: P_('sys') }, free: { memory: P_('free') },
+  token: { tokens: q => q.k === 'pchip' }, tk_sys: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'sys' }, tk_docs: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'docs' }, tk_q: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'q' },
+  hw_storage: { system: P_('ssd') }, hw_ram: { system: P_('ram', 'sys', 'weights', 'kv', 'state', 'buf', 'free') }, hw_vram: { system: P_('vram', 'card') },
+  hw_proc: { system: q => P_('cpu', 'gpu', 'npu', 'sram', 'memctl', 'chip')(q) || q.k === 'cu' || q.k === 'core' }, hw_link: { system: P_('bus', 'link') },
+};
+function brushLegend(k) { const m = k && LEGEND_MATCH[k] && LEGEND_MATCH[k][UI.lens]; UI.brush = m ? { canvas: LENS_CV[UI.lens], match: m } : null; }
 const LEGEND_ENT = { weights: ['weights', {}], flight: ['weights', {}], kv: ['kv', {}], kvres: ['kv', {}], kvby: ['kv', {}], state: ['state', {}], sys: ['apps', {}], free: ['ram', {}], busy: ['gpu', {}], token: ['answer', {}], tk_sys: ['prompt', { kind: 'sys' }], tk_docs: ['prompt', { kind: 'docs' }], tk_q: ['prompt', { kind: 'q' }], tk_ans: ['answer', {}], hw_ram: ['ram', {}], hw_storage: ['ssd', {}], hw_proc: ['gpu', {}], hw_vram: ['gpu', {}], hw_link: ['ram', {}] };
 // Outline every hit that matches: each one when few, one box per kind when many.
 function outlineMatches(id, x, match, a, fill) {
-  const hs = (HITS[id] || []).filter(h => Array.isArray(h.shape) && match(h.sel)), groups = {};
-  if (hs.length <= 12) { for (const h of hs) { if (fill) x.fillRect(h.shape[0], h.shape[1], h.shape[2], h.shape[3]); x.strokeRect(h.shape[0] - 1, h.shape[1] - 1, h.shape[2] + 2, h.shape[3] + 2); } return; }
-  for (const h of hs) { const k = h.sel.k + (h.sel.id || ''), g = groups[k] || (groups[k] = [1e9, 1e9, -1e9, -1e9]); g[0] = Math.min(g[0], h.shape[0]); g[1] = Math.min(g[1], h.shape[1]); g[2] = Math.max(g[2], h.shape[0] + h.shape[2]); g[3] = Math.max(g[3], h.shape[1] + h.shape[3]); }
-  for (const g of Object.values(groups)) { if (fill) x.fillRect(g[0], g[1], g[2] - g[0], g[3] - g[1]); x.strokeRect(g[0] - 2, g[1] - 2, g[2] - g[0] + 4, g[3] - g[1] + 4); }
+  // every matching mark is outlined where it is; nothing is boxed together, so marks in between are never covered
+  const hs = (HITS[id] || []).filter(h => Array.isArray(h.shape) && match(h.sel)), many = hs.length > 24;
+  if (many) { x.save(); x.lineWidth = 1; x.setLineDash([]); }
+  for (const h of hs) { const [X, Y, w, hh] = h.shape; if (fill) x.fillRect(X, Y, w, hh); x.strokeRect(X + (many ? .5 : -1), Y + (many ? .5 : -1), w + (many ? -1 : 2), hh + (many ? -1 : 2)); }
+  if (many) x.restore();
 }
 // The flash: two soft pulses around every part that matches, then gone. It is interface, not simulation, so it also runs while paused.
 function drawFlash(id, x) {

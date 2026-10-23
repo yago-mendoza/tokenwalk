@@ -48,7 +48,7 @@ function bind() {
   const scaleOpen = on => { $('scaleWin').hidden = !on; if (on) drawRuler(now()); };
   $('scaleBtn').addEventListener('click', () => scaleOpen(true)); $('scaleClose').addEventListener('click', () => scaleOpen(false)); $('scaleWin').querySelector('.scrim').addEventListener('click', () => scaleOpen(false)); $('scaleClose').innerHTML = ICON('close', 's');
   { let legOpen = false; try { legOpen = localStorage.getItem('llmc.legOpen') === '1'; } catch (er) {} const setLeg = on => { $('wfoot').classList.toggle('open', on); requestAnimationFrame(() => dispatchEvent(new Event('resize'))); $('legBtn').setAttribute('aria-expanded', on); try { localStorage.setItem('llmc.legOpen', on ? '1' : '0'); } catch (er) {} }; setLeg(legOpen); $('legBtn').addEventListener('click', () => setLeg(!$('wfoot').classList.contains('open'))); }
-  $('legend').addEventListener('pointerover', e => { const it = e.target.closest('.lg'); brushEntity(it ? LEGEND_ENT[it.dataset.k] : null); }); $('legend').addEventListener('pointerleave', () => { UI.brush = null; });
+  $('legend').addEventListener('pointerover', e => { const it = e.target.closest('.lg'); brushLegend(it ? it.dataset.k : null); }); $('legend').addEventListener('pointerleave', () => { UI.brush = null; });
   $('chainWin').querySelector('.scrim').addEventListener('click', () => { UI.logitsBig = false; }); $('chainClose').addEventListener('click', () => { UI.logitsBig = false; }); $('chainClose').innerHTML = ICON('close', 's');
   $('zUp').addEventListener('click', () => zoomTo(UI.lens, ZOOM[UI.lens].length - 1)); $('zJump').addEventListener('click', zJumpGo); $('zInfo').addEventListener('click', zInfoGo);
   $('track').addEventListener('click', e => { const t = e.target.closest('.tk'); if (!t || fitGate()) return; const k = ['load', 'prefill', 'decode', 'done'].find(q => t.classList.contains(q)); const to = { load: 0, prefill: R.ttftStart + 1e-9, decode: R.ttft + 1e-9, done: R.total }[k]; if (to !== undefined) { UI.tlPeek = null; stopAt(to); KEEP.idle = 0; } });
@@ -101,11 +101,11 @@ function bind() {
       if (zoomable(cid, sel)) { const f = frameOf(sel); if (f) { const hh = (HITS[cid] || []).find(q => selKey(q.sel) === selKey(sel)); zoomIn(cid === 'cModel' ? 'model' : 'memory', f, hh && Array.isArray(hh.shape) ? hh.shape : null); return; } } if (sel.k === 'layer' && cid === 'cModel') { UI.layer = sel.i; writeUrl(); } UI.follow = false; SEL_FROM = cid; select(sel); });
   }
   const tl = $('cTime'); let drag = false, moved = false;
-  const at = e => { if (!timeGeo) return; const r = tl.getBoundingClientRect(), f = (e.clientX - r.left - timeGeo.lab) / timeGeo.w; stopAt(timeGeo.t0 + Math.max(0, Math.min(1, f)) * (timeGeo.t1 - timeGeo.t0)); };
+  const at = e => { if (!timeGeo) return; if (timeGeo.real) { if (timeGeo.endT == null) return; const r2 = tl.getBoundingClientRect(); UI.realT = Math.max(0, Math.min(timeGeo.endT, ((e.clientX - r2.left - timeGeo.lab) / timeGeo.w) * timeGeo.t1)); return; } const r = tl.getBoundingClientRect(), f = (e.clientX - r.left - timeGeo.lab) / timeGeo.w; stopAt(timeGeo.t0 + Math.max(0, Math.min(1, f)) * (timeGeo.t1 - timeGeo.t0)); };
   tl.addEventListener('pointerdown', e => { if (fitGate()) return; drag = true; moved = false; tl.setPointerCapture(e.pointerId); });
   tl.addEventListener('pointermove', e => { if (drag) { moved = true; at(e); } });
   // A click on a token or chunk opens it here, layer by layer, without moving the playhead; a drag still scrubs time.
-  tl.addEventListener('pointerup', e => { if (drag && !moved) { const r = tl.getBoundingClientRect(), sel = hitAt('cTime', e.clientX - r.left, e.clientY - r.top); let pi = null;
+  tl.addEventListener('pointerup', e => { if (drag && timeGeo && timeGeo.real) { at(e); drag = false; return; } if (drag && !moved) { const r = tl.getBoundingClientRect(), sel = hitAt('cTime', e.clientX - r.left, e.clientY - r.top); let pi = null;
       if (timeGeo && timeGeo.scale === 'request') { const yy = e.clientY - r.top, ln = [1, 2].find(k => yy >= timeGeo.laneY[k] - 2 && yy <= timeGeo.laneY[k] + timeGeo.laneH + 2); if (ln) { const tt = timeGeo.t0 + Math.max(0, Math.min(1, (e.clientX - r.left - timeGeo.lab) / timeGeo.w)) * (timeGeo.t1 - timeGeo.t0), i = Math.max(0, Math.min(R.segs.length - 1, segAt(tt))), sg = R.segs[i]; if (sg && (ln === 1 ? sg.k === 'prefill' : sg.k === 'decode' || sg.k === 'round')) pi = i; } }
       if (pi !== null) UI.tlPeek = pi; else if (sel && sel.k !== 'seg') select(sel); else at(e); } drag = false; });
   splitter('sp1', '--cfgW', 'x', 240, 440, 1); splitter('sp2', '--monW', 'x', 290, 520, -1); splitter('sp3', '--runH', 'y', 170, 380, -1);
@@ -141,6 +141,7 @@ function frame(t0) {
   const dt = Math.min(.1, (t0 - last) / 1000); last = t0;
   try {
     advance(dt, now());
+    if (isReal()) { const et = realEstT(); if (et !== null) P.t = et; }
     const n = now();
     if (UI.follow && n.layer >= 0 && n.seg && UI.layer !== n.layer) UI.layer = n.layer; // follow moves Model's focus, never the selection (which would open an explainer every frame)
     if (UI.lens === 'system') drawSystem(n, dt); else if (UI.lens === 'model') drawModel(n); else if (UI.lens === 'memory') drawMemory(n); else drawTokens(n);
