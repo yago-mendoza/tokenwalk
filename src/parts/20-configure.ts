@@ -68,7 +68,8 @@ function renderMmode() { const h = [['grid', L('Grid', 'Cuadrícula')], ['stack'
 function setLens(l) { UI.lens = l; document.body.dataset.lens = l; if (legendLens !== l) buildLegend(); renderZbar(); document.querySelectorAll('#stage [data-lens]').forEach(el => el.classList.toggle('on', el.dataset.lens === l)); renderLensSeg(); writeUrl(); }
 function renderLensSeg() {
   // One lens switcher: each tab carries a live miniature of its view.
-  $('lensSeg').innerHTML = LENS_DEF.map(([k, ic, l]) => `<button type="button" data-l="${k}" aria-pressed="${UI.lens === k}"><canvas class="lt"></canvas><span>${esc(l())}</span></button>`).join('');
+  const LENS_Q = { system: L('Where the bytes travel: memory, chips and the wires between them', 'Por dónde viajan los bytes: memoria, chips y los cables entre ellos'), model: L('How a token climbs the layers, and what each layer reads', 'Cómo sube un token por las capas y qué lee cada capa'), memory: L('What fills the memory, and how the KV cache grows', 'Qué llena la memoria y cómo crece la caché KV'), tokens: L('What goes in, what comes out, and how each word is chosen', 'Qué entra, qué sale y cómo se elige cada palabra') };
+  $('lensSeg').innerHTML = LENS_DEF.map(([k, ic, l]) => `<button type="button" data-l="${k}" aria-pressed="${UI.lens === k}" title="${esc(LENS_Q[k])}"><canvas class="lt"></canvas><span>${esc(l())}</span></button>`).join('');
   $('lensSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => setLens(b.dataset.l)));
 
 }

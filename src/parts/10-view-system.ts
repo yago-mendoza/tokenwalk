@@ -271,7 +271,7 @@ function drawModel(n) {
   textFit(x, L(`Layer ${focus + 1} of ${m.layers} · ${kindTxt}${away ? ` · the pass is at ${n.layer + 1}` : ''}`, `Capa ${focus + 1} de ${m.layers} · ${kindTxt}${away ? ` · la pasada va por la ${n.layer + 1}` : ''}`), ix, iy + 11, iw - (away ? 150 : 4), C.ink, 'left', 10.5, 600);
   const mats = li.mixer.slice(); if (sh.router) mats.push(sh.router); if (sh.mlp) mats.push(...sh.mlp);
   const expertsW = sh.expert ? Math.min(narrow ? 150 : 170, iw * .34) : 0;
-  const availW = iw - 8 - (expertsW ? expertsW + 12 : 0), availH = ih - 96;
+  const FLOW = 40, availW = iw - 8 - (expertsW ? expertsW + 12 : 0), availH = ih - 96 - FLOW;
   const maxOut = Math.max(...mats.map(s => s[2])), sumIn = mats.reduce((s, o) => s + o[1], 0);
   const k = Math.max(1e-6, Math.min((availH - 24) / maxOut, (availW - mats.length * 18) / sumIn));
   // progress of each operation in the focused layer
@@ -293,7 +293,28 @@ function drawModel(n) {
     outlineSel(x, sel, X, Y, w, h); hit(id, [X - 3, Y - 3, Math.max(w, 40) + 6, h + 30], sel);
     return w;
   };
-  let cx = ix + 8; const baseY = iy + 28;
+  // Minimap of the layer: the operations in order, each coloured by what it reads (cyan the token's numbers,
+  // lilac weights, yellow the KV cache, teal the fixed state), the running one lit, the done ones filled.
+  { const fy = iy + 20, fw = availW, nodes = [];
+    nodes.push({ id: 'x', lab: 'x', src: 'tok' });
+    for (const o of ops) { if (o.kind === 'expert') { if (!nodes.some(q => q.id === 'experts')) nodes.push({ id: 'experts', lab: L(`experts ${R.m.expertsUsed}+${R.m.sharedExperts}`, `expertos ${R.m.expertsUsed}+${R.m.sharedExperts}`), src: 'w', a: o.a, b: ops.filter(q => q.kind === 'expert').slice(-1)[0].b }); continue; }
+      nodes.push({ id: o.id, lab: o.kind === 'kv' ? L('attention', 'atención') : o.kind === 'state' ? L('state', 'estado') : o.kind === 'expertsAll' ? L('experts', 'expertos') : o.id.replace(/^(attn_|ffn_|ssm_)/, ''), src: o.kind === 'kv' ? 'kv' : o.kind === 'state' ? 'st' : 'w', a: o.a, b: o.b }); }
+    nodes.push({ id: 'x2', lab: 'x′', src: 'tok' });
+    const col = { tok: C.cy, w: C.li, kv: C.hot, st: '#3fd6c0' }, gap = 9; x.font = `700 9.5px ${FONT}`;
+    let want = nodes.map(q => x.measureText(q.lab).width + 12), sumW = want.reduce((a2, v) => a2 + v, 0);
+    if (sumW > fw - gap * (nodes.length - 1)) { const SH = { output: 'out', router: L('route', 'ruta'), gate: 'gate', [L('attention', 'atención')]: 'attn', [L('state', 'estado')]: L('state', 'est.') }; nodes.forEach(q => { q.lab = SH[q.lab] || (q.id === 'experts' ? `${R.m.expertsUsed}+${R.m.sharedExperts}` : q.lab); }); want = nodes.map(q => x.measureText(q.lab).width + 12); sumW = want.reduce((a2, v) => a2 + v, 0); }
+    const sc2 = Math.min(1.6, (fw - gap * (nodes.length - 1)) / sumW);
+    let fx = ix + 8;
+    nodes.forEach((q, i) => {
+      const nw = want[i] * sc2, X = fx; fx += nw + gap; cur = q.a !== undefined && lp >= q.a && lp < q.b && (n.layer === focus || P.anim), done = q.b !== undefined && lp >= q.b, c2 = col[q.src];
+      x.fillStyle = done ? c2 : 'rgba(255,255,255,.03)'; x.globalAlpha = done ? .28 : 1; x.fillRect(X, fy, nw, 18); x.globalAlpha = 1;
+      if (cur) { x.save(); x.shadowColor = c2; x.shadowBlur = 10; x.strokeStyle = c2; x.lineWidth = 2; x.strokeRect(X, fy, nw, 18); x.restore(); } else { x.strokeStyle = c2; x.globalAlpha = .7; x.strokeRect(X + .5, fy + .5, nw - 1, 17); x.globalAlpha = 1; }
+      textFit(x, q.lab, X + nw / 2, fy + 12.5, nw - 4, cur ? C.ink : C.mid, 'center', 9.5, cur ? 700 : 500);
+      if (i) { x.fillStyle = C.faint; x.beginPath(); x.moveTo(X - gap + 2, fy + 6); x.lineTo(X - 2, fy + 9); x.lineTo(X - gap + 2, fy + 12); x.fill(); }
+      if (q.a !== undefined) hit(id, [X, fy, nw, 18], q.src === 'kv' ? { k: 'kvlayer', layer: focus } : q.src === 'st' ? { k: 'state', layer: focus } : q.id === 'experts' ? { k: 'expert', layer: focus, e: -1 } : { k: 'mat', layer: focus, name: q.id === 'router' && R.sh.router ? R.sh.router[0] : q.id });
+    });
+    textFit(x, L('reads: cyan token · lilac weights · yellow KV · teal state', 'lee: cian token · lila pesos · amarillo KV · verde estado'), ix + 8, fy + 31, fw, C.dim, 'left', 9.5); }
+  let cx = ix + 8; const baseY = iy + 28 + FLOW;
   for (const s of mats) { const w = drawMat(s, cx, baseY, k, s[0]); cx += Math.max(w + 10, 64); }
   // attention or state operation, drawn as what it reads
   const special = ops.find(o => o.kind === 'kv' || o.kind === 'state');
