@@ -140,7 +140,7 @@ function frame(t0) {
   try {
     advance(dt, now());
     const n = now();
-    if (UI.follow && n.layer >= 0 && n.seg) UI.sel = { k: 'layer', i: n.layer };
+    if (UI.follow && n.layer >= 0 && n.seg && UI.layer !== n.layer) UI.layer = n.layer; // follow moves Model's focus, never the selection (which would open an explainer every frame)
     if (UI.lens === 'system') drawSystem(n, dt); else if (UI.lens === 'model') drawModel(n); else if (UI.lens === 'memory') drawMemory(n); else drawTokens(n);
     drawTimeline(n); drawCtx(n); renderOutput(n);
     renderRun(n); renderKpis(n);
