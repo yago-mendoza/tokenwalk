@@ -670,3 +670,15 @@ label.sw.simonly::after { top: 50%; transform: translateY(-50%); }
 .g.live:nth-of-type(even) { background: rgb(255 93 108 / .05); }
 .g.live.sel { outline: 1.5px solid #ff5d6c; }
 #stream .lv-tag { margin-right: 6px; }
+
+.lv-setup { margin: 4px 0 8px; border: 1px solid var(--line2); border-radius: 6px; background: var(--inset); }
+.lv-setup summary { cursor: pointer; padding: 9px 12px; font: 600 12px/1 var(--sans); color: var(--ink); }
+.lv-setup[open] summary { border-bottom: 1px solid var(--line); }
+.lv-os { display: flex; gap: 0; margin: 10px 12px 2px; } .lv-os button { height: 24px; padding: 0 10px; border: 1px solid var(--line2); margin-left: -1px; background: var(--p1); color: var(--mid); font: 500 11px/1 var(--sans); }
+.lv-os button:first-child { border-radius: 3px 0 0 3px; margin-left: 0; } .lv-os button:last-child { border-radius: 0 3px 3px 0; } .lv-os button[aria-pressed=true] { background: var(--p3); color: var(--ink); border-color: var(--hl); }
+.lv-setup ol { list-style: none; margin: 0; padding: 8px 12px 12px; display: grid; gap: 10px; }
+.lv-setup li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; } .lv-setup li > b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--p3); color: var(--ink); font: 700 10.5px/1 var(--mono); }
+.lv-setup p { margin: 1px 0 6px; font-size: 12px; line-height: 1.45; color: var(--mid); } .lv-setup p a { color: var(--cy); } .lv-setup .lv-note { color: var(--dim); font-size: 11px; margin-top: 6px; }
+.lv-cmd { position: relative; } .lv-cmd pre { margin: 0; padding: 8px 76px 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #08080b; color: var(--ink); font: 400 11.5px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; }
+.lv-copy { position: absolute; top: 5px; right: 5px; display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border: 1px solid var(--line2); border-radius: 3px; background: var(--p2); color: var(--mid); font: 500 10.5px/1 var(--sans); }
+.lv-copy:hover { color: var(--ink); border-color: var(--hl); } .lv-copy.done { color: var(--ok); border-color: var(--ok); } .lv-copy .ic { width: 11px; height: 11px; }

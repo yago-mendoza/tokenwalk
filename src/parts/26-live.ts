@@ -181,6 +181,8 @@ function liveSyncScope() {
 function liveChipHtml() {
   // called by the setup line during start-up, before this part has run: LIVE does not exist yet then
   try { if (LIVE.status !== 'ok' || !LIVE.pick) return ''; } catch (e) { return ''; }
+  // the console already draws the server's model: mark that segment instead of repeating it
+  if (S.model === 'live' && MODELS.live && MODELS.live.tag === LIVE.pick) return '';
   const mm = LIVE.models.find(q => q.name === LIVE.pick);
   return `<span class="sep">/</span><span class="lvseg" title="${esc(L('The model on the live server', 'El modelo en el servidor en vivo'))}">${ICON('server', 's')}<i class="livedot${LIVE.running ? ' run' : ''}"></i><b>${esc(LIVE.pick)}</b>${mm && mm.quant ? ` ${esc(mm.quant)}` : ''}</span>`;
 }
@@ -212,6 +214,28 @@ function drawLiveChain(id2, W, H2) {
 let chipLive = '';
 setInterval(() => { liveSyncScope(); const c = liveChipHtml(); if (c !== chipLive) { chipLive = c; syncControls(); } }, 400);
 
+// Setup, the way an empty GitHub repo shows it: numbered steps, each command in a block with a copy button.
+// The commands are for this page's origin and the visitor's system (tabs switch it).
+let LIVE_OS = /Win/i.test(navigator.platform) ? 'win' : /Mac/i.test(navigator.platform) ? 'mac' : 'linux';
+function liveSetupHtml() {
+  const o = location.protocol === 'file:' || location.origin === 'null' ? '*' : location.origin, os = LIVE_OS;
+  const allow = { win: `setx OLLAMA_ORIGINS "${o}"`, mac: `launchctl setenv OLLAMA_ORIGINS "${o}"`, linux: `sudo systemctl edit ollama.service\n# add under [Service]:\nEnvironment="OLLAMA_ORIGINS=${o}"\nsudo systemctl restart ollama` }[os];
+  const restart = { win: L('Quit Ollama from the tray icon and open it again (setx applies to new processes).', 'Cierra Ollama desde el icono de la bandeja y vuelve a abrirlo (setx se aplica a procesos nuevos).'), mac: L('Quit Ollama from the menu bar and open it again.', 'Cierra Ollama desde la barra de menús y vuelve a abrirlo.'), linux: '' }[os];
+  const check = `curl -s -o /dev/null -w "%{http_code}" -X OPTIONS http://localhost:11434/api/tags -H "Origin: ${o === '*' ? 'null' : o}" -H "Access-Control-Request-Method: GET"`;
+  const block = (cmd) => `<div class="lv-cmd"><pre>${esc(cmd)}</pre><button type="button" class="lv-copy" data-copy="${esc(cmd)}" title="${esc(L('Copy', 'Copiar'))}">${ICON('notes', 's')}<span>${esc(L('Copy', 'Copiar'))}</span></button></div>`;
+  const step = (n, t, body) => `<li><b>${n}</b><div><p>${t}</p>${body}</div></li>`;
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(location.origin);
+  return `<details class="lv-setup" ${LIVE.status === 'cors' ? 'open' : ''}><summary>${esc(L('How to connect your own Ollama', 'Cómo conectar tu propio Ollama'))}</summary>
+    <div class="lv-os">${[['win', 'Windows'], ['mac', 'macOS'], ['linux', 'Linux']].map(([k, l]) => `<button type="button" data-os="${k}" aria-pressed="${os === k}">${l}</button>`).join('')}</div>
+    <ol>${step(1, L('Install Ollama from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> and pull the article’s model:', 'Instala Ollama desde <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> y descarga el modelo del artículo:'), block('ollama pull qwen3.6:35b-a3b'))}
+    ${local ? step(2, L('This page is on localhost, which Ollama already allows. Nothing to change.', 'Esta página está en localhost, que Ollama ya permite. No hay nada que cambiar.'), '') : step(2, L(`Allow this page (${esc(o)}) to talk to Ollama:`, `Permite que esta página (${esc(o)}) hable con Ollama:`), block(allow) + (restart ? `<p class="lv-note">${esc(restart)}</p>` : ''))}
+    ${step(3, L('Check it: it prints 204 when allowed, 403 when not.', 'Compruébalo: imprime 204 si está permitido, 403 si no.'), block(check))}
+    ${step(4, L('Press Detect above.', 'Pulsa Detectar arriba.'), '')}</ol></details>`;
+}
+document.addEventListener('click', e => {
+  const c = e.target.closest('.lv-copy'); if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.copy).then(() => { c.classList.add('done'); c.querySelector('span').textContent = L('Copied', 'Copiado'); setTimeout(() => { c.classList.remove('done'); c.querySelector('span').textContent = L('Copy', 'Copiar'); }, 1400); }); return; }
+  const b = e.target.closest('.lv-os [data-os]'); if (b) { LIVE_OS = b.dataset.os; const d = b.closest('details'); const open = d && d.open; renderLive(true); if (open) { const nd = document.querySelector('.lv-setup'); if (nd) nd.open = true; } }
+});
 let liveKey = '', liveCmpKey = '';
 function renderLive(force) {
   const st = LIVE.status, chip = { idle: [L('not connected', 'sin conectar'), ''], busy: [L('detecting…', 'detectando…'), ''], ok: [`${LIVE.kind === 'ollama' ? 'Ollama' : 'llama.cpp'}${LIVE.version ? ` · ${LIVE.version}` : ''}`, 'ok'], cors: [L('blocked by CORS', 'bloqueado por CORS'), 'warn'], down: [L('not running', 'no responde'), 'bad'], error: [L('error', 'error'), 'bad'] }[st];
@@ -225,6 +249,7 @@ function renderLive(force) {
       ${LIVE.promptMode === 'own' ? `<textarea id="lvOwn" rows="4" placeholder="${esc(L('Paste a prompt', 'Pega un prompt'))}">${esc(LIVE.own)}</textarea>` : ''}
       <div class="lv-row"><label class="lv-n">${esc(L('Max tokens', 'Tokens máx.'))}<input type="number" id="lvMax" min="8" max="2048" step="8" value="${LIVE.maxTok}"></label>
       ${LIVE.running ? `<button type="button" class="btnp" id="lvStop">${ICON('stop', 's')}<span>${esc(L('Stop', 'Parar'))}</span></button>` : `<button type="button" class="btnp" id="lvRun">${ICON('play', 's')}<span>${esc(L('Run live', 'Ejecutar en vivo'))}</span></button>`}</div>` : ''}
+    ${st !== 'ok' ? liveSetupHtml() : ''}
     <div class="hint">${esc(L('Sends one real request to the server and measures it; the simulated run is not touched. Sampling settings are shared.', 'Envía una petición real al servidor y la mide; la ejecución simulada no se toca. Los ajustes de muestreo se comparten.'))}</div>`;
   const key = h + (LIVE.running ? Math.floor(performance.now() / 500) : '');
   if (force || key !== liveKey) {
