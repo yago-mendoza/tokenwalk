@@ -133,6 +133,7 @@ function renderRealCfg() {
     ${LIVE.kind === 'ollama' && liveHasMtp() ? `<label class="sw"><input type="checkbox" id="rqMtp" ${S.mtp ? 'checked' : ''} ${dis}><i></i><span>${esc(L(`MTP drafts (draft_num_predict ${MTP.k})`, `Borradores MTP (draft_num_predict ${MTP.k})`))}</span></label>` : ''}
     <div class="hint">${esc(L('Sent with each real request, with num_ctx, keep_alive and the sampling settings below.', 'Se envía con cada petición real, junto con num_ctx, keep_alive y los ajustes de muestreo de abajo.'))}</div>`;
   const mach = `<dl class="rm"><dt>${esc(L('Server', 'Servidor'))}</dt><dd>${esc(name)} ${esc(LIVE.version || '')}</dd><dt>${esc(L('Address', 'Dirección'))}</dt><dd>${esc(LIVE.ep)}</dd><dt>${esc(L('Model', 'Modelo'))}</dt><dd>${esc(LIVE.pick)}${mm && mm.quant ? ` ${esc(mm.quant)}` : ''}</dd></dl>
+    <button type="button" class="rmlink" id="rqChange" ${dis}>${esc(L('Change server…', 'Cambiar servidor…'))}</button>
     <div class="fld"><label for="rqEst"><span>${esc(L('Estimate as', 'Estimar como'))}</span></label><select id="rqEst">${Object.entries(MACHINES).map(([k, mc]) => `<option value="${k}" ${S.machine === k ? 'selected' : ''}>${esc(mc.name)}</option>`).join('')}</select>
       <div class="hint">${esc(L('The machine preset the Observatory draws the estimate on. The real numbers come from the server, whatever this says.', 'El preset de máquina con el que el Observatorio dibuja la estimación. Los números reales salen del servidor, diga lo que diga esto.'))}</div></div>`;
   const key = req + mach + lang;
@@ -146,6 +147,7 @@ function renderRealCfg() {
   if ($('rqOwn')) $('rqOwn').addEventListener('input', e => { LIVE.own = e.target.value; }), $('rqOwn').addEventListener('change', re);
   $('rqMax').addEventListener('change', e => { LIVE.maxTok = Math.max(8, Math.min(2048, Math.round(+e.target.value) || 64)); re(); });
   if ($('rqMtp')) $('rqMtp').addEventListener('change', e => { S.mtp = e.target.checked; re(); });
+  $('rqChange').addEventListener('click', () => liveOpen(true));
   $('rqEst').addEventListener('change', e => { S.machine = e.target.value; Object.assign(S, machineFields(S.machine)); saveReal(); changed(); });
   if (ae && $(ae)) $(ae).focus();
 }

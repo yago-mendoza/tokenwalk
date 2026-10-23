@@ -1,7 +1,7 @@
 // @ts-nocheck: DOM-heavy UI, to be typed in a later pass
 // ===== Setup (zone 1): scenarios, sections, values =====
 const SCEN = [
-  { id: 'laptop', ic: 'memory', t: () => L('Article’s laptop', 'Portátil del artículo'), s: () => L('Qwen3.6 MoE on the 860M iGPU', 'Qwen3.6 MoE en la iGPU 860M'), set: {} },
+  { id: 'laptop', ic: 'memory', t: () => L('Reference: ThinkPad 860M', 'Referencia: ThinkPad 860M'), s: () => L('Qwen3.6 MoE on the 860M iGPU', 'Qwen3.6 MoE en la iGPU 860M'), set: {} },
   { id: 'dense', ic: 'layers', t: () => L('Dense 27B, same laptop', 'Denso 27B, mismo portátil'), s: () => L('every weight read per token', 'todos los pesos leídos por token'), set: { model: 'qwen38' } },
   { id: 'rtx', ic: 'bolt', t: () => L('Same request on an RTX 5090', 'La misma petición en una RTX 5090'), s: () => L('32 GB of VRAM at 1,792 GB/s', '32 GB de VRAM a 1.792 GB/s'), set: { machine: 'rtx5090' } },
   { id: 'nofit', ic: 'warning', t: () => L('55 GB model on a 32 GB laptop', 'Modelo de 55 GB en un portátil de 32 GB'), s: () => L('dense 27B in F16: fails the fit check', 'denso 27B en F16: no pasa la comprobación'), set: { model: 'qwen38', quant: 'F16', ram: 32 } },
@@ -16,7 +16,7 @@ function buildScen() {
 }
 function renderScen() { const cur = JSON.stringify(S); document.querySelectorAll('.sc').forEach(b => { const sc = SCEN.find(s => s.id === b.dataset.s); b.classList.toggle('on', JSON.stringify(scenState(sc)) === cur); }); }
 function fillSelects() {
-  $('machine').innerHTML = Object.entries(MACHINES).map(([k, mm]) => `<option value="${k}">${mm.name}${mm.est ? ' *' : ''}</option>`).join('');
+  $('machine').innerHTML = Object.entries(MACHINES).map(([k, mm]) => `<option value="${k}">${mm.name}${mm.est ? ' *' : k === 'thinkpad' ? ` · ${L('calibrated', 'calibrada')}` : ''}</option>`).join('');
   $('model').innerHTML = Object.entries(MODELS).map(([k, mm]) => `<option value="${k}">${mm.name}</option>`).join('');
   $('quant').innerHTML = Object.entries(QUANTS).map(([k, q]) => `<option value="${k}">${q.label} · ${dec(q.bpw)} bits</option>`).join('');
   $('kv').innerHTML = Object.entries(KV_TYPES).map(([k, q]) => `<option value="${k}">${q.label}</option>`).join('');
@@ -38,7 +38,7 @@ function syncControls() {
   $('specFields').style.display = S.spec ? 'grid' : 'none';
   $('bwFormula').innerHTML = dec(`${num(S.mts)} MT/s × ${S.bus} bit / 8 = <b>${((S.mts * S.bus) / 8 / 1000).toFixed(1)} GB/s</b>`);
   $('ctxNote').textContent = L('Ollama reserved 262,144 by default on the laptop (the right end).', 'Ollama reservaba 262.144 por defecto en el portátil (el extremo derecho).');
-  $('estNote').textContent = p.est ? L('Estimated machine: published bandwidth, assumed efficiency.', 'Máquina estimada: ancho de banda publicado, eficiencia supuesta.') : L('Calibrated on the article’s measurements.', 'Calibrada con las medidas del artículo.');
+  $('estNote').textContent = p.est ? L('Estimated machine: published bandwidth, assumed efficiency.', 'Máquina estimada: ancho de banda publicado, eficiencia supuesta.') : L('Calibrated: measured on this machine.', 'Calibrada: medida en esta máquina.');
   $('modelNote').textContent = L(`${dec(fmtGB(R.weights))} file · ${dec((m.readParams / 1e9).toFixed(1))}B read per token${m.moe ? ` · ${m.expertsUsed} + ${m.sharedExperts} of ${m.experts} experts` : ' · dense'}`, `archivo de ${dec(fmtGB(R.weights))} · ${dec((m.readParams / 1e9).toFixed(1))}B leídos por token${m.moe ? ` · ${m.expertsUsed} + ${m.sharedExperts} de ${m.experts} expertos` : ' · denso'}`);
   $('vMachine').textContent = `${R.mc.short}${p.est ? ' *' : ''} · ${dec(R.mc.bw.toFixed(0))} GB/s`;
   $('vModel').textContent = `${m.name.replace(' 35B-A3B', '')} · ${S.quant}`;
@@ -202,7 +202,7 @@ function applyText() {
   document.querySelectorAll('[data-t]').forEach(el => { el.textContent = T(el.dataset.t); });
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ICON(el.dataset.ic, el.dataset.ic === 'chev' ? 's' : ''); });
   document.title = `tokenwalk · ${T('title')}`; document.documentElement.lang = lang;
-  $('reset').innerHTML = `${ICON('restart', 's')}<span>${esc(L('Article’s laptop', 'Portátil del artículo'))}</span>`;
+  $('reset').innerHTML = `${ICON('restart', 's')}<span>${esc(L('Reference machine', 'Máquina de referencia'))}</span>`; $('reset').title = L('Back to the calibrated ThinkPad with a Radeon 860M and the default request', 'Volver al ThinkPad calibrado con una Radeon 860M y la petición por defecto');
   $('gear').innerHTML = ICON('settings'); $('gear').title = L('Settings', 'Ajustes'); $('helpBtn').innerHTML = ICON('help'); $('helpBtn').title = L('Wizard (?)', 'Wizard (?)');
   $('monBtn').innerHTML = `${ICON('eq', 's')}<span>${esc(L('Monitor', 'Monitor'))}</span>`; $('monClose').innerHTML = ICON('close', 's');
   $('stop').innerHTML = ICON('stop'); $('stop').title = L('Stop and back to the start', 'Parar y volver al principio');

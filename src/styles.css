@@ -715,3 +715,11 @@ body.real .swrow label.sw { opacity: .45; cursor: not-allowed; }
 #liveIn .lv-st { display: grid; gap: 4px; justify-items: start; } #liveIn .lv-st small { color: var(--mid); font: 400 11.5px/1.4 var(--sans); }
 #liveIn .lv-act { display: flex; flex-wrap: wrap; gap: 6px; } #liveIn .lv-act button { height: 28px; display: inline-flex; align-items: center; gap: 6px; }
 @media (max-width: 1180px) { .brand .t { display: none; } }
+
+/* Real mode: This machine is a fixed card, not an accordion; it shows what it is and nothing to expand. */
+.rmcard { margin: 8px 0; padding: 10px 12px 12px; border: 1px solid rgb(127 227 255 / .35); border-radius: 6px; background: rgb(127 227 255 / .04); }
+body.real .rmcard.realonly { display: block; }
+.rmcard .rmh { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; color: var(--cy); } .rmcard .rmh .ttl { color: var(--ink); font: 600 12px/1 var(--sans); } .rmcard .rmh .ic { width: 15px; height: 15px; }
+.rmcard #realMachIn .rm { margin-bottom: 6px; }
+.rmlink { display: inline-block; margin: 0 0 10px; padding: 0; border: 0; background: none; color: var(--dim); font: 400 11px/1.3 var(--sans); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+.rmlink:hover { color: var(--cy); } .rmlink:disabled { opacity: .5; cursor: default; }

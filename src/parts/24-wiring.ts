@@ -17,6 +17,11 @@ function bind() {
   $('topk').addEventListener('input', e => { S.topk = Math.round(+e.target.value); resample(); });
   $('seed').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v > 0) { S.seed = v; resample(); } else e.target.value = S.seed; });
   // Closing a section never pulls the list up under the cursor: the body keeps its height (empty space below) until the pointer leaves the panel.
+  // An open section's panel stays attached to its header while the Setup column scrolls; it closes once the header leaves the column.
+  { let fq = 0; const follow = () => { if (fq) return; fq = requestAnimationFrame(() => { fq = 0; const acc = document.querySelector('#cfgBody .acc.open'); if (!acc) return;
+      const r = acc.querySelector('button').getBoundingClientRect(), zb = $('cfg').querySelector('.zb').getBoundingClientRect();
+      if (r.bottom <= zb.top || r.top >= zb.bottom) acc.classList.remove('open'); else placeFlyout(acc); }); };
+    $('cfg').querySelector('.zb').addEventListener('scroll', follow, { passive: true }); addEventListener('resize', follow); }
   document.querySelectorAll('.acc:not(.lvrow) > button').forEach(b => b.addEventListener('click', () => { const acc = b.parentElement; const was = acc.classList.contains('open'); fillHintbars(); document.querySelectorAll('#cfgBody .acc.open').forEach(o => o.classList.remove('open')); if (!was) { acc.classList.add('open'); placeFlyout(acc); } }));
   // A click outside an open panel only closes it; it does not also act on what lies beneath.
   let swallow = 0;

@@ -58,7 +58,7 @@ function renderRun(n) {
   renderTrack(n);
   const lk = locked();
   $('cfg').classList.toggle('locked', lk); $('reset').disabled = lk || isDefault();
-  $('reset').title = lk ? L('Locked during the run', 'Bloqueado durante la ejecución') : '';
+  $('reset').title = lk ? L('Locked during the run', 'Bloqueado durante la ejecución') : L('Back to the calibrated ThinkPad with a Radeon 860M and the default request', 'Volver al ThinkPad calibrado con una Radeon 860M y la petición por defecto');
   document.querySelectorAll('.sc').forEach(b => { b.disabled = lk; });
 }
 function renderTransport() {

@@ -25,6 +25,7 @@ function zName(sel) {
   if (sel.k === 'zrow') return L(`row ${num(sel.r + 1)}, one dot product`, `fila ${num(sel.r + 1)}, un producto escalar`);
   if (sel.k === 'kvtok') return L(`token ${num(sel.t + 1)}, its keys and values`, `token ${num(sel.t + 1)}, sus claves y valores`);
   if (sel.k === 'kvbin') return L('the newest token in this column', 'el token más nuevo de esta columna');
+  if (sel.k === 'gstate') return (sel.scaled ? L(`DeltaNet state of one layer, worth ≈ ${num(sel.tok)} tokens of KV · fixed size: same at token 1 and token 100,000`, `Estado DeltaNet de una capa, ≈ ${num(sel.tok)} tokens de KV · tamaño fijo: igual en el token 1 y en el 100.000`) : L(`DeltaNet state of one layer, ≈ ${num(sel.tok)} tokens of KV (not to scale) · fixed size: same at token 1 and token 100,000`, `Estado DeltaNet de una capa, ≈ ${num(sel.tok)} tokens de KV (sin escala) · tamaño fijo: igual en el token 1 y en el 100.000`));
   if (sel.k === 'gcol') { const q = R.segs[sel.s]; return q && q.k === 'prefill' ? L(`chunk ${q.i + 1}: open the matrices of a layer`, `bloque ${q.i + 1}: abre las matrices de una capa`) : L(`token ${num((q && q.tok || 0) + 1)}: open the matrices of a layer`, `token ${num((q && q.tok || 0) + 1)}: abre las matrices de una capa`); }
   if (sel.k === 'zchain') return L('go to this level', 'ir a este nivel');
   if (sel.k === 'zw') return L(`weight ${num(sel.i + 1)}, its bits`, `peso ${num(sel.i + 1)}, sus bits`);

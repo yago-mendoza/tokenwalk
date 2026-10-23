@@ -343,10 +343,10 @@ function drawModel(n) {
     }
     const shY = gy + 16 * cs + 6, sel = { k: 'expert', layer: focus, e: -1 };
     fillKind(x, 'weights', gx, shY, cs * 3 - 1, cs - 1, progOf('shared expert') > 0 ? 1 : .6); outlineSel(x, sel, gx, shY, cs * 3 - 1, cs - 1); hit(id, [gx, shY, cs * 3, cs], sel);
-    text(x, L('shared, always read', 'compartido, siempre se lee'), gx + cs * 3 + 5, shY + cs - 1, C.dim, 'left', 8.5);
+    textFit(x, L('Shared', 'Compartido'), gx + cs * 3 + 5, shY + cs - 1, Math.max(30, W - (gx + cs * 3 + 5) - 2), C.dim, 'left', 9.5);
     // one expert to the same scale as the matrices on the left
     let ex2 = gx; const ey2 = shY + cs + 18;
-    text(x, L('one expert, same scale', 'un experto, misma escala'), gx, ey2 - 5, C.mid, 'left', 8.5);
+    textFit(x, L('Expert · to scale', 'Experto · a escala'), gx, ey2 - 5, Math.max(40, W - gx - 2), C.mid, 'left', 9.5);
     for (const s of sh.expert) { const w = Math.max(3, s[1] * k), h = Math.max(3, s[2] * k); fillKind(x, 'weights', ex2, ey2, w, h, .7); ex2 += w + 6; }
   }
   // inset: where this sits in the whole

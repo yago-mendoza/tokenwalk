@@ -56,6 +56,32 @@ await check('no text is cut or overflows, at 1440x900 and 1280x720', async () =>
   }
 });
 
+await check('Model grid captions never overlap (es and en, long and short prompt, three sizes)', async () => {
+  for (const [w, h] of [[1440, 900], [1280, 720], [900, 700]]) {
+    await fresh('?view=model', w, h);
+    for (const lg of ['en', 'es']) for (const short of [false, true]) {
+      await p.ev(`setLang('${lg}'); UI.modelMode = 'grid'; renderMmode(); ${short ? "S.sys = 0; S.docs = 0; S.q = 50;" : "S.docs = 120000;"} changed(); P.t = R.ttft + 2; setPlaying(false)`); await sleep(250);
+      const g = await p.ev(`JSON.stringify([window.__GRIDCAP || [], stageSize()[0]])`), [caps, W] = JSON.parse(g);
+      for (const c of caps) assert(c[0] >= -1 && c[2] <= W + 1, `caption off the view at ${w}x${h} ${lg} ${short ? 'short' : 'long'}: ` + g);
+      if (caps.length === 2) { const [a, b] = caps, hit = a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3]; assert(!hit, `captions overlap at ${w}x${h} ${lg} ${short ? 'short' : 'long'}: ` + g); }
+      const tr = await p.ev('JSON.stringify([...window.__TRUNC].filter(t => t.startsWith("cModel")))'); assert(tr === '[]', 'cut text in Model: ' + tr);
+    }
+    await p.ev(`setLang('en')`);
+  }
+});
+
+await check('an open Setup section stays attached to its header while the column scrolls', async () => {
+  await fresh('', 1280, 720);
+  await p.ev(`document.querySelector('#cfgBody .acc[data-acc=model] > button').click()`); await sleep(150);
+  const zb = `document.querySelector('#cfg .zb')`;
+  for (const dy of [40, 90]) {
+    await p.ev(`${zb}.scrollTop = ${dy}`); await sleep(120);
+    const g = await p.ev(`(() => { const a = document.querySelector('#cfgBody .acc[data-acc=model]'), z = ${zb}.getBoundingClientRect(), h = a.querySelector('button').getBoundingClientRect(), pn = a.querySelector('.in').getBoundingClientRect(); return [a.classList.contains('open'), h.bottom, pn.top, z.top, ${zb}.scrollTop]; })()`);
+    if (g[0]) assert(Math.abs(g[1] - g[2]) <= 1.5, 'the panel came off its header: ' + JSON.stringify(g)); else assert(g[1] <= g[3] + 1, 'the panel closed while its header was visible: ' + JSON.stringify(g));
+  }
+  await p.ev(`${zb}.scrollTop = 0; document.querySelectorAll('#cfgBody .acc.open').forEach(o => o.classList.remove('open'))`);
+});
+
 await check('zoom goes matrix, row, one weight, and back out with Esc', async () => {
   await fresh('?view=model');
   await p.ev(`UI.modelMode = 'stack'; renderMmode(); P.t = R.ttft + 10; setPlaying(false)`); await sleep(500);
@@ -165,6 +191,10 @@ await check('mode: connect, send, record, then back to the simulation restored e
   assert(/Connected to Ollama 0\.40\.7 at http:\/\/localhost:11434 · qwen3\.6:35b-a3b/.test(await p.ev(`document.querySelector('#modeSw [data-mode=real]').title`)), 'the switch tooltip: ' + await p.ev(`document.querySelector('#modeSw [data-mode=real]').title`));
   for (const sel of ['[data-acc=request]', '[data-acc=machine]', '[data-acc=model]', '[data-acc=adv]', '[data-acc=scen]']) assert(!(await shown(sel)), sel + ' is not hidden in Real');
   assert(await shown('[data-acc=realreq]') && await shown('[data-acc=realmach]'), 'the real sections are missing');
+  { const mc = await p.ev(`(() => { const c = document.querySelector('[data-acc=realmach]'); return [c.classList.contains('acc'), !!c.querySelector('.chev'), c.querySelector('#realMachIn').offsetParent !== null, c.textContent]; })()`);
+    assert(!mc[0] && !mc[1] && mc[2], 'This machine is still an accordion or its body is hidden');
+    assert(/Server/.test(mc[3]) && /Address/.test(mc[3]) && /Model/.test(mc[3]) && /Change server/.test(mc[3]) && /Estimate as/.test(mc[3]), 'This machine card content: ' + mc[3].slice(0, 160));
+    assert(!(await p.ev(`!!document.querySelector('[data-acc=realmach] input[type=text]')`)), 'the address looks editable in the card'); }
   await p.ev(`document.querySelector('[data-acc=engine]').classList.add('open')`); await sleep(100);
   assert(!(await shown('#kv')) && !(await shown('#cold')) && await shown('#ctx'), 'KV type / cold start are not hidden, or num_ctx is');
   await p.ev(`document.querySelector('[data-acc=engine]').classList.remove('open')`);

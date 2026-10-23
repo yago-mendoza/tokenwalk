@@ -57,12 +57,12 @@ const MODELS = {
 // hostBw: what a card falls back to for weights that do not fit (system RAM read by the CPU).
 const MACHINES = {
   thinkpad: {
-    name: 'ThinkPad, Radeon 860M iGPU', short: '860M iGPU', kind: 'unified',
+    name: 'ThinkPad · Radeon 860M', short: '860M iGPU', kind: 'unified',
     ramGB: 64, fastGB: 47.6, bw: 128, bwEff: 0.33, tflops: 0.75, layerMs: 0.9, hostBw: 128, linkBw: 0,
     cores: 8, units: 8, unitName: 'CU', est: false,
   },
   thinkpadCpu: {
-    name: 'Same laptop, CPU only', short: 'CPU only', kind: 'unified',
+    name: 'ThinkPad · CPU only', short: 'CPU only', kind: 'unified',
     ramGB: 64, fastGB: 60, bw: 128, bwEff: 0.33, tflops: 0.42, layerMs: 0.9, hostBw: 128, linkBw: 0,
     cores: 8, units: 8, unitName: 'core', est: false,
   },

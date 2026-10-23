@@ -30,7 +30,14 @@ try {
   console.log('      breadcrumb: ' + await p.ev(`document.getElementById('chip').textContent`));
   console.log('      sending to ' + pick + ' (a cold load can take a minute)…');
   await p.ev(`document.getElementById('play').click()`);
-  for (let t = 0; t < 6000 && (await p.ev(`LIVE.running || !LIVE.run && !LIVE.error`)); t++) await sleep(100);
+  // while it streams, sample the estimate's clock: the views must follow the server
+  const seen = []; let midShot = false;
+  for (let t = 0; t < 6000 && (await p.ev(`LIVE.running || !LIVE.run && !LIVE.error`)); t++) { await sleep(100);
+    if (t % 5 === 0 && (await p.ev('LIVE.running'))) seen.push(await p.ev('[+P.t.toFixed(3), generatedAt(P.t), LIVE.toks.length, now().layer]'));
+    if (!midShot && process.env.SHOT_MID && (await p.ev('LIVE.toks.length >= 12'))) { midShot = true; await p.ev(`setLens('model')`); await sleep(300); await p.shot(process.env.SHOT_MID); await p.ev(`setLens('system')`); } }
+  const ts = seen.map(q => q[0]), moved = ts.length > 2 && ts[ts.length - 1] > ts[0] && new Set(ts).size > 2;
+  console.log(`      views follow the run: ${moved ? 'yes' : 'NO'} (${seen.length} samples, estimate t ${ts[0]} → ${ts[ts.length - 1]}, last [t, written in views, real tokens, layer] ${JSON.stringify(seen[seen.length - 1])})`);
+  if (!moved) throw new Error('the views did not move during the real run');
   const r = await p.ev(`JSON.stringify({ run: LIVE.run && { ...LIVE.run, text: LIVE.run.text.slice(0, 120), arrivalsMs: LIVE.run.arrivalsMs.length }, est: LIVE.est, err: LIVE.error, clock: document.getElementById('clock').textContent })`);
   console.log('      ' + r);
   const o = JSON.parse(r); if (!o.run || !(o.run.evalN > 0)) throw new Error('no measured run: ' + o.err);

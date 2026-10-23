@@ -7,7 +7,13 @@
 function drawModelGrid(n) {
   const id = 'cModel', c = $(id), [W, H] = stageSize(), x = fit(c, W, H); hitReset(id);
   const m = R.m, kinds = R.kinds, chunks = R.segs.filter(q => q.k === 'prefill'), ans = R.segs.filter(q => q.k === 'decode' || q.k === 'round');
-  const top = 46, bot = 40, lab = 66, boxW = m.kvLayers < m.layers ? 46 : 0, gx = lab, gw = W - lab - boxW - 14, rh = (H - top - bot) / m.layers;
+  // The DeltaNet state box is drawn to scale with the KV cells: one layer's fixed state is worth this many tokens of one
+  // attention layer's keys and values, at the same tokens per pixel as the prompt columns; capped (and said) if it cannot fit.
+  const top = 46, bot = 40, lab = 66, gx = lab, gw0 = W - lab - 14, rh = (H - top - bot) / m.layers, nDn = m.layers - m.kvLayers;
+  const boxTok = nDn > 0 && m.stateMB ? (m.stateMB * 1e6 / nDn) / Math.max(1, kvBytesPerToken(m, S.kv) / Math.max(1, m.kvLayers)) : 0;
+  let boxW = 0, boxScaled = true;
+  if (nDn > 0) { let g = gw0 - 46; for (let k = 0; k < 3; k++) { const pxTok = chunks.length ? Math.min(28, g * .42 / chunks.length) / 512 : ans.length ? Math.max(.6, (g - 10) / ans.length) : 0; const want = boxTok * pxTok + 6; boxW = Math.max(12, Math.min(gw0 * .22, want)); boxScaled = want <= gw0 * .22 && want >= 12; g = gw0 - boxW; } }
+  const gw = gw0 - boxW;
   const cwP = chunks.length ? Math.min(28, gw * .42 / chunks.length) : 0, cwA = ans.length ? Math.max(.6, (gw - chunks.length * cwP - 10) / ans.length) : 0;
   const cols = [...chunks.map(q => ({ seg: q, w: cwP })), ...ans.map(q => ({ seg: q, w: cwA }))];
   let cx = gx; cols.forEach((col, i) => { col.x = cx; cx += col.w + (i === chunks.length - 1 ? 10 : 0); });
@@ -24,7 +30,8 @@ function drawModelGrid(n) {
     const dl = doneLayers(col.seg), w = Math.max(.6, col.w - (col.w > 3 ? 1 : 0));
     for (let i = 0; i < m.layers; i++) {
       const y = top + (m.layers - 1 - i) * rh, h = Math.max(.8, rh - (rh > 3 ? 1 : 0)), attn = kinds[i] === 'attn' || m.kvLayers >= m.layers;
-      if (i < dl) { x.fillStyle = attn ? 'rgba(231,194,47,.8)' : 'rgba(150,150,170,.32)'; x.fillRect(col.x, y, w, h); }
+      // the legend's own textures: KV cache for attention rows, a faint tint of the fixed state for DeltaNet rows (the solid box at the row end is the one state it keeps)
+      if (i < dl) { if (attn) fillKind(x, 'kv', col.x, y, w, h); else fillKind(x, 'state', col.x, y, w, h, .35); }
       else { x.fillStyle = 'rgba(255,255,255,.035)'; x.fillRect(col.x, y, w, h); }
     }
     hit(id, [col.x, top, Math.max(2, col.w), H - top - bot], { k: 'gcol', s: R.segs.indexOf(col.seg) });
@@ -33,18 +40,32 @@ function drawModelGrid(n) {
   if (cur && curL >= 0) {
     const col = cols.find(q => q.seg === cur), y = top + (m.layers - 1 - curL) * rh, attn = kinds[curL] === 'attn' || m.kvLayers >= m.layers;
     if (col) {
-      if (attn) { x.fillStyle = 'rgba(127,227,255,.14)'; x.fillRect(gx, y - 1, col.x - gx, rh + 1); text(x, L('reads all of this row', 'lee toda esta fila'), Math.max(gx + 4, col.x - 130), y - 4, C.cy, 'left', 9.5, 600); }
-      else if (boxW) { x.strokeStyle = C.cy; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(col.x + col.w, y + rh / 2); x.lineTo(W - boxW - 2, y + rh / 2); x.stroke(); x.setLineDash([]); }
+      const h = Math.max(.8, rh - (rh > 3 ? 1 : 0));
+      if (attn) { x.fillStyle = 'rgba(127,227,255,.55)'; for (const q of cols) { if (q === col) break; if (doneLayers(q.seg) > curL) x.fillRect(q.x, y, Math.max(.6, q.w - (q.w > 3 ? 1 : 0)), h); } }
+      textFit(x, attn ? L('reads the KV of every earlier token', 'lee la KV de todos los tokens anteriores') : L('reads and updates its state', 'lee y actualiza su estado'), gx, top - 4, Math.max(40, W - (boxW ? 130 : 0) - gx - 8), C.cy, 'left', 9.5, 600);
       x.save(); x.shadowColor = C.cy; x.shadowBlur = 10; x.fillStyle = C.cy; x.fillRect(col.x - 1, y - 1, Math.max(3, col.w + 1), rh + 1); x.restore();
     }
   }
   // DeltaNet: one state box per row, the same size at every token
-  if (boxW) { for (let i = 0; i < m.layers; i++) if (!(kinds[i] === 'attn')) { const y = top + (m.layers - 1 - i) * rh; fillKind(x, 'state', W - boxW, y + .5, boxW - 6, Math.max(.8, rh - 1), i === curL ? 1 : .55); }
-    text(x, L('state', 'estado'), W - boxW, top - 4, '#3fd6c0', 'left', 9.5, 600); }
+  if (boxW) { for (let i = 0; i < m.layers; i++) if (!(kinds[i] === 'attn')) { const y = top + (m.layers - 1 - i) * rh, on = i === curL; fillKind(x, 'state', W - boxW, y + .5, boxW - 6, Math.max(.8, rh - 1), on ? 1 : .55); if (on) { x.fillStyle = 'rgba(127,227,255,.6)'; x.fillRect(W - boxW, y + .5, boxW - 6, Math.max(.8, rh - 1)); } }
+    hit(id, [W - boxW, top, boxW - 6, H - top - bot], { k: 'gstate', scaled: boxScaled, tok: Math.round(boxTok) });
+    if (curL < 0 || kinds[curL] === 'attn' || m.kvLayers >= m.layers) textFit(x, boxScaled ? L('state', 'estado') : L('state · not to scale', 'estado · sin escala'), W - 6, top - 4, 120, '#3fd6c0', 'right', 9.5, 600); }
   // column labels
-  if (chunks.length) { const x0 = cols[0].x, x1 = cols[chunks.length - 1].x + cwP; x.strokeStyle = C.cy; x.beginPath(); x.moveTo(x0, H - bot + 8); x.lineTo(x1, H - bot + 8); x.stroke(); textFit(x, chunks.length === 1 ? L('prompt: 1 chunk, all layers at once', 'prompt: 1 bloque, todas las capas a la vez') : L(`prompt: ${chunks.length} chunks of 512, all layers at once`, `prompt: ${chunks.length} bloques de 512, todas las capas a la vez`), x0, H - bot + 22, Math.max(80, Math.min(W - x0 - 8, x1 - x0 + 240)), C.cy, 'left', 10); }
-  if (ans.length) { const x0 = cols[chunks.length].x, x1 = cols[cols.length - 1].x + cwA; x.strokeStyle = C.hot; x.beginPath(); x.moveTo(x0, H - bot + 8); x.lineTo(x1, H - bot + 8); x.stroke(); textFit(x, L(`answer: one column per token, ${num(ans.length)}`, `respuesta: una columna por token, ${num(ans.length)}`), x1, H - bot + 22, x1 - x0, C.hot, 'right', 10); }
-  setCap('model', L('The model as a grid: each pass climbs one column through every layer; attention rows read the yellow cells to their left, DeltaNet rows fold everything into one box.', 'El modelo como cuadrícula: cada pasada sube una columna por todas las capas; las filas de atención leen las celdas amarillas a su izquierda, las DeltaNet lo pliegan todo en una caja.'));
+  // The two captions never touch: each under its own block when both fit on one line, else two lines, else the short forms.
+  { const cap = [];
+    if (chunks.length) { const x0 = cols[0].x, x1 = cols[chunks.length - 1].x + cwP; x.strokeStyle = C.cy; x.beginPath(); x.moveTo(x0, H - bot + 8); x.lineTo(x1, H - bot + 8); x.stroke();
+      cap.push({ x0, x1, col: C.cy, align: 'left', long: chunks.length === 1 ? L(`prompt: ${num(R.newTokens)} tokens read in 1 chunk`, `prompt: ${num(R.newTokens)} tokens leídos en 1 bloque`) : L(`prompt: ${num(R.newTokens)} tokens read in ${chunks.length} chunks of 512`, `prompt: ${num(R.newTokens)} tokens leídos en ${chunks.length} bloques de 512`), short: L(`prompt · ${chunks.length} × 512`, `prompt · ${chunks.length} × 512`) }); }
+    if (ans.length) { const x0 = cols[chunks.length].x, x1 = cols[cols.length - 1].x + cwA; x.strokeStyle = C.hot; x.beginPath(); x.moveTo(x0, H - bot + 8); x.lineTo(x1, H - bot + 8); x.stroke();
+      cap.push({ x0, x1, col: C.hot, align: 'right', long: L(`answer: one column per token, ${num(ans.length)}`, `respuesta: una columna por token, ${num(ans.length)}`), short: L(`answer · ${num(ans.length)} tokens`, `respuesta · ${num(ans.length)} tokens`) }); }
+    x.font = `400 10px ${FONT}`; const wd = t => x.measureText(t).width;
+    const span = (c, t) => c.align === 'left' ? [c.x0, c.x0 + wd(t)] : [c.x1 - wd(t), c.x1];
+    const fitsOne = key => { if (cap.length < 2) return span(cap[0], cap[0][key])[1] <= W && span(cap[0], cap[0][key])[0] >= 0; const a = span(cap[0], cap[0][key]), b = span(cap[1], cap[1][key]); return a[1] + 14 <= b[0] && a[0] >= 0 && b[1] <= W; };
+    let key = 'long', two = false;
+    if (cap.length && !fitsOne('long')) { if (fitsOne('short')) key = 'short'; else { two = true; key = cap.every(c => wd(c.long) <= W) ? 'long' : 'short'; } }
+    window.__GRIDCAP = [];
+    cap.forEach((c, j) => { const y = H - bot + 22 + (two && j === 1 ? 13 : 0), t = c[key], X = two ? (c.align === 'left' ? 0 : W) : c.align === 'left' ? c.x0 : c.x1; text(x, t, X, y, c.col, c.align, 10); const sp = c.align === 'left' ? [X, X + wd(t)] : [X - wd(t), X]; window.__GRIDCAP.push([sp[0], y - 10, sp[1], y + 2]); });
+  }
+  setCap('model', L('The model as a grid: each pass climbs one column through every layer; attention rows read the KV cells to their left (cyan while read), DeltaNet rows read and update one fixed state box.' + (isReal() && (LIVE.running || LIVE.toks.length) ? ' Layers interpolated within each real token.' : ''), 'El modelo como cuadrícula: cada pasada sube una columna por todas las capas; las filas de atención leen las celdas KV a su izquierda (cian mientras se leen), las DeltaNet leen y actualizan una caja de estado fija.' + (isReal() && (LIVE.running || LIVE.toks.length) ? ' Capas interpoladas dentro de cada token real.' : '')));
   drawHover(id, x);
 }
 function modeSwitch(x, id, W) {
