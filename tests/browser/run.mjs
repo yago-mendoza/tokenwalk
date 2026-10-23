@@ -108,6 +108,43 @@ await check('explainers link other views and the wiki, with absolute URLs', asyn
   assert((await p.ev('UI.lens')) === 'memory', 'See it in Memory did not switch the view');
 });
 
+// Live mode without a server: fetch is replaced in the page by one that answers from the recorded responses.
+const fixture = f => JSON.stringify(fs.readFileSync(`tests/fixtures/${f}`, 'utf8'));
+const mockOllama = cors => `(() => {
+  const files = { '/api/version': ${fixture('ollama-version.json')}, '/api/tags': ${fixture('ollama-tags.json')}, '/api/show': ${fixture('ollama-show-qwen36.json')}, '/api/generate': ${fixture('ollama-generate-warm.ndjson')} };
+  window.fetch = async (url, opts = {}) => {
+    if (opts.mode === 'no-cors') return new Response('');
+    if (${cors}) throw new TypeError('Failed to fetch');
+    const path = new URL(url).pathname, body = files[path];
+    if (body === undefined) return new Response('not found', { status: 404 });
+    if (path === '/api/generate') { const lines = body.split(String.fromCharCode(10)).filter(Boolean); let i = 0;
+      return new Response(new ReadableStream({ pull(c) { if (i < lines.length) c.enqueue(new TextEncoder().encode(lines[i++] + String.fromCharCode(10))); else c.close(); } }), { status: 200 }); }
+    return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+})()`;
+
+await check('live mode: a blocked origin explains the OLLAMA_ORIGINS fix', async () => {
+  await fresh(); await p.ev(mockOllama(true)); await p.ev(`document.querySelector('[data-acc=live] button').click()`);
+  await p.ev('liveDetect()');
+  assert((await p.ev('LIVE.status')) === 'cors', 'expected the CORS state');
+  assert(/OLLAMA_ORIGINS/.test(await p.ev(`document.getElementById('liveIn').textContent`)), 'the fix is not shown');
+});
+
+await check('live mode: detect, run, compare and calibrate against recorded Ollama responses', async () => {
+  await fresh(); await p.ev(mockOllama(false)); await p.ev(`document.querySelector('[data-acc=live] button').click()`);
+  await p.ev('liveDetect()');
+  assert((await p.ev(`LIVE.status + LIVE.version + LIVE.models.length`)) === 'ok0.40.72', 'not connected to the mock');
+  await p.ev(`LIVE.pick = 'qwen3.6:35b-a3b'; liveRun()`);
+  const run = await p.ev('LIVE.run && [LIVE.run.promptN, LIVE.run.evalN, LIVE.run.arrivalsMs.length]');
+  assert(run && run[0] === 36 && run[1] === 80 && run[2] === 80, 'run not parsed: ' + JSON.stringify(run));
+  assert((await p.ev(`document.querySelectorAll('#liveCmp .lv-r').length`)) === 5, 'the comparison table is missing');
+  assert(/live/i.test(await p.ev(`document.getElementById('outStream').textContent`)), 'the live answer is not in Output');
+  await p.ev('liveUseModel()'); assert((await p.ev(`S.model + MODELS.live.layers`)) === 'live40', 'live model not drawn');
+  await p.ev('liveCalibrate()'); const d = await p.ev(`[LIVE.est.decodeTps, LIVE.run.evalN / LIVE.run.decodeS]`);
+  assert(Math.abs(d[0] - d[1]) / d[1] < 0.02, 'calibrated decode ' + d.join(' vs '));
+  await p.ev(`select({ k: 'trend', id: 'tpt' })`); await sleep(300); await p.ev('select(null); liveResetCal(); registerLiveModel(null)');
+});
+
 if (SHOT) {
   await fresh('?view=model'); await p.ev(`P.t = R.ttft + 8; setPlaying(false)`); await sleep(900);
   await p.shot('docs/screenshot.png'); console.log('wrote docs/screenshot.png');

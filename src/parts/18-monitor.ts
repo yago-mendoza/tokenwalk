@@ -89,6 +89,9 @@ function trendArrow(tr) { const a = tr.f(Math.max(0, P.t - R.total / 160)), b = 
 function drawSpark(x, tr, w, h, big) {
   const c = trendCurve(tr), pts = c.pts, def = pts.filter(q => q[1] !== null), vs = def.map(q => q[1]), col = tr.col();
   // Big: the x axis spans where the quantity exists, the y axis its own range, both labelled. Small: the whole run from zero.
+  // A live run's measured time per token joins this curve, placed at the simulated time of the same token.
+  const meas = tr.id === 'tpt' ? liveTpt() : null, mPts = meas ? meas.map((ms, i) => { const sg = R.segs[R.firstDecode + i + 1]; return sg ? [sg.a, ms] : null; }).filter(Boolean) : [];
+  if (mPts.length) vs.push(...mPts.map(q => q[1]));
   const t0 = big && def.length ? def[0][0] : 0, t1 = R.total, axW = big ? 70 : 0, vmin = Math.min(...vs), vmax = Math.max(...vs), pad = (vmax - vmin) * .15 || Math.abs(vmax) * .05 || 1;
   const lo = big ? vmin - pad : Math.min(0, vmin), hi = big ? vmax + pad : Math.max(1e-12, vmax), axL = big ? 70 : 1, axB = big ? 16 : 2;
   const X = t => axL + ((t - t0) / Math.max(1e-12, t1 - t0)) * (w - axL - 2), Y = v => h - axB - ((v - lo) / Math.max(1e-12, hi - lo)) * (h - axB - 6);
@@ -105,6 +108,7 @@ function drawSpark(x, tr, w, h, big) {
   }
   const vn = P.t > 0 ? tr.f(Math.min(R.total - 1e-9, P.t)) : null;
   if (vn !== null) { x.fillStyle = col; x.beginPath(); x.arc(X(P.t), Y(vn), big ? 4 : 2.6, 0, 7); x.fill(); }
+  if (mPts.length) { x.fillStyle = C.cy; for (const [t, v] of mPts) { x.globalAlpha = .75; x.fillRect(X(t) - (big ? 1.5 : 1), Y(v) - (big ? 1.5 : 1), big ? 3 : 2, big ? 3 : 2); } x.globalAlpha = 1; if (big) text(x, L('cyan dots: measured on your server', 'puntos cian: medido en tu servidor'), w - 2, 12, C.cy, 'right', 9.5); }
 }
 function renderTrends() {
   const el = $('trends');

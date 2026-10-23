@@ -53,9 +53,41 @@ tools/                split-legacy.mjs (the port from the original single file),
 
 The data, language, state, cost model, sampling, playback, history, drawing and entity parts are type-checked; the DOM-heavy UI parts still carry `@ts-nocheck` and are next to type.
 
+## Live mode
+
+Open **Live: a real server** in Configure, point it at a local server and press **Detect**. tokenwalk lists its models; **Draw this model in the console** reads the model's real header and draws it in every view; **Run live** sends one real request and streams the answer into Output, marked *live*.
+
+Monitor then shows **Estimate vs measured** for that same request: load, time to first token, prefill and decode speed, total, and the ratio. **Calibrate this machine to the run** scales the machine preset's effective bandwidth (fitted to the measured decode) and compute (fitted to the measured prefill, only from a prompt of 256 tokens or more) so the simulator matches your hardware; the factors are kept per machine in the browser and can be reset. The measured time of every token is drawn as cyan dots over *Time / token* in Over the run.
+
+On the article's laptop (Radeon 860M, 64 GB, Ollama 0.40.7, `qwen3.6:35b-a3b`, a 3,510-token prompt):
+
+| | Estimate | Measured |
+|---|---|---|
+| Load | 54 s | 26–31 s |
+| Prefill | 89 tok/s | 124–130 tok/s |
+| Decode | 12 tok/s | 17.5–18 tok/s |
+
+**Ollama** (`http://localhost:11434`): uses `/api/version`, `/api/tags`, `/api/show` and streamed `/api/generate`; timings come from the final message (`load_duration`, `prompt_eval_count`, `prompt_eval_duration`, `eval_count`, `eval_duration`, `total_duration`, in nanoseconds). Ollama accepts pages served from localhost out of the box. From any other origin (the copy on infraphysics.net, for example) the browser is refused until you allow it and restart Ollama:
+
+```
+# Windows (then quit Ollama from the tray and open it again)
+setx OLLAMA_ORIGINS "https://infraphysics.net"
+# macOS
+launchctl setenv OLLAMA_ORIGINS "https://infraphysics.net"
+# Linux (systemd): Environment="OLLAMA_ORIGINS=https://infraphysics.net" in the ollama service
+```
+
+tokenwalk tells a refused origin from a server that is not running and shows the exact fix. Your browser may also ask to let the page reach devices on your local network.
+
+**llama.cpp** (`llama-server --host 127.0.0.1 --port 8080 -m model.gguf`, address `http://localhost:8080`): uses `/props`, `/v1/models` and streamed `/completion`; timings come from the last event (`prompt_n`, `prompt_ms`, `predicted_n`, `predicted_ms`). Its CORS default (`--cors-origins *`) lets any page in. It reports no load time, and its model header gives only totals, so the drawn model is an approximation (dense, every layer attention).
+
+**What stays simulated:** everything inside a pass (which layer, which matrix, the KV cache filling, the logits and the sampling chain). A server reports totals, not what happens per layer; the live run gives the console real totals to be held against.
+
+Tests: `npm test` runs the cost-model and live-parsing unit tests (on responses recorded from Ollama, in `tests/fixtures/`) and the browser checks, which include live mode against a mocked server. `npm run test:live` runs one real request against a local Ollama and skips when none answers.
+
 ## Roadmap
 
-Stage 2 is a live mode: point tokenwalk at a running Ollama or llama.cpp server, send the same request for real, and lay the measured load, prefill and per-token times over the model's predictions.
+Typing the UI parts and turning the ordered parts into ES modules.
 
 ## License
 

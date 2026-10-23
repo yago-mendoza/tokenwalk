@@ -38,6 +38,7 @@ function drawCtx(n) {
 // ===== Output on the right: the answer, growing in place =====
 let outKey = '';
 function renderOutput(n) {
+  if (liveOutput()) return;
   const gen = generatedAt(P.t), ls = logitState(n), shown = gen + (ls.on && n.seg && n.seg.k !== 'prefill' ? 1 : 0);
   const key = `${shown}|${lang}|${S.seed}|${S.temp}|${S.topp}|${S.topk}`;
   if (key !== outKey) {

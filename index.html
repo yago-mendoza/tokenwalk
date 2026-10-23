@@ -74,6 +74,8 @@
           <div class="fld"><label for="topp"><span>3 · Top-p</span><output id="toppOut"></output></label><input type="range" id="topp" min=".05" max="1" step=".05"><div class="hint" data-t="toppHint"></div></div>
           <div class="fld"><label for="seed"><span data-t="seedL"></span></label><input type="number" id="seed" min="1" max="9999" step="1"></div>
         </div></div>
+      <div class="acc" data-acc="live"><button type="button"><span class="ic-slot" data-ic="bolt"></span><span class="ttl" data-t="aLive"></span><span class="val" id="vLive"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in" id="liveIn"></div></div>
       <div class="acc" data-acc="adv"><button type="button"><span class="ic-slot" data-ic="bolt"></span><span class="ttl" data-t="aAdv"></span><span class="val" id="vAdv"></span><span class="chev" data-ic="chev"></span></button>
         <div class="in">
           <label class="sw"><input type="checkbox" id="cached"><i></i><span data-t="cached"></span></label>
@@ -111,6 +113,7 @@
     <div id="out"><div class="oh"><span class="lbl" data-t="output"></span><span style="font-size:10px;color:var(--faint)" data-t="illus"></span><span id="outCnt" class="num"></span></div><div id="outStream"></div><div id="outLogit"></div></div>
     <div id="kpis"></div>
     <div id="mbody">
+      <section class="msec" id="liveSec" hidden><h4 class="sech"><span data-t="secLive"></span><small data-t="secLiveSub"></small></h4><div id="liveCmp"></div></section>
       <section class="msec"><h4 class="sech"><span data-t="secAlerts"></span><span class="cnt" id="secAlertCnt"></span></h4><ul id="alertList"></ul></section>
       <section class="msec"><h4 class="sech"><span data-t="secInst"></span><small data-t="secInstSub"></small></h4><div id="trends"></div><div id="ichips"></div><div id="details" hidden></div></section>
     </div>
