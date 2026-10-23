@@ -57,7 +57,12 @@ function gotoHtml(sel) {
   const parts = lenses.map(l => bt('lens:' + l, ln[l], 'eye', l === UI.lens));
   if (row.ctx) parts.push(bt('ctx', L('Context window', 'Ventana de contexto'), 'notes'));
   if (row.time) parts.push(bt('time', L('Timeline', 'Línea de tiempo'), 'eq'));
-  return `<div class="lsgo"><span class="lbl">${esc(L('See it in', 'Verlo en'))}</span>${parts.join('')}${row.cfg ? `<span class="sp"></span><button type="button" class="cfg" data-go="cfg:${row.cfg}">${ICON('tune', 's')}<span>${esc(L(`Change it: ${sn[row.cfg]}`, `Cambiarlo: ${sn[row.cfg]}`))}</span></button>` : ''}</div>`;
+  return `<div class="lsgo"><span class="lbl">${esc(L('See it in', 'Verlo en'))}</span><span class="chips">${parts.join('')}</span></div>`;
+}
+// The change-it action sits under the values it would change, in the explainer's left column.
+function cfgHtml(sel) {
+  const e = entityOf(sel); if (!e) return ''; const row = ENTITY[e[0]](e[1]); if (!row.cfg) return '';
+  return `<button type="button" class="lscfg" data-go="cfg:${row.cfg}">${ICON('tune', 's')}<span>${esc(L(`Change it in ${SECTION_NAME()[row.cfg]}`, `Cambiarlo en ${SECTION_NAME()[row.cfg]}`))}</span></button>`;
 }
 
 // ===== The wiki behind each explainer =====
@@ -87,7 +92,7 @@ function wikiFor(sel) {
 }
 function wikiHtml(sel) {
   const ids = wikiFor(sel); if (!ids.length) return '';
-  return `<div class="lswiki"><span class="lbl">${esc(L('In the wiki', 'En el wiki'))}</span>${ids.map(id => `<a href="https://infraphysics.net/wiki/${id}" target="_blank" rel="noopener">${ICON('notes', 's')}<span>${esc(L(...WIKI_NAME[id]))}</span>${ICON('chev', 's')}</a>`).join('')}</div>`;
+  return `<div class="lswiki"><span class="lbl">${esc(L('In the wiki', 'En el wiki'))}</span><span class="chips">${ids.map(id => `<a href="https://infraphysics.net/wiki/${id}" target="_blank" rel="noopener">${ICON('notes', 's')}<span>${esc(L(...WIKI_NAME[id]))}</span>${ICON('chev', 's')}</a>`).join('')}</span></div>`;
 }
 
 function goTo(where) {
