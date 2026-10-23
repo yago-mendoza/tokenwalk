@@ -139,6 +139,7 @@ await check('live mode: detect, run, compare and calibrate against recorded Olla
   const run = await p.ev('LIVE.run && [LIVE.run.promptN, LIVE.run.evalN, LIVE.run.arrivalsMs.length]');
   assert(run && run[0] === 36 && run[1] === 80 && run[2] === 80, 'run not parsed: ' + JSON.stringify(run));
   assert((await p.ev(`document.querySelectorAll('#liveCmp .lv-r').length`)) === 5, 'the comparison table is missing');
+  await sleep(400); // Output is painted on the next frames, not when the run resolves
   assert(/live/i.test(await p.ev(`document.getElementById('outStream').textContent`)), 'the live answer is not in Output');
   await sleep(500);
   assert((await p.ev(`document.querySelectorAll('.simonly').length`)) > 5, 'controls the server ignores are not marked');

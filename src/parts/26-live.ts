@@ -23,7 +23,12 @@ async function liveFetch(path, opts = {}, ms = 4000) {
 // A browser cannot tell "nothing is listening" from "the server refused this origin" (both are a network error),
 // so a second, opaque request settles it: if that one goes through, the server is there and CORS is the problem.
 async function liveReachable() { try { await fetch(LIVE.ep, { mode: 'no-cors', signal: AbortSignal.timeout(2500) }); return true; } catch (e) { return false; } }
-function liveCorsFix(kind) {
+function liveCorsFix(kind) { return liveCorsFix0(kind) + ' ' + liveCorsCheck(kind); }
+function liveCorsCheck(kind) {
+  const o = location.origin === 'null' || location.protocol === 'file:' ? 'null' : location.origin, port = kind === 'llama' ? 8080 : 11434, path = kind === 'llama' ? '/props' : '/api/tags';
+  return L(`Check: curl -s -o /dev/null -w "%{http_code}" -X OPTIONS http://localhost:${port}${path} -H "Origin: ${o}" -H "Access-Control-Request-Method: GET" prints 204 once it is allowed. Opened from disk (origin null)? Serve it with npm run preview instead.`, `Comprueba: curl -s -o /dev/null -w "%{http_code}" -X OPTIONS http://localhost:${port}${path} -H "Origin: ${o}" -H "Access-Control-Request-Method: GET" devuelve 204 cuando ya está permitido. ¿Abierto desde disco (origen null)? Sírvelo con npm run preview.`);
+}
+function liveCorsFix0(kind) {
   const o = location.origin === 'null' || location.protocol === 'file:' ? '*' : location.origin;
   return kind === 'llama' ? L(`Start llama-server with --cors-origins ${o} (the default, *, also works).`, `Arranca llama-server con --cors-origins ${o} (el valor por defecto, *, también vale).`)
     : L(`Allow this page in Ollama: set OLLAMA_ORIGINS=${o} and restart Ollama. Windows: setx OLLAMA_ORIGINS "${o}", then quit Ollama from the tray and open it again. macOS: launchctl setenv OLLAMA_ORIGINS "${o}". Linux: add Environment="OLLAMA_ORIGINS=${o}" to the ollama service.`,

@@ -1,10 +1,32 @@
-# tokenwalk
+<p align="center">
+  <a href="https://infraphysics.net/lab/projects/llm-inference-console"><img src="docs/assets/infraphysics.svg" width="72" alt="InfraPhysics"></a>
+</p>
 
-Watch one LLM request walk through a local machine. You pick a machine, a model and a prompt; tokenwalk plays the request pass by pass and shows where every byte lives, what each layer reads, how the KV cache fills, and why the first word takes a minute while the rest come at twelve a second.
+<h1 align="center">tokenwalk</h1>
+
+<p align="center">
+  Watch one LLM request walk through a local machine.<br>
+  Where every byte lives, what each layer reads, how the KV cache fills, and why the first word takes a minute.
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/code-MIT-blue" alt="Code: MIT"></a>
+  <img src="https://img.shields.io/badge/runtime%20deps-none-brightgreen" alt="No runtime dependencies">
+  <img src="https://img.shields.io/badge/live-Ollama%20%C2%B7%20llama.cpp-red" alt="Live mode: Ollama and llama.cpp">
+</p>
+
+<p align="center">
+  <b>A project of <a href="https://infraphysics.net">InfraPhysics</a>.</b>
+  Try it live at <a href="https://infraphysics.net/playgrounds/7148293/simulator"><b>infraphysics.net/playgrounds/7148293/simulator</b></a><br>
+  How it is built: <a href="https://infraphysics.net/lab/projects/llm-inference-console">the project page</a> ·
+  the ideas, one at a time: <a href="https://infraphysics.net/blog/bits2bricks/transformers-and-local-inference-from-zero">the article</a>
+</p>
+
+---
+
+You pick a machine, a model and a prompt; tokenwalk plays the request pass by pass. Connect it to your own Ollama or llama.cpp and it runs the same request for real, next to its estimate (see [Live mode](#live-mode)).
 
 ![tokenwalk: the model as a grid of tokens across and layers up, mid-way through writing the answer](docs/screenshot.png)
-
-It runs live at [infraphysics.net/playgrounds/7148293/simulator](https://infraphysics.net/playgrounds/7148293/simulator). The ideas behind it are explained slowly, one at a time, in [Transformers and local inference](https://infraphysics.net/blog/bits2bricks/transformers-and-local-inference-from-zero).
 
 ## Run it
 
@@ -21,7 +43,7 @@ There is no framework and nothing at runtime: one HTML page, a canvas, and about
 
 Nothing here runs a neural network. tokenwalk is a cost model, and it is honest about which of its numbers are which:
 
-- **Calibrated.** The laptop preset (a ThinkPad with a Radeon 860M iGPU, 64 GB of shared LPDDR5X, Qwen3.6 35B-A3B at Q4_K_M under Ollama) is fitted to five measured runs: about 76 s to the first token for a 6,500-token prompt, then about 12 tokens a second.
+- **Calibrated.** The laptop preset (a ThinkPad with a Radeon 860M iGPU, 64 GB of shared LPDDR5X, Qwen3.6 35B-A3B at Q4_K_M under Ollama) is fitted to measured runs: about 76 s to the first token for a 6,500-token prompt, then about 12 tokens a second without MTP drafting (see [Live mode](#live-mode) for what drafting changes).
 - **Read from the files.** Layer counts, heads, experts and which layers keep KV come from the GGUF headers.
 - **Estimated.** Every other machine is the same formulas with that machine's bandwidth and compute; the console marks them as estimates.
 - **Illustrative.** The answer text, the logits and the values inside a row of weights are made up. Their sizes are not.
@@ -55,35 +77,97 @@ The data, language, state, cost model, sampling, playback, history, drawing and 
 
 ## Live mode
 
-Open **Live: a real server** in Configure, point it at a local server and press **Detect**. tokenwalk lists its models; **Draw this model in the console** reads the model's real header and draws it in every view; **Run live** sends one real request and streams the answer into Output, marked *live*.
+tokenwalk can send the same request to a real server on your machine and put the measured numbers next to its estimate. It is optional: without a server everything is simulated.
 
-Monitor then shows **Estimate vs measured** for that same request: load, time to first token, prefill and decode speed, total, and the ratio. **Calibrate this machine to the run** scales the machine preset's effective bandwidth (fitted to the measured decode) and compute (fitted to the measured prefill, only from a prompt of 256 tokens or more) so the simulator matches your hardware; the factors are kept per machine in the browser and can be reset. The measured time of every token is drawn as cyan dots over *Time / token* in Over the run.
+### 1. Start a server the browser is allowed to reach
 
-On the article's laptop (Radeon 860M, 64 GB, Ollama 0.40.7, `qwen3.6:35b-a3b`, a 3,510-token prompt):
+A browser page can only talk to a local server that allows the page's **origin** (the scheme, host and port it was loaded from). What you need depends on how you opened tokenwalk:
 
-| | Estimate | Measured |
-|---|---|---|
-| Load | 54 s | 26–31 s |
-| Prefill | 89 tok/s | 124–130 tok/s |
-| Decode | 12 tok/s | 17.5–18 tok/s |
+| How you opened tokenwalk | Its origin | Ollama, out of the box | What to do |
+|---|---|---|---|
+| `npm run dev` | `http://localhost:5173` | allowed | nothing |
+| `npm run preview` | `http://localhost:4173` | allowed | nothing |
+| `dist/tokenwalk.html` opened from disk | `null` | refused | serve it (`npm run preview`), or allow every origin (below) |
+| [infraphysics.net/…/simulator](https://infraphysics.net/playgrounds/7148293/simulator) | `https://infraphysics.net` | refused | allow it (below) |
 
-**Ollama** (`http://localhost:11434`): uses `/api/version`, `/api/tags`, `/api/show` and streamed `/api/generate`; timings come from the final message (`load_duration`, `prompt_eval_count`, `prompt_eval_duration`, `eval_count`, `eval_duration`, `total_duration`, in nanoseconds). Ollama accepts pages served from localhost out of the box. From any other origin (the copy on infraphysics.net, for example) the browser is refused until you allow it and restart Ollama:
+(Checked against Ollama 0.40.7: any `localhost` or `127.0.0.1` port is accepted; `null` and other sites get 403.)
 
-```
-# Windows (then quit Ollama from the tray and open it again)
+**Ollama.** Set `OLLAMA_ORIGINS` to the origin and restart Ollama. Several origins can be comma-separated; `*` allows any page, which also lets any website you visit talk to your Ollama, so prefer the exact origin.
+
+Windows (PowerShell or cmd), then quit Ollama from the tray icon and open it again:
+
+```bat
 setx OLLAMA_ORIGINS "https://infraphysics.net"
-# macOS
-launchctl setenv OLLAMA_ORIGINS "https://infraphysics.net"
-# Linux (systemd): Environment="OLLAMA_ORIGINS=https://infraphysics.net" in the ollama service
 ```
 
-tokenwalk tells a refused origin from a server that is not running and shows the exact fix. Your browser may also ask to let the page reach devices on your local network.
+macOS (the app), then quit and reopen Ollama:
 
-**llama.cpp** (`llama-server --host 127.0.0.1 --port 8080 -m model.gguf`, address `http://localhost:8080`): uses `/props`, `/v1/models` and streamed `/completion`; timings come from the last event (`prompt_n`, `prompt_ms`, `predicted_n`, `predicted_ms`). Its CORS default (`--cors-origins *`) lets any page in. It reports no load time, and its model header gives only totals, so the drawn model is an approximation (dense, every layer attention).
+```bash
+launchctl setenv OLLAMA_ORIGINS "https://infraphysics.net"
+```
 
-**What stays simulated:** everything inside a pass (which layer, which matrix, the KV cache filling, the logits and the sampling chain). A server reports totals, not what happens per layer; the live run gives the console real totals to be held against.
+Linux (systemd service):
 
-Tests: `npm test` runs the cost-model and live-parsing unit tests (on responses recorded from Ollama, in `tests/fixtures/`) and the browser checks, which include live mode against a mocked server. `npm run test:live` runs one real request against a local Ollama and skips when none answers.
+```bash
+sudo systemctl edit ollama.service
+# add under [Service]:
+#   Environment="OLLAMA_ORIGINS=https://infraphysics.net"
+sudo systemctl restart ollama
+```
+
+Or for one session in a terminal: `OLLAMA_ORIGINS=https://infraphysics.net ollama serve`.
+
+**llama.cpp.** `llama-server` allows every origin by default (`--cors-origins *`). Give it the port tokenwalk expects, since recent builds default to 9931:
+
+```bash
+llama-server -m model.gguf --host 127.0.0.1 --port 8080
+# to restrict it: --cors-origins https://infraphysics.net   (or: --cors-origins localhost)
+```
+
+### 2. Check it before opening the page
+
+```bash
+# 204 means the origin is allowed; 403 means it is not (set OLLAMA_ORIGINS and restart)
+curl -s -o /dev/null -w "%{http_code}\n" -X OPTIONS http://localhost:11434/api/tags -H "Origin: https://infraphysics.net" -H "Access-Control-Request-Method: GET"
+curl http://localhost:11434/api/version        # Ollama answers {"version": ...}
+curl http://localhost:8080/props               # llama-server answers with its settings
+```
+
+### 3. Use it
+
+Open **Live: a real server** (the row in Configure, or the *Simulated* badge in the top bar). Enter the address (`http://localhost:11434` for Ollama, `http://localhost:8080` for llama-server) and press **Detect**. Pick a model; **Draw this model in the console** reads its real GGUF header and draws it in every view; **Run live** sends one request.
+
+- **Monitor, Estimate vs measured:** load, time to first token, prefill and decode speed, total, with the ratio. **Calibrate this machine to the run** fits the machine's effective bandwidth (from decode, with MTP drafting taken out first) and compute (from prefill, if the prompt has 256 tokens or more); kept per machine in your browser, with Reset.
+- **Tokens view:** the live answer as tokens with their arrival times. Click one to see what the server chose it from (Ollama `logprobs`, llama-server `n_probs`), when the server sends that.
+- **Trends:** the measured time of every token as dots over *Time / token*.
+- **The top bar** shows a pulsing LIVE dot, the server, and its model with the quantization.
+
+What is sent: num_ctx, temperature, top_p, top_k, seed, keep_alive and MTP drafting (`draft_num_predict`) for Ollama; the sampling settings and `cache_prompt` for llama-server. The window lists the exact options of each run. Settings the server does not take per request (the machine, the model's size, the request lengths, KV type, KV to disk, cold start, a separate draft model) are marked **sim** in Configure, with the reason on hover: they still drive the simulation, not the real run.
+
+### MTP, and why the laptop is not simply "12 tokens a second"
+
+Both Qwen models carry one extra *next-n* block (`nextn_predict_layers: 1` in the GGUF) trained to guess the tokens after the next one, and Ollama uses it by default as a built-in draft (`draft_num_predict 2`): the block guesses two tokens, one pass of the full model checks them, and the ones that match are kept. Measured on the laptop (qwen3.6:35b-a3b, Ollama 0.40.7, 96-token answers):
+
+| | tok/s | vs. no drafting |
+|---|---|---|
+| Drafting off (`draft_num_predict 0`) | 13.2 | |
+| Drafting on, temperature 0, long prompt | 15.6 | ×1.18 |
+| Drafting on, temperature 0.7 | 11.5 and 10.6 | ×0.87, ×0.80 |
+
+A guess costs a read of one block plus the output head (0.35 GB, about a fifth of a full pass), so drafting pays only when most guesses survive: it helps greedy, predictable text and costs time when sampling freely. tokenwalk models it as speculative rounds with an acceptance rate fitted to these runs (0.55 at temperature 0, 0.25 at 0.7): for the article's request, 12.1 tok/s without drafting, 10.2 with it at temperature 0.7, 14.4 at 0. Switch it under *Caches and speculation*. A side effect worth knowing: with drafting on, Ollama 0.40.7 returns `logprobs` for only a few tokens (2 of 16 in a test, 16 of 16 with drafting off).
+
+### When it does not connect
+
+- **"Blocked by CORS"**: the server is running but refuses this page's origin. Set `OLLAMA_ORIGINS` as above and restart Ollama completely (the tray app, not just a terminal).
+- **"Not running"**: nothing answers at that address. Start Ollama (`ollama serve`) or llama-server, and check the port.
+- **The browser asks about local network access**: allow it; a public page reaching `localhost` needs that permission in recent Chrome.
+- **The first run is slow**: the server loads the model from disk first (Load in the table); the next run is warm until keep_alive runs out.
+
+### What stays simulated
+
+Everything inside a pass: which layer, which matrix, the KV cache filling, the sampling chain of a simulated token. A server reports totals and the tokens it sent, not what happens per layer; the live run gives the console real totals to be held against.
+
+Tests: `npm test` runs the cost-model, MTP and live-parsing unit tests (on responses recorded from Ollama, in `tests/fixtures/`) and the browser checks, which include live mode against a mocked server. `npm run test:live` runs one real request against a local Ollama and skips when none answers.
 
 ## Roadmap
 
