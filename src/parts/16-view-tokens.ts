@@ -1,4 +1,6 @@
 // @ts-nocheck: DOM-heavy UI, to be typed in a later pass
+// The play button, inline in a sentence: it looks like the transport's button and starts the run.
+const PLAY_GLYPH = () => `<button type="button" class="playg" title="${esc(L('Play', 'Reproducir'))}" onclick="if (!fitGate()) setPlaying(true)">${ICON('play', 's')}</button>`;
 // ===== Tokens lens: prompt, stream, and logits only when they exist =====
 let streamKey = '';
 function logitState(n) {
@@ -37,7 +39,7 @@ function drawTokens(n) {
     const from = Math.max(0, shown - 220);
     let h = from ? '… ' : '';
     for (let i = from; i < shown && i < SAMPLED.length; i++) { const s = SAMPLED[i]; h += `<span class="g${s.script ? '' : ' alt'}${i === shown - 1 && ls.on ? ' now' : ''}${UI.logitTok === i ? ' sel' : ''}" data-tok="${i}" title="${esc(L(`token ${i + 1}: “${s.word}”`, `token ${i + 1}: “${s.word}”`))}">${esc(i === from ? s.word.trimStart() : s.word)}</span>`; }
-    if (!shown) h = `<span class="ph">${P.t > 0 && P.t < R.ttft ? L('Waiting for the first token: the prompt is being read.', 'Esperando el primer token: se está leyendo el prompt.') : L('Press play: the answer appears here, one token per pass.', 'Pulsa reproducir: aquí aparece la respuesta, un token por pasada.')}</span>`;
+    if (!shown) h = `<span class="ph">${P.t > 0 && P.t < R.ttft ? L('Waiting for the first token: the prompt is being read.', 'Esperando el primer token: se está leyendo el prompt.') : L(`Press ${PLAY_GLYPH()}: the answer appears here, one token per pass.`, `Pulsa ${PLAY_GLYPH()}: aquí aparece la respuesta, un token por pasada.`)}</span>`;
     $('stream').innerHTML = h; $('stream').scrollTop = $('stream').scrollHeight;
     const fl = UI.flash; if (fl && fl.canvas === 'cPrompt' && fl.tok !== undefined && !fl.done) { fl.done = true; const els = fl.tok === 'all' ? [...$('stream').querySelectorAll('.g')] : [...$('stream').querySelectorAll(`[data-tok="${fl.tok}"]`)]; els.forEach(el => el.classList.add('flash')); if (els[0] && fl.tok !== 'all') els[0].scrollIntoView({ block: 'nearest' }); }
   }
@@ -64,17 +66,17 @@ function drawChain(id2, W, H2, ls, gen, big) {
   const rare = pick && pick.rest ? { w: pick.word, rare: true, p1: d.rest.p1 / tailN, p: d.rest.p / tailN, fin: (d.finalP.get(d.rest) || 0) / tailN, inK: d.ordered.includes(d.rest) } : null;
   if (rare) rows.push(rare); rows.push(d.rest);
   const topk = new Set(d.ordered), kOn = S.topk < 6, pOn = S.topp < 1;
-  const lw = Math.min(190, Math.max(124, W * .2)), gapC = 18, cw = (W - lw - gapC * 3) / 4, top = big ? 64 : H2 < 230 ? 46 : 52, rh = Math.max(12, Math.min(big ? 44 : 30, (H2 - top - 8) / rows.length));
+  const lw = Math.min(190, Math.max(124, W * .2)), gapC = 18, cw = (W - lw - gapC * 3) / 4, top = big ? 70 : 58, rh = Math.max(12, Math.min(big ? 44 : 30, (H2 - top - 8) / rows.length));
   const val = (it, j) => it.rare ? [it.p1, it.p, it.inK ? it.p / d.zk : 0, it.fin][j] : [it.p1, it.p, topk.has(it) ? it.p / d.zk : 0, d.finalP.get(it) || 0][j];
   const stages = [
-    [L('0 · Softmax', '0 · Softmax'), L('raw logits, T = 1', 'logits en bruto, T = 1'), true],
-    [L(`1 · Temp. ${dec(S.temp.toFixed(2))}`, `1 · Temp. ${dec(S.temp.toFixed(2))}`), S.temp < 1 ? L('sharper', 'más afilada') : S.temp > 1 ? L('flatter', 'más plana') : L('unchanged', 'sin cambio'), true],
-    [L(`2 · Top-k ${kOn ? S.topk : L('off', 'apagado')}`, `2 · Top-k ${kOn ? S.topk : L('off', 'apagado')}`), kOn ? L(`keeps the ${S.topk} likeliest`, `se queda los ${S.topk} más probables`) : L('passes everything', 'deja pasar todo'), kOn],
-    [L(`3 · Top-p ${dec(S.topp.toFixed(2))}`, `3 · Top-p ${dec(S.topp.toFixed(2))}`), pOn ? L(`keeps ${pct(S.topp)}`, `guarda ${pct(S.topp)}`) : L('passes everything', 'deja pasar todo'), pOn],
+    ['0 · Softmax', '', true],
+    [`1 · Temp ${dec(S.temp.toFixed(2))}`, '', true],
+    [`2 · Top-k ${kOn ? S.topk : 'off'}`, '', kOn],
+    [`3 · Top-p ${pOn ? dec(S.topp.toFixed(2)) : 'off'}`, '', pOn],
   ];
   stages.forEach(([h, sub, on], j) => {
     const X = lw + j * (cw + gapC);
-    textFit(x2, h, X, top - 20, cw, on ? C.ink : C.dim, 'left', big ? 11.5 : 10, 650); textFit(x2, sub, X, top - 7, cw, C.dim, 'left', 9.5);
+    textFit(x2, h, X, top - 12, cw, on ? C.ink : C.dim, 'left', big ? 12 : 10.5, 650);
     if (j) { x2.fillStyle = C.faint; x2.beginPath(); x2.moveTo(X - gapC + 5, top - 24); x2.lineTo(X - 6, top - 20); x2.lineTo(X - gapC + 5, top - 16); x2.fill(); }
     hit(id2, [X, top - 32, cw, 30], { k: 'sampstage', j });
   });
@@ -93,5 +95,15 @@ function drawChain(id2, W, H2, ls, gen, big) {
     }
     hit(id2, [0, Y, lw, rh], { k: 'cand', i: stepI, j: Math.max(0, d.items.indexOf(it)) });
   });
+  // The cut, live: a dashed line under the last survivor of top-k and of top-p, gliding to its place as the sliders move.
+  UI.cutY = UI.cutY || {};
+  for (const j of [2, 3]) {
+    if (!stages[j][2]) { delete UI.cutY[id2 + j]; continue; }
+    let last = -1; rows.forEach((it, r) => { if (val(it, j) > 0) last = r; });
+    if (last < 0 || last >= rows.length - 1) { delete UI.cutY[id2 + j]; continue; }
+    const target = top + (last + 1) * rh - 1, key = id2 + j, cur = UI.cutY[key] ?? target, yy = cur + (target - cur) * .35; UI.cutY[key] = Math.abs(target - yy) < .3 ? target : yy;
+    const X = lw + j * (cw + gapC), bw = cw - 8;
+    x2.save(); x2.strokeStyle = 'rgba(255,90,110,.9)'; x2.lineWidth = 1.5; x2.setLineDash([4, 3]); x2.beginPath(); x2.moveTo(X - 4, yy); x2.lineTo(X + bw, yy); x2.stroke(); x2.restore();
+  }
   drawHover(id2, x2);
 }

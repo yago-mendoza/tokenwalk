@@ -8,6 +8,8 @@ function bind() {
   $('bus').addEventListener('change', guard(e => { S.bus = +e.target.value; changed(); }));
   $('ctx').addEventListener('change', guard(e => { const v = +e.target.value; S.ctx = v >= +$('ctx').max - .01 ? MODELS[S.model].ctxMax : Math.round(2 ** v / 256) * 256; changed(); }));
   $('ctx').addEventListener('input', e => { if (!locked()) $('ctxOut').textContent = num(Math.round(2 ** +e.target.value / 256) * 256); });
+  let liveRaf = 0; const liveChange = () => { if (liveRaf) return; liveRaf = requestAnimationFrame(() => { liveRaf = 0; changed(true); }); };
+  for (const id2 of ['sys', 'docs', 'q', 'ans', 'gamma', 'keepalive']) $(id2).addEventListener('input', e => { if (locked()) return; S[id2] = Math.round(+e.target.value); liveChange(); });
   for (const id2 of ['sys', 'docs', 'q', 'ans', 'gamma', 'keepalive']) { $(id2).addEventListener('change', guard(e => { S[id2] = Math.round(+e.target.value); changed(); })); $(id2).addEventListener('input', e => { const o = $(id2 + 'Out'); if (o && !locked()) o.textContent = num(Math.round(+e.target.value)); }); }
   $('alpha').addEventListener('change', guard(e => { S.alpha = +e.target.value; changed(); }));
   for (const id2 of ['cold', 'cached', 'disk', 'spec']) $(id2).addEventListener('change', guard(e => { S[id2] = e.target.checked; if (id2 === 'cold') { KEEP.unloaded = false; KEEP.idle = 0; } changed(); }));
@@ -142,7 +144,7 @@ function frame(t0) {
     renderRun(n); renderKpis(n);
     if (t0 - slowT > 250) { slowT = t0; drawRuler(n); renderAlerts(); renderGate(); renderChoice(); renderUndo(); renderJump(); renderDetails(); renderTrends(); renderLive(); if (!$('logPop').hidden) renderLog(n); }
     renderInspector(); renderThumbs(n); renderCap();
-    const tl = UI.lens === 'tokens'; $('ruler').style.display = tl ? 'none' : ''; $('lensCap').style.display = tl ? 'none' : ''; $('stage').classList.toggle('tok', tl);
+    const tl = UI.lens === 'tokens'; $('lensCap').style.display = tl ? 'none' : ''; $('stage').classList.toggle('tok', tl);
     if (P.anim && performance.now() - P.anim.start > P.anim.dur + 300) P.anim = null;
   } catch (e) { if (window.__errs.length < 20) { window.__errs.push(String(e && e.stack || e)); console.error(e); } }
   requestAnimationFrame(frame);

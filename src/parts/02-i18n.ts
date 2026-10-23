@@ -24,7 +24,7 @@ const STR = {
   pauseTok: ['Pause after each token', 'Pausa tras cada token'], pauseLayer: ['Pause after each layer', 'Pausa tras cada capa'],
   undo: ['Undo', 'Deshacer'], ctxWin: ['Context window', 'Ventana de contexto'], output: ['Output', 'Salida'], illus: ['illustrative text', 'texto ilustrativo'], follow: ['follow', 'seguir'],
   locked: ['Configuration locked during the run', 'Configuración bloqueada durante la ejecución'],
-  lockedSub: ['A run uses one fixed configuration. Sampling stays live below.', 'Una ejecución usa una configuración fija. El muestreo sigue activo abajo.'],
+  lockedSub: ['A run uses one fixed configuration. Sampling, above, stays live.', 'Una ejecución usa una configuración fija. El muestreo, arriba, sigue activo.'],
 };
 const qLang = new URLSearchParams(location.search).get('lang');
 let fromEs = false; try { fromEs = new URL(document.referrer).pathname.startsWith('/es/'); } catch (e) {}
