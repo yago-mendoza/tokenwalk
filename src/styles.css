@@ -51,8 +51,8 @@ button { cursor: pointer; }
 @media (min-width: 1101px) { #alertBtn { display: none !important; } }
 #top { display: flex; align-items: center; gap: 12px; padding: 0 12px; background: #0d0d11; border-bottom: 1px solid var(--line); min-width: 0; }
 .brand { display: flex; align-items: center; gap: 8px; color: var(--ink); font: 600 13px/1 var(--sans); white-space: nowrap; }
-.brand .logo { flex: none; width: 20px; height: 20px; display: block; }
-.brand .nm { font: 800 13.5px/1 var(--sans); letter-spacing: -.01em; color: var(--ink); }
+.brand .logo { flex: none; width: 77px; height: 24px; display: block; object-fit: contain; }
+.brand .nm { font: 700 14px/1 var(--mono); letter-spacing: -.02em; color: #f3f3f5; } .brand .nm span { color: var(--hot); }
 .brand .t { color: var(--dim); font-weight: 400; font-size: 12px; }
 .brand small { font: 400 var(--f1)/1 var(--mono); color: var(--dim); letter-spacing: .04em; }
 #chip { min-width: 0; flex: 1 1 auto; display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 10px; border: 1px solid var(--line); border-radius: 3px; background: var(--p1); color: var(--mid); font: 400 11.5px/1 var(--mono); white-space: nowrap; overflow: hidden; cursor: pointer; }

@@ -2,7 +2,7 @@
   <a href="https://infraphysics.net/lab/projects/llm-inference-console"><img src="docs/assets/infraphysics.svg" width="72" alt="InfraPhysics"></a>
 </p>
 
-<h1 align="center"><img src="docs/assets/tokenwalk.svg" width="34" alt="" align="top"> tokenwalk</h1>
+<p align="center"><img src="docs/assets/tokenwalk-banner.png" width="720" alt="tokenwalk"></p>
 
 <p align="center">
   Watch one LLM request walk through a local machine.<br>
