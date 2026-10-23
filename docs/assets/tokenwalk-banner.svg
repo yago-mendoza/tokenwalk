@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560">
+  <!-- tokenwalk banner, drawn as vectors: prompt card -> machine -> model layers -> KV and state -> answer card, a stream of tokens walking through -->
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="soft" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="9"/></filter>
+    <linearGradient id="flow" x1="250" x2="985" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5fd0ff"/><stop offset=".45" stop-color="#9d8cf0"/><stop offset=".72" stop-color="#4fe0b0"/><stop offset="1" stop-color="#ffd43b"/></linearGradient>
+    <linearGradient id="pane" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".07"/><stop offset="1" stop-color="#ffffff" stop-opacity=".015"/></linearGradient>
+    <pattern id="cells" width="6" height="8" patternUnits="userSpaceOnUse"><rect width="3" height="3" fill="#d6d8e2" opacity=".85"/></pattern>
+  </defs>
+  <rect width="1200" height="560" fill="#08080b"/>
+
+  <!-- the walk -->
+  <path d="M250 222 C 330 190, 380 250, 460 222 S 600 190, 660 222 S 790 255, 860 230 S 960 215, 985 224" fill="none" stroke="url(#flow)" stroke-width="22" opacity=".2" filter="url(#soft)"/>
+  <path d="M250 222 C 330 190, 380 250, 460 222 S 600 190, 660 222 S 790 255, 860 230 S 960 215, 985 224" fill="none" stroke="url(#flow)" stroke-width="1.5" opacity=".6"/>
+
+  <!-- 1 prompt card -->
+  <g transform="translate(110 168)">
+    <rect width="150" height="112" rx="10" fill="#101016" stroke="#3a3a48" stroke-width="1.5"/>
+    <g fill="#5fd0ff"><rect x="18" y="20" width="56" height="5" rx="2.5"/><rect x="18" y="34" width="96" height="5" rx="2.5" opacity=".85"/><rect x="18" y="48" width="70" height="5" rx="2.5" opacity=".7"/></g>
+    <g fill="#8a8f9e"><rect x="18" y="62" width="104" height="5" rx="2.5" opacity=".7"/><rect x="18" y="76" width="84" height="5" rx="2.5" opacity=".6"/></g>
+    <rect x="114" y="74" width="10" height="12" rx="2" fill="#ffd43b"/>
+  </g>
+
+  <!-- 2 machine pane: the chip -->
+  <g transform="translate(300 128)">
+    <path d="M0 18 L150 0 L150 208 L0 190 Z" fill="url(#pane)" stroke="#4a4a5a" stroke-width="1.5"/>
+    <g fill="#2a2a34"><rect x="22" y="40" width="10" height="10"/><rect x="38" y="40" width="10" height="10"/><rect x="22" y="56" width="10" height="10"/><rect x="22" y="150" width="10" height="10"/><rect x="38" y="150" width="10" height="10"/><rect x="118" y="40" width="10" height="10"/><rect x="118" y="150" width="10" height="10"/></g>
+    <rect x="52" y="62" width="58" height="84" rx="9" fill="#14141b" stroke="#b9bcc8" stroke-width="2.5"/>
+    <rect x="64" y="76" width="36" height="56" fill="url(#cells)"/>
+  </g>
+
+  <!-- 3 model pane: stacked layers of weights -->
+  <g transform="translate(505 120)">
+    <path d="M0 0 L150 20 L150 220 L0 200 Z" fill="url(#pane)" stroke="#4a4a5a" stroke-width="1.5"/>
+    <rect x="30" y="26" width="86" height="150" rx="6" fill="#1c1630" stroke="#7a62e0" stroke-width="2"/>
+    <rect x="22" y="36" width="86" height="150" rx="6" fill="#211a3a" stroke="#9d8cf0" stroke-width="2.5" filter="url(#glow)"/>
+    <g fill="#9d8cf0">
+      <rect x="34" y="52" width="10" height="10" opacity=".9"/><rect x="50" y="52" width="10" height="10" opacity=".55"/><rect x="66" y="52" width="10" height="10" opacity=".8"/><rect x="82" y="52" width="10" height="10" opacity=".45"/>
+      <rect x="34" y="68" width="10" height="10" opacity=".5"/><rect x="50" y="68" width="10" height="10" opacity=".95"/><rect x="66" y="68" width="10" height="10" opacity=".6"/><rect x="82" y="68" width="10" height="10" opacity=".85"/>
+      <rect x="34" y="84" width="10" height="10" opacity=".85"/><rect x="50" y="84" width="10" height="10" opacity=".6"/><rect x="66" y="84" width="10" height="10" opacity=".9"/><rect x="82" y="84" width="10" height="10" opacity=".5"/>
+      <rect x="34" y="100" width="10" height="10" opacity=".55"/><rect x="50" y="100" width="10" height="10" opacity=".8"/><rect x="66" y="100" width="10" height="10" opacity=".45"/><rect x="82" y="100" width="10" height="10" opacity=".9"/>
+      <rect x="34" y="116" width="10" height="10" opacity=".9"/><rect x="50" y="116" width="10" height="10" opacity=".5"/><rect x="66" y="116" width="10" height="10" opacity=".85"/><rect x="82" y="116" width="10" height="10" opacity=".6"/>
+      <rect x="34" y="132" width="10" height="10" opacity=".6"/><rect x="50" y="132" width="10" height="10" opacity=".9"/><rect x="66" y="132" width="10" height="10" opacity=".55"/><rect x="82" y="132" width="10" height="10" opacity=".8"/>
+      <rect x="34" y="148" width="10" height="10" opacity=".8"/><rect x="50" y="148" width="10" height="10" opacity=".45"/><rect x="66" y="148" width="10" height="10" opacity=".9"/><rect x="82" y="148" width="10" height="10" opacity=".6"/>
+      <rect x="34" y="164" width="10" height="10" opacity=".5"/><rect x="50" y="164" width="10" height="10" opacity=".85"/><rect x="66" y="164" width="10" height="10" opacity=".6"/><rect x="82" y="164" width="10" height="10" opacity=".9"/>
+    </g>
+  </g>
+
+  <!-- 4 memory pane: KV rows and the fixed state -->
+  <g transform="translate(700 135)">
+    <path d="M0 0 L120 16 L120 196 L0 180 Z" fill="url(#pane)" stroke="#4a4a5a" stroke-width="1.5"/>
+    <g stroke="#4fe0b0" stroke-width="2" fill="#0f1a17"><rect x="24" y="30" width="72" height="26" rx="3"/><rect x="24" y="64" width="72" height="26" rx="3"/><rect x="24" y="98" width="72" height="26" rx="3"/><rect x="24" y="140" width="72" height="22" rx="3"/></g>
+    <g fill="#4fe0b0" opacity=".75"><rect x="34" y="40" width="44" height="6" rx="1"/><rect x="34" y="74" width="50" height="6" rx="1"/><rect x="34" y="108" width="38" height="6" rx="1"/><rect x="34" y="148" width="46" height="6" rx="1"/></g>
+  </g>
+
+  <!-- 5 answer card -->
+  <g transform="translate(985 176)">
+    <rect width="160" height="112" rx="10" fill="#101016" stroke="#3a3a48" stroke-width="1.5"/>
+    <g fill="#ffd43b"><rect x="18" y="20" width="96" height="5" rx="2.5"/><rect x="18" y="34" width="124" height="5" rx="2.5"/><rect x="18" y="48" width="74" height="5" rx="2.5" opacity=".9"/><rect x="18" y="62" width="112" height="5" rx="2.5" opacity=".85"/><rect x="18" y="76" width="60" height="5" rx="2.5" opacity=".8"/></g>
+    <rect x="126" y="82" width="12" height="14" rx="2" fill="#ffd43b" filter="url(#glow)"/>
+  </g>
+
+  <!-- tokens walking through, drawn over the panes -->
+  <g filter="url(#glow)">
+    <rect x="262" y="205" width="9" height="9" fill="#5fd0ff"/><rect x="286" y="216" width="9" height="9" fill="#5fd0ff"/><rect x="309" y="203" width="9" height="9" fill="#62d6ff"/>
+    <rect x="460" y="214" width="9" height="9" fill="#8fe0ff"/><rect x="480" y="204" width="9" height="9" fill="#9fd8ff"/>
+    <rect x="662" y="218" width="9" height="9" fill="#a99cf4"/><rect x="684" y="226" width="9" height="9" fill="#7fe8d0"/>
+    <rect x="830" y="236" width="9" height="9" fill="#5fe6bd"/><rect x="855" y="230" width="9" height="9" fill="#8fe39a"/><rect x="893" y="222" width="9" height="9" fill="#c8e06a"/><rect x="920" y="226" width="9" height="9" fill="#ffe066"/><rect x="948" y="220" width="9" height="9" fill="#ffd43b"/>
+  </g>
+
+  <!-- wordmark: a squared monospace drawn as text; falls back cleanly where the font is missing -->
+  <text x="600" y="470" text-anchor="middle" font-family="'JetBrains Mono','IBM Plex Mono','SF Mono',Menlo,Consolas,monospace" font-size="124" font-weight="700" letter-spacing="-3"><tspan fill="#f4f4f6">token</tspan><tspan fill="#ffd43b">walk</tspan></text>
+</svg>

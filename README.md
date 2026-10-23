@@ -2,7 +2,7 @@
   <a href="https://infraphysics.net/lab/projects/llm-inference-console"><img src="docs/assets/infraphysics.svg" width="72" alt="InfraPhysics"></a>
 </p>
 
-<p align="center"><img src="docs/assets/tokenwalk-banner.png" width="720" alt="tokenwalk"></p>
+<p align="center"><img src="docs/assets/tokenwalk-banner.svg" width="760" alt="tokenwalk"></p>
 
 <p align="center">
   Watch one LLM request walk through a local machine.<br>
@@ -17,7 +17,7 @@
 
 <p align="center">
   <b>A project of <a href="https://infraphysics.net">InfraPhysics</a>.</b>
-  Try it live at <a href="https://infraphysics.net/playgrounds/7148293/simulator"><b>infraphysics.net/playgrounds/7148293/simulator</b></a><br>
+  Try it live at <a href="https://infraphysics.net/playgrounds/7148293/tokenwalk"><b>infraphysics.net/playgrounds/7148293/tokenwalk</b></a><br>
   How it is built: <a href="https://infraphysics.net/lab/projects/llm-inference-console">the project page</a> ·
   the ideas, one at a time: <a href="https://infraphysics.net/blog/bits2bricks/transformers-and-local-inference-from-zero">the article</a>
 </p>
@@ -89,7 +89,7 @@ A browser page can only talk to a local server that allows the page's **origin**
 | `npm run dev` | `http://localhost:5173` | allowed | nothing |
 | `npm run preview` | `http://localhost:4173` | allowed | nothing |
 | `dist/tokenwalk.html` opened from disk | `null` | refused | serve it (`npm run preview`), or allow every origin (below) |
-| [infraphysics.net/…/simulator](https://infraphysics.net/playgrounds/7148293/simulator) | `https://infraphysics.net` | refused | allow it (below) |
+| [infraphysics.net/…/tokenwalk](https://infraphysics.net/playgrounds/7148293/tokenwalk) | `https://infraphysics.net` | refused | allow it (below) |
 
 (Checked against Ollama 0.40.7: any `localhost` or `127.0.0.1` port is accepted; `null` and other sites get 403.)
 
