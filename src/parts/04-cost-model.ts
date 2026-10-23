@@ -28,7 +28,23 @@ function compute() {
   }
   const ttft = t, firstDecode = segs.length;
   let specInfo = null;
-  if (!S.spec) {
+  const useMtp = !S.spec && S.mtp && m.mtp;
+  if (useMtp) {
+    // MTP: draft k tokens with the model's own next-n block, verify them in one pass of the full model.
+    const k = MTP.k, alpha = mtpAlpha(S.temp), draftT = mtpDraftGB(m, S.quant) / bwEff + mc.layerMs / 1000;
+    const r = rngOf(9191 + Math.round(alpha * 1000));
+    let i = 0, rounds = 0, acc = 0;
+    while (i < S.ans) {
+      let a = 0; while (a < k && r() < alpha) a++;
+      const n = Math.min(a + 1, S.ans - i), ctxNow = prompt + i;
+      const vBytes = passReadGB(m, S.quant, k + 1) + kvGB(m, S.kv, ctxNow);
+      const verifyT = Math.max(vBytes / bwEff, (2 * m.readParams * (k + 1)) / (mc.tflops * 1e12)) + (mc.layerMs * m.layers) / 1000;
+      segs.push({ k: 'round', a: t, d: k * draftT + verifyT, tok: i, n, acc: a, ctx: ctxNow, bytes: vBytes, draftT, verifyT, mtp: true });
+      t += k * draftT + verifyT; i += n; rounds++; acc += a;
+    }
+    const plain = decodeStep(mc, m, S.quant, S.kv, prompt + S.ans / 2);
+    specInfo = { kind: 'mtp', k, alpha, draftT, rounds, perRound: S.ans / rounds, speedup: (S.ans / (t - ttft)) * plain.seconds, accRate: acc / (rounds * k), plainTps: 1 / plain.seconds };
+  } else if (!S.spec) {
     for (let i = 0; i < S.ans; i++) { const st = decodeStep(mc, m, S.quant, S.kv, prompt + i); segs.push({ k: 'decode', a: t, d: st.seconds, tok: i, ctx: prompt + i, bytes: st.bytesGB }); t += st.seconds; }
   } else {
     const bpw = QUANTS[S.quant].bpw, draftT = (DRAFT.params * bpw) / 8 / GB / bwEff + (mc.layerMs * DRAFT.layers) / 1000;
@@ -43,7 +59,7 @@ function compute() {
       t += S.gamma * draftT + verifyT; i += n; rounds++; acc += a;
     }
     const plain = decodeStep(mc, m, S.quant, S.kv, prompt + S.ans / 2);
-    specInfo = { draftT, rounds, perRound: S.ans / rounds, speedup: (S.ans / (t - ttft)) * plain.seconds, accRate: acc / (rounds * S.gamma) };
+    specInfo = { kind: 'draft', draftT, rounds, perRound: S.ans / rounds, speedup: (S.ans / (t - ttft)) * plain.seconds, accRate: acc / (rounds * S.gamma) };
   }
   const total = t, decodeTime = total - ttft, tps = S.ans / Math.max(1e-9, decodeTime);
   const mid = decodeStep(mc, m, S.quant, S.kv, Math.min(ctx, prompt + S.ans / 2));

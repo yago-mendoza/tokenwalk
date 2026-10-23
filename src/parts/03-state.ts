@@ -4,7 +4,7 @@ function defaults() {
   return {
     machine: DEFAULTS.machine, model: DEFAULTS.model, quant: DEFAULTS.quant, kv: DEFAULTS.kv, ctx: DEFAULTS.ctx,
     sys: 800, docs: DEFAULTS.prompt - 800 - 50, q: 50, ans: DEFAULTS.output,
-    temp: 0.7, topk: 6, topp: 0.95, seed: 1, cached: false, cold: false, disk: false, spec: false, gamma: 4, alpha: 0.7, keepalive: 5,
+    temp: 0.7, topk: 6, topp: 0.95, seed: 1, cached: false, cold: false, disk: false, spec: false, mtp: true, gamma: 4, alpha: 0.7, keepalive: 5,
     ...machineFields(DEFAULTS.machine),
   };
 }
@@ -14,7 +14,7 @@ const PARAMS = [
   ['machine', 'machine', 's'], ['model', 'model', 's'], ['quant', 'quant', 's'], ['kv', 'kv', 's'], ['ctx', 'ctx', 'n'],
   ['system', 'sys', 'n'], ['history', 'docs', 'n'], ['question', 'q', 'n'], ['answer', 'ans', 'n'],
   ['temp', 'temp', 'n'], ['topp', 'topp', 'n'], ['topk', 'topk', 'n'], ['cache', 'cached', 'b'], ['cold', 'cold', 'b'], ['disk', 'disk', 'b'],
-  ['spec', 'spec', 'b'], ['gamma', 'gamma', 'n'], ['alpha', 'alpha', 'n'], ['keepalive', 'keepalive', 'n'], ['seed', 'seed', 'n'],
+  ['spec', 'spec', 'b'], ['mtp', 'mtp', 'b'], ['gamma', 'gamma', 'n'], ['alpha', 'alpha', 'n'], ['keepalive', 'keepalive', 'n'], ['seed', 'seed', 'n'],
   ['ram', 'ram', 'n'], ['tflops', 'tflops', 'n'], ['mts', 'mts', 'n'], ['bus', 'bus', 'n'], ['vram', 'vram', 'n'], ['vbw', 'vbw', 'n'],
 ];
 const LENSES = ['system', 'model', 'memory', 'tokens'];

@@ -10,7 +10,7 @@
 <body data-zone="watch">
 <div id="app">
   <header id="top">
-    <div class="brand"><span class="mark"></span><span class="t" data-t="title">One request, end to end</span><small>LLM · OLLAMA · LLAMA.CPP</small></div>
+    <div class="brand"><span class="mark"></span><span class="t" data-t="title">One request, end to end</span><button type="button" id="engineBadge"></button></div>
     <div id="chip" role="button" tabindex="0"></div>
     <span id="pill" class="pill idle"><i></i><span id="pillTxt">IDLE</span></span>
     <button type="button" class="tbtn" id="alertBtn"><span id="alertIc"></span><span class="cnt" id="alertCnt">0</span></button>
@@ -80,6 +80,7 @@
         <div class="in">
           <label class="sw"><input type="checkbox" id="cached"><i></i><span data-t="cached"></span></label>
           <label class="sw"><input type="checkbox" id="disk"><i></i><span data-t="disk"></span></label>
+          <label class="sw" id="mtpRow"><input type="checkbox" id="mtp"><i></i><span data-t="mtp"></span></label>
           <label class="sw"><input type="checkbox" id="spec"><i></i><span data-t="spec"></span></label>
           <div id="specFields" style="display:none;gap:10px">
             <div class="fld"><label for="gamma"><span data-t="gamma"></span><output id="gammaOut"></output></label><input type="range" id="gamma" min="1" max="8" step="1"></div>

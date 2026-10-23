@@ -12,7 +12,7 @@ function bind() {
   for (const id2 of ['sys', 'docs', 'q', 'ans', 'gamma', 'keepalive']) $(id2).addEventListener('input', e => { if (locked()) return; S[id2] = Math.round(+e.target.value); liveChange(); });
   for (const id2 of ['sys', 'docs', 'q', 'ans', 'gamma', 'keepalive']) { $(id2).addEventListener('change', guard(e => { S[id2] = Math.round(+e.target.value); changed(); })); $(id2).addEventListener('input', e => { const o = $(id2 + 'Out'); if (o && !locked()) o.textContent = num(Math.round(+e.target.value)); }); }
   $('alpha').addEventListener('change', guard(e => { S.alpha = +e.target.value; changed(); }));
-  for (const id2 of ['cold', 'cached', 'disk', 'spec']) $(id2).addEventListener('change', guard(e => { S[id2] = e.target.checked; if (id2 === 'cold') { KEEP.unloaded = false; KEEP.idle = 0; } changed(); }));
+  for (const id2 of ['cold', 'cached', 'disk', 'spec', 'mtp']) $(id2).addEventListener('change', guard(e => { S[id2] = e.target.checked; if (id2 === 'cold') { KEEP.unloaded = false; KEEP.idle = 0; } changed(); }));
   for (const id2 of ['temp', 'topp']) $(id2).addEventListener('input', e => { S[id2] = +e.target.value; resample(); });
   $('topk').addEventListener('input', e => { S.topk = Math.round(+e.target.value); resample(); });
   $('seed').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v > 0) { S.seed = v; resample(); } else e.target.value = S.seed; });

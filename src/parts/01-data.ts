@@ -28,13 +28,13 @@ const MODELS = {
     name: 'Qwen3.6 35B-A3B', tag: 'qwen3.6:35b-a3b', moe: true,
     total: 35.51e9, readParams: 3.0e9, layers: 40, kvLayers: 10, qHeads: 16, kvHeads: 2, headDim: 256,
     hidden: 2048, vocab: 248320, experts: 256, expertsUsed: 8, sharedExperts: 1, expertParams: 3 * 2048 * 512,
-    ctxMax: 262144, stateMB: 63, measured: true,
+    ctxMax: 262144, stateMB: 63, measured: true, mtp: 1,
   },
   qwen38: {
     name: 'Qwen3.8 27B', tag: 'qwen3.8:27b', moe: false,
     total: 27.32e9, readParams: 26.05e9, layers: 64, kvLayers: 16, qHeads: 24, kvHeads: 4, headDim: 256,
     hidden: 5120, vocab: 248320, experts: 0, expertsUsed: 0, sharedExperts: 0, expertParams: 0,
-    ctxMax: 262144, stateMB: 150, measured: true,
+    ctxMax: 262144, stateMB: 150, measured: true, mtp: 1,
   },
   llama8b: {
     name: 'Llama 3.1 8B', tag: 'llama3.1:8b', moe: false,
@@ -103,6 +103,16 @@ const SYSTEM_GB = 32; // Windows, Chrome, Cursor and the rest, measured before a
 
 const fileGB = (m, q) => (m.total * QUANTS[q].bpw) / 8 / GB;
 const readGB = (m, q) => (m.readParams * QUANTS[q].bpw) / 8 / GB;
+// Multi-token prediction (MTP). Both Qwen GGUFs carry one extra "next-n" block (nextn_predict_layers: 1) and
+// Ollama runs it as a built-in draft (draft_num_predict 2): the MTP block guesses the next tokens, and one pass of
+// the full model checks them all. A draft step reads one block plus the output head; how many guesses survive
+// (the acceptance rate) depends on how predictable the text is, so it falls as the temperature rises.
+// Fitted on the laptop, qwen3.6:35b-a3b, Ollama 0.40.7, 2026-10-23, 96-token answers: drafting off 13.2 tok/s
+// (short and 3,505-token prompts alike); drafting on, temperature 0 on the long prompt 15.6 tok/s (x1.18);
+// temperature 0.7, 11.5 and 10.6 tok/s (x0.87, x0.80).
+const MTP = { k: 2, alphaT0: 0.55, alphaT07: 0.25 };
+const mtpDraftGB = (m, q) => (((m.readParams - m.vocab * m.hidden) / m.layers + m.vocab * m.hidden) * QUANTS[q].bpw) / 8 / GB;
+const mtpAlpha = T => { const t = Math.max(0, T); return Math.max(0.05, t <= 0.7 ? MTP.alphaT0 + (MTP.alphaT07 - MTP.alphaT0) * (t / 0.7) : MTP.alphaT07 * (1 - Math.min(1, (t - 0.7) / 1.3) * 0.6)); };
 const kvBytesPerToken = (m, kv) => 2 * m.kvLayers * m.kvHeads * m.headDim * KV_TYPES[kv].bytes;
 const kvGB = (m, kv, ctx) => (kvBytesPerToken(m, kv) * ctx) / GB;
 const buffersGB = m => 0.1 + (m.vocab * 4 * 64) / GB; // compute scratch and logits; ollama ps on the laptop (20.6 GiB) leaves ~0.3 GB for them
@@ -136,6 +146,14 @@ function decodeStep(mc, m, q, kv, ctx) {
   return { seconds: t, bytesGB: bytes, ceiling: mc.bw / bytes, fastShare: pl.fastShare };
 }
 const decodeTokS = (mc, m, q, kv, ctx) => 1 / decodeStep(mc, m, q, kv, ctx).seconds;
+// Expected tokens a second with MTP drafting k tokens at acceptance alpha: (1 - a^(k+1)) / (1 - a) tokens per round,
+// each round k draft steps (one block plus the head) and one verification pass carrying k + 1 tokens.
+function mtpTokS(mc, m, q, kv, ctx, alpha, k = MTP.k) {
+  const bw = mc.bw * mc.bwEff, draftT = mtpDraftGB(m, q) / bw + mc.layerMs / 1000;
+  const verifyT = Math.max((passReadGB(m, q, k + 1) + kvGB(m, kv, ctx)) / bw, (2 * m.readParams * (k + 1)) / (mc.tflops * 1e12)) + (mc.layerMs * m.layers) / 1000;
+  const perRound = alpha >= 1 ? k + 1 : (1 - alpha ** (k + 1)) / (1 - alpha);
+  return perRound / (k * draftT + verifyT);
+}
 
 // Seconds to read a prompt of n tokens, in chunks of 512 (llama.cpp's default micro-batch). Each chunk
 // costs the larger of reading its weights and doing its arithmetic, plus the attention over the context so

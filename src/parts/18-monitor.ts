@@ -124,7 +124,7 @@ function renderTrends() {
     const cv = d.querySelector('canvas'), x = fit(cv, 74, 20); drawSpark(x, tr, 74, 20, false);
   });
   // whole-run settings that do not move: one line of chips
-  const short = id => { if (id === 'spec') return R.specInfo ? L(`on · ×${dec(R.specInfo.speedup.toFixed(2))}`, `activa · ×${dec(R.specInfo.speedup.toFixed(2))}`) : L('off', 'apagada'); if (id === 'prefix') return R.startAt ? L(`${pct(R.startAt / R.prompt)} reused`, `${pct(R.startAt / R.prompt)} reutilizado`) : L('none', 'ninguno'); return INSTR.find(q => q.id === id).val().replace(/<[^>]+>/g, '').split(' · ')[0]; };
+  const short = id => { if (id === 'spec') return R.specInfo ? (R.specInfo.kind === 'mtp' ? `MTP · k ${R.specInfo.k} · ×${dec(R.specInfo.speedup.toFixed(2))}` : L(`on · ×${dec(R.specInfo.speedup.toFixed(2))}`, `activa · ×${dec(R.specInfo.speedup.toFixed(2))}`)) : L('off', 'apagada'); if (id === 'prefix') return R.startAt ? L(`${pct(R.startAt / R.prompt)} reused`, `${pct(R.startAt / R.prompt)} reutilizado`) : L('none', 'ninguno'); return INSTR.find(q => q.id === id).val().replace(/<[^>]+>/g, '').split(' · ')[0]; };
   const ch = `<div class="kvh">${esc(L('In effect', 'En vigor'))}</div>` + ['place', 'spec', 'prefix', 'keep'].map(id => { const ins = INSTR.find(q => q.id === id); return `<button type="button" class="ichip ${ins.level()}" data-id="${id}"><span>${esc(ins.label())}</span><b>${esc(short(id))}</b></button>`; }).join('');
   if ($('ichips').dataset.k !== ch) { $('ichips').dataset.k = ch; $('ichips').innerHTML = ch; $('ichips').querySelectorAll('button').forEach(b => b.addEventListener('click', () => select({ k: 'inst', id: b.dataset.id }))); }
 }

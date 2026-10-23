@@ -638,3 +638,12 @@ body.reduced * { transition: none !important; animation: none !important; }
 
 .playg { display: inline-flex; align-items: center; gap: 4px; height: 19px; margin: 0 1px; padding: 0 6px 0 4px; vertical-align: 0; border: 1px solid var(--line2); border-radius: 4px; background: var(--p3); color: var(--ink); font: 500 11.5px/1 var(--mono); cursor: pointer; }
 .playg:hover { border-color: var(--hl); } .playg .ic { width: 11px; height: 11px; color: var(--mid); }
+
+#engineBadge { display: inline-flex; align-items: center; gap: 6px; height: 22px; margin-left: 10px; padding: 0 9px 0 7px; border: 1px solid var(--line2); border-radius: 11px; background: transparent; color: var(--dim); font: 600 10.5px/1 var(--mono); letter-spacing: .04em; cursor: pointer; white-space: nowrap; }
+#engineBadge:hover { color: var(--ink); border-color: var(--hl); } #engineBadge .ic { width: 12px; height: 12px; }
+#engineBadge.on { color: var(--ink); border-color: rgb(255 77 109 / .55); background: rgb(255 77 109 / .08); }
+#engineBadge b { color: #ff6b84; font-weight: 800; letter-spacing: .1em; }
+#engineBadge .livedot { width: 7px; height: 7px; border-radius: 50%; background: #ff4d6d; box-shadow: 0 0 6px #ff4d6d; animation: livepulse 1.6s ease-in-out infinite; }
+#engineBadge .livedot.run { animation-duration: .7s; }
+@keyframes livepulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+body.reduced #engineBadge .livedot { animation: none; }

@@ -33,7 +33,8 @@ function syncControls() {
   $('sysOut').textContent = num(S.sys); $('docsOut').textContent = num(S.docs); $('qOut').textContent = num(S.q); $('ansOut').textContent = num(S.ans);
   $('gammaOut').textContent = String(S.gamma); $('alphaOut').textContent = dec(S.alpha.toFixed(2)); $('keepaliveOut').textContent = S.keepalive ? `${S.keepalive} min` : L('0, unload at once', '0, descarga inmediata');
   $('tempOut').textContent = dec(S.temp.toFixed(2)); $('topkOut').textContent = S.topk >= 6 ? L('off', 'sin corte') : String(S.topk); $('toppOut').textContent = dec(S.topp.toFixed(2));
-  for (const id2 of ['cold', 'cached', 'disk', 'spec']) $(id2).checked = S[id2];
+  for (const id2 of ['cold', 'cached', 'disk', 'spec', 'mtp']) $(id2).checked = S[id2];
+  { const has = !!MODELS[S.model].mtp; $('mtp').disabled = !has || S.spec; $('mtpRow').title = !has ? L('This model has no MTP block', 'Este modelo no tiene bloque MTP') : S.spec ? L('The separate draft model replaces MTP while it is on', 'El modelo borrador aparte sustituye a MTP mientras está activo') : L('What Ollama does by default with this model (draft_num_predict 2)', 'Lo que Ollama hace por defecto con este modelo (draft_num_predict 2)'); $('mtpRow').classList.toggle('off', !has || S.spec); }
   $('specFields').style.display = S.spec ? 'grid' : 'none';
   $('bwFormula').innerHTML = dec(`${num(S.mts)} MT/s × ${S.bus} bit / 8 = <b>${((S.mts * S.bus) / 8 / 1000).toFixed(1)} GB/s</b>`);
   $('ctxNote').textContent = L('Ollama reserved 262,144 by default on the laptop (the right end).', 'Ollama reservaba 262.144 por defecto en el portátil (el extremo derecho).');
@@ -44,7 +45,7 @@ function syncControls() {
   $('vRequest').textContent = `${num(S.sys + S.docs + S.q)} + ${num(S.ans)}`;
   $('vEngine').textContent = `${num(Math.min(S.ctx, m.ctxMax) / 1024)}k · ${S.kv} · ${S.keepalive}m`;
   $('vSamp').textContent = `T ${dec(S.temp.toFixed(2))} · k ${S.topk >= 6 ? L('off', 'no') : S.topk} · p ${dec(S.topp.toFixed(2))}`; if (document.activeElement !== $('seed')) $('seed').value = S.seed;
-  $('vAdv').textContent = [S.cached ? L('prefix', 'prefijo') : '', S.disk ? 'KV disk' : '', S.spec ? `spec γ${S.gamma}` : ''].filter(Boolean).join(' · ') || L('off', 'apagado');
+  $('vAdv').textContent = [S.cached ? L('prefix', 'prefijo') : '', S.disk ? 'KV disk' : '', S.spec ? `spec γ${S.gamma}` : '', !S.spec && S.mtp && MODELS[S.model].mtp ? 'MTP' : ''].filter(Boolean).join(' · ') || L('off', 'apagado');
   $('chip').innerHTML = `${ICON('memory', 's')}<b>${esc(R.mc.short)}</b><span class="sep">/</span><b>${esc(m.name)}</b> ${esc(S.quant)}<span class="sep">/</span>${num(R.prompt)} + ${num(S.ans)} ${L('tokens', 'tokens')}<span class="sep">/</span>num_ctx ${num(R.ctx)}`;
   $('pauseTok').checked = UI.pauseTok; $('pauseLayer').checked = UI.pauseLayer;
   renderScen();
