@@ -32,7 +32,7 @@ function drawTokens(n) {
   // The scale, drawn: a real square of the strip, then how many tokens it stands for.
   { x.font = `400 10px ${FONT}`; const a = L(`${num(R.prompt)} prompt tokens · `, `${num(R.prompt)} tokens de prompt · `), aw = x.measureText(a).width; text(x, a, 0, 44, C.dim, 'left', 10);
     chipSq(x, aw + 1, 36, cs, TOKCOL.docs); text(x, L(` = ${num(Math.round(per))} tokens${R.startAt ? ` · underlined: ${num(R.startAt)} cached, no prefill` : ''}`, ` = ${num(Math.round(per))} tokens${R.startAt ? ` · subrayados: ${num(R.startAt)} en caché, sin prefill` : ''}`), aw + cs + 3, 44, C.dim, 'left', 10); }
-  { const wt = L(`${num(gen)} / ${num(S.ans)} written`, `${num(gen)} / ${num(S.ans)} escritos`); if ($('tokHint').textContent !== wt) $('tokHint').textContent = wt; }
+  { const wt = liveShowing() ? L(`live · ${num(LIVE.toks.length)} tokens from ${LIVE.pick}`, `en vivo · ${num(LIVE.toks.length)} tokens de ${LIVE.pick}`) : L(`${num(gen)} / ${num(S.ans)} written`, `${num(gen)} / ${num(S.ans)} escritos`); if ($('tokHint').textContent !== wt) $('tokHint').textContent = wt; }
   drawHover(id, x);
   const shown = gen + (ls.on && n.seg && n.seg.k !== 'prefill' ? 1 : 0);
   const lvOn = liveShowing(), key = lvOn ? `live|${LIVE.toks.length}|${UI.liveTok}|${lang}` : `${shown}|${lang}|${S.temp}|${S.topk}|${S.topp}|${S.seed}|${P.t > 0 && P.t < R.ttft}|${UI.logitTok}`;
