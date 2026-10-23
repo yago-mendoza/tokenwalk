@@ -270,8 +270,8 @@ function drawModel(n) {
   if (away) { x.font = `600 10.5px ${FONT}`; const ft = L('Follow the pass', 'Seguir la pasada'), fw = x.measureText(ft).width + 18; x.strokeStyle = 'rgba(127,227,255,.55)'; x.strokeRect(ix + iw - fw + .5, iy + .5, fw - 1, 17); text(x, ft, ix + iw - fw / 2, iy + 12.5, C.cy, 'center', 10.5, 600); hit(id, [ix + iw - fw, iy, fw, 18], { k: 'followPass' }); }
   textFit(x, L(`Layer ${focus + 1} of ${m.layers} · ${kindTxt}${away ? ` · the pass is at ${n.layer + 1}` : ''}`, `Capa ${focus + 1} de ${m.layers} · ${kindTxt}${away ? ` · la pasada va por la ${n.layer + 1}` : ''}`), ix, iy + 11, iw - (away ? 150 : 4), C.ink, 'left', 10.5, 600);
   const mats = li.mixer.slice(); if (sh.router) mats.push(sh.router); if (sh.mlp) mats.push(...sh.mlp);
-  const expertsW = sh.expert ? (narrow ? 0 : Math.min(170, iw * .34)) : 0;
-  const availW = iw - 8 - (expertsW ? expertsW + 12 : 0), availH = (narrow && sh.expert ? 150 : ih - 96);
+  const expertsW = sh.expert ? Math.min(narrow ? 150 : 170, iw * .34) : 0;
+  const availW = iw - 8 - (expertsW ? expertsW + 12 : 0), availH = ih - 96;
   const maxOut = Math.max(...mats.map(s => s[2])), sumIn = mats.reduce((s, o) => s + o[1], 0);
   const k = Math.max(1e-6, Math.min((availH - 24) / maxOut, (availW - mats.length * 18) / sumIn));
   // progress of each operation in the focused layer
@@ -298,7 +298,7 @@ function drawModel(n) {
   // attention or state operation, drawn as what it reads
   const special = ops.find(o => o.kind === 'kv' || o.kind === 'state');
   if (special) {
-    const sx2 = narrow ? ix + 8 : Math.min(cx, ix + availW - 70), sy2 = narrow ? baseY + maxOut * k + 36 : iy + ih - 92, pr = Math.max(0, Math.min(1, (lp - special.a) / (special.b - special.a)));
+    const sx2 = narrow ? ix + 8 : Math.min(cx, ix + availW - 70), sy2 = iy + ih - (narrow ? 50 : 92), pr = Math.max(0, Math.min(1, (lp - special.a) / (special.b - special.a)));
     const sel = special.kind === 'kv' ? { k: 'kvlayer', layer: focus } : { k: 'state', layer: focus };
     fillKind(x, special.kind === 'kv' ? 'kv' : 'state', sx2, sy2, 62, 12, .35 + .65 * (pr > 0 ? 1 : 0));
     if (pr > 0 && pr < 1) { x.save(); x.strokeStyle = C.cy; x.shadowColor = C.cy; x.shadowBlur = 6; x.strokeRect(sx2 - 1, sy2 - 1, 64, 14); x.restore(); }
@@ -307,8 +307,8 @@ function drawModel(n) {
     outlineSel(x, sel, sx2, sy2, 62, 12); hit(id, [sx2 - 2, sy2 - 2, 120, 40], sel);
   }
   if (sh.expert) {
-    const gx = narrow ? ix + 8 : ix + iw - expertsW, gy = narrow ? baseY + maxOut * k + 84 : baseY + 4;
-    const cs = Math.max(5, Math.floor(Math.min(expertsW || 150, 150) / 16));
+    const gx = ix + iw - expertsW, gy = baseY + 4;
+    const cs = Math.max(4, Math.floor(Math.min(expertsW || 150, 150, (iy + ih - gy - 74) ) / 16));
     const prefillSeg = n.seg && n.seg.k === 'prefill' && n.layer >= 0;
     const tok = n.seg && (n.seg.k === 'decode' || n.seg.k === 'round') ? n.seg.tok : 0;
     const chosen = new Set(chosenExperts(tok, focus)), touched = prefillSeg ? expertsTouched(m, n.seg.to - n.seg.from) : 0;
