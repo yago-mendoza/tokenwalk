@@ -1,0 +1,8 @@
+data: {"content":"Watch","stop":false}
+
+data: {"content":" the INR","stop":false}
+
+data: {"content":".","stop":false}
+
+data: {"content":"","stop":true,"timings":{"cache_n":0,"prompt_n":36,"prompt_ms":2091.2,"prompt_per_token_ms":58.09,"prompt_per_second":17.21,"predicted_n":3,"predicted_ms":331.9,"predicted_per_token_ms":110.6,"predicted_per_second":9.04}}
+

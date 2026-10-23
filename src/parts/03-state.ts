@@ -52,5 +52,7 @@ function machine() {
   const p = MACHINES[S.machine], mc = { ...p, ramGB: S.ram, tflops: S.tflops };
   if (p.kind === 'unified') { mc.bw = (S.mts * S.bus) / 8 / 1000; mc.hostBw = mc.bw; mc.fastGB = S.ram * (p.fastGB / p.ramGB); }
   else { mc.bw = S.vbw; mc.fastGB = S.vram; }
+  // A live run can calibrate this machine: its effective bandwidth and compute are scaled to match it.
+  const cal = CALIB[S.machine]; if (cal) { mc.bwEff *= cal.bw; mc.tflops *= cal.fl; mc.calibrated = true; }
   return mc;
 }
