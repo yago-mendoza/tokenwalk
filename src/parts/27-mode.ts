@@ -153,7 +153,7 @@ function renderRealCfg() {
 // ---- Run zone in Real: one real request, in real time ----
 const REAL_TIME = () => L('Real time: a real server cannot be slowed, paused or stepped', 'Tiempo real: un servidor real no se puede ralentizar, pausar ni avanzar paso a paso');
 function realElapsed() { return LIVE.running ? (performance.now() - LIVE.t0) / 1000 : LIVE.run ? LIVE.run.totalS || 0 : 0; }
-function realSend() { if (LIVE.running) liveStop(); else if (!MODE.lost) liveRun().then(() => { if (LIVE.run) { S.q = LIVE.run.promptN || S.q; changed(); } }); }
+function realSend() { UI.realT = null; if (LIVE.running) liveStop(); else if (!MODE.lost) liveRun().then(() => { if (LIVE.run) { S.q = LIVE.run.promptN || S.q; S.ans = Math.max(1, LIVE.run.evalN || LIVE.toks.length || S.ans); changed(); } }); }
 let realRunT = 0;
 function renderRealRun() {
   const t = performance.now(); if (t - realRunT < 90) return; realRunT = t;
@@ -198,6 +198,44 @@ setInterval(() => { const r = isReal(); if (wasReal && !r) realControlsBack(); w
 $('estTag').textContent = L('estimate', 'estimación');
 $('estTag').title = L('In Real machine mode, System, Model and Memory draw the cost model’s estimate for the server’s model on the Estimate as machine. Tokens and the Estimate vs measured table are real.', 'En modo Máquina real, Sistema, Modelo y Memoria dibujan la estimación del modelo de costes para el modelo del servidor en la máquina de Estimar como. Tokens y la tabla Estimación frente a medida son reales.');
 
+// ---- Real run -> estimate timeline: the views follow the server ----
+// Phase by phase: the wait before the first token covers the estimate's load, prefill and first pass (split at the
+// server's own load time once it reports it); each arriving token i maps to the estimate's pass for token i.
+// The server does not report layers, so inside one real token the layers are interpolated over its real duration.
+let EST_END = { r: null, m: new Map() };
+function eTokEnd(i) { // when the estimate has written token i (0-based)
+  if (EST_END.r !== R) EST_END = { r: R, m: new Map() };
+  if (EST_END.m.has(i)) return EST_END.m.get(i);
+  let lo = 0, hi = R.total; if (generatedAt(hi - 1e-9) < i + 1) { EST_END.m.set(i, R.total); return R.total; }
+  for (let k = 0; k < 48; k++) { const mid = (lo + hi) / 2; if (generatedAt(mid) >= i + 1) hi = mid; else lo = mid; }
+  EST_END.m.set(i, hi); return hi;
+}
+function realToEst(t) {
+  const run = LIVE.run, arr = LIVE.toks.map(q => q.t / 1000), n = arr.length, eps = 1e-6;
+  if (!R.total) return 0;
+  if (n === 0) return Math.min(t, eTokEnd(0) - eps);
+  const e0 = eTokEnd(0);
+  if (t < arr[0]) {
+    const eLoad = R.load + R.restore;
+    if (run && run.loadS > 0 && eLoad > 0 && arr[0] > run.loadS) return t < run.loadS ? eLoad * t / run.loadS : eLoad + (e0 - eLoad) * (t - run.loadS) / (arr[0] - run.loadS);
+    return e0 * t / arr[0];
+  }
+  let k = n - 1; while (k > 0 && arr[k] > t) k--;
+  const a = eTokEnd(k), b = eTokEnd(Math.min(k + 1, S.ans - 1));
+  if (k < n - 1) return a + (b - a) * (t - arr[k]) / Math.max(eps, arr[k + 1] - arr[k]);
+  if (!LIVE.running) return Math.min(R.total, a + (run && t > arr[k] ? (R.total - a) * Math.min(1, (t - arr[k]) / Math.max(eps, (run.totalS || t) - arr[k])) : 0));
+  const avg = k > 0 ? (arr[k] - arr[0]) / k : Math.max(.05, eTokEnd(1) - e0);
+  return a + (b - a) * Math.min(.98, (t - arr[k]) / Math.max(eps, avg));
+}
+// The record ends at the last real arrival, on the same browser clock as the arrivals (the server's own total can differ).
+function realRecEnd() { const n = LIVE.toks.length; return n ? LIVE.toks[n - 1].t / 1000 : LIVE.run ? LIVE.run.totalS || 0 : realElapsed(); }
+// The estimate's clock in Real: live while the request streams, the chosen point of the record afterwards.
+function realEstT() {
+  if (LIVE.running) return realToEst(realElapsed());
+  if (LIVE.run || LIVE.toks.length) { const end = realRecEnd(); return UI.realT == null ? R.total : realToEst(Math.min(end, UI.realT)); }
+  return null;
+}
+
 // The timeline in Real: the run as it arrives, on a real-time axis, then kept as the record of that run.
 function drawRealTimeline() {
   const id = 'cTime', c = $(id), r = $('tlWrap').getBoundingClientRect(), W = Math.max(200, Math.floor(r.width)), H = Math.max(48, Math.floor(r.height)), x = fit(c, W, H); hitReset(id);
@@ -215,7 +253,10 @@ function drawRealTimeline() {
   }
   const yA = ly(3) - 2, step = [0.5, 1, 2, 5, 10, 20, 30, 60, 120, 300].find(s => T / s <= 8) || 600;
   for (let t = 0; t <= T; t += step) { const xx = Math.round(X(t)) + .5; x.strokeStyle = C.grid; x.beginPath(); x.moveTo(xx, 2); x.lineTo(xx, yA); x.stroke(); text(x, S_(t), xx, yA + 12, C.dim, 'center', 9.5); }
-  if (LIVE.running) { const ph = X(el); x.strokeStyle = C.cy; x.lineWidth = 2; x.beginPath(); x.moveTo(ph, 0); x.lineTo(ph, yA); x.stroke(); x.lineWidth = 1; }
+  // the present: a playhead at the real elapsed time while it runs, then at the chosen point of the record (the end by default)
+  const endT = realRecEnd(), tp = LIVE.running ? el : (run || arr.length) ? (UI.realT == null ? endT : Math.min(endT, UI.realT)) : null;
+  if (tp !== null) { const ph = X(tp); x.strokeStyle = C.ink; x.lineWidth = 2; x.beginPath(); x.moveTo(ph, 0); x.lineTo(ph, yA); x.stroke(); x.lineWidth = 1; x.fillStyle = C.ink; x.beginPath(); x.moveTo(ph - 5, 0); x.lineTo(ph + 5, 0); x.lineTo(ph, 6); x.fill(); }
+  timeGeo = { lab, w, t0: 0, t1: T, real: true, scale: 'real', endT: (run || arr.length) && !LIVE.running ? endT : null };
 }
 
 // ---- start: resume Real only when the last session was Real and the server answers quickly ----

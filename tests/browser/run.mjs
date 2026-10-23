@@ -210,6 +210,34 @@ await check('mode: connect, send, record, then back to the simulation restored e
   await p.ev(`leaveReal(true)`);
 });
 
+await check('mode: the views advance with the real run while it streams', async () => {
+  await fresh(); await p.ev(mockOllama(false)); await toReal(); await p.ev(`setLens('model'); UI.modelMode = 'grid'`);
+  await p.ev(`window.__slow = 40; document.getElementById('play').click()`); await until('LIVE.running');
+  await until('LIVE.toks.length >= 6', 8000);
+  const a = await p.ev('[P.t, generatedAt(P.t), LIVE.toks.length, now().layer]');
+  await until('LIVE.toks.length >= ' + (a[2] + 10), 8000);
+  const b = await p.ev('[P.t, generatedAt(P.t), LIVE.toks.length]');
+  assert(b[0] > a[0] && b[1] > a[1], 'the estimate clock did not follow the real run: ' + JSON.stringify([a, b]));
+  assert(Math.abs(b[1] - b[2]) <= 2, 'tokens written in the views do not match the real tokens: ' + JSON.stringify(b));
+  assert(/interpolated within each real token/.test(await p.ev(`LENS_ABOUT().model[1]`)), 'no note that layers are interpolated');
+  await p.ev(`setLens('memory')`); await sleep(300); const kv1 = await p.ev('tokensInCache(P.t)'); await sleep(700); const kv2 = await p.ev('tokensInCache(P.t)');
+  assert(kv2 > kv1, 'the KV cache does not grow in Memory: ' + kv1 + ' -> ' + kv2);
+  await until('!LIVE.running && !!LIVE.run', 12000); await p.ev('window.__slow = 0; setLens("system")');
+});
+
+await check('mode: the timeline has a present playhead in Real, and the record scrubs the views', async () => {
+  await fresh(); await p.ev(mockOllama(false)); await toReal();
+  await p.ev(`window.__slow = 25; document.getElementById('play').click()`); await until('LIVE.running'); await until('LIVE.toks.length >= 3', 8000);
+  const g = await p.ev('JSON.stringify(timeGeo)'); assert(/"real":true/.test(g), 'no real timeline geometry');
+  await until('!LIVE.running && !!LIVE.run', 12000); await p.ev('window.__slow = 0'); await sleep(200);
+  const end = await p.ev('[P.t, generatedAt(P.t), LIVE.toks.length]'); assert(end[1] === end[2] || end[1] >= end[2] - 1, 'after the run the views are not at its end: ' + JSON.stringify(end));
+  const r = await p.ev(`(() => { const r = document.getElementById('cTime').getBoundingClientRect(); return [r.x + timeGeo.lab + timeGeo.w * (timeGeo.endT * .5 / timeGeo.t1), r.y + r.height / 2]; })()`);
+  await p.cmd('Input.dispatchMouseEvent', { type: 'mousePressed', x: r[0], y: r[1], button: 'left', clickCount: 1 }); await p.cmd('Input.dispatchMouseEvent', { type: 'mouseReleased', x: r[0], y: r[1], button: 'left', clickCount: 1 }); await sleep(250);
+  const mid = await p.ev('[UI.realT, timeGeo.endT, generatedAt(P.t), LIVE.toks.length, LIVE.running]');
+  assert(mid[0] > 0 && mid[0] < mid[1] && mid[2] < mid[3] && !mid[4], 'scrubbing the record did not move the views back without sending: ' + JSON.stringify(mid));
+  await p.ev(`leaveReal(true)`);
+});
+
 await check('mode: switching back while a real request runs asks, and keeps running by default', async () => {
   await fresh(); await p.ev(mockOllama(false)); await toReal();
   await p.ev(`window.__slow = 120; document.getElementById('play').click()`); await until('LIVE.running');
