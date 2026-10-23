@@ -333,7 +333,7 @@ function drawModel(n) {
     const prefillSeg = n.seg && n.seg.k === 'prefill' && n.layer >= 0;
     const tok = n.seg && (n.seg.k === 'decode' || n.seg.k === 'round') ? n.seg.tok : 0;
     const chosen = new Set(chosenExperts(tok, focus)), touched = prefillSeg ? expertsTouched(m, n.seg.to - n.seg.from) : 0;
-    textFit(x, prefillSeg ? L(`${num(touched)} of 256 experts touched by this chunk`, `${num(touched)} de 256 expertos tocados por este bloque`) : L('256 experts · 8 chosen + 1 shared', '256 expertos · 8 elegidos + 1 compartido'), gx, gy - 6, W - gx - 4, C.mid, 'left', 9.5);
+    textFit(x, prefillSeg ? L(`${num(touched)} of 256 experts touched by this chunk`, `${num(touched)} de 256 expertos tocados por este bloque`) : L(`${R.m.experts} experts · ${R.m.expertsUsed}+${R.m.sharedExperts} read`, `${R.m.experts} expertos · ${R.m.expertsUsed}+${R.m.sharedExperts} leídos`), gx, gy - 6, W - gx - 4, C.mid, 'left', 9.5);
     for (let e = 0; e < 256; e++) {
       const ex = gx + (e % 16) * cs, ey = gy + Math.floor(e / 16) * cs, on = prefillSeg ? rngOf(e * 7 + 1)() < touched / 256 : chosen.has(e);
       const opE = ops.find(o => o.e === e), pr = opE ? Math.max(0, Math.min(1, (lp - opE.a) / (opE.b - opE.a))) : 0;
