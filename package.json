@@ -1,0 +1,22 @@
+{
+  "name": "tokenwalk",
+  "version": "0.1.0",
+  "description": "Watch one LLM request walk through a local machine: tokens, layers, KV cache and memory, pass by pass, on real hardware numbers.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Yago Mendoza",
+  "repository": "github:yago-mendoza/tokenwalk",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node tools/single-file.mjs",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/unit/*.test.mjs\" && node tests/browser/run.mjs",
+    "test:unit": "node --test \"tests/unit/*.test.mjs\"",
+    "test:browser": "node tests/browser/run.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^6.4.5"
+  }
+}
