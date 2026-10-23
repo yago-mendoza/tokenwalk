@@ -1,0 +1,187 @@
+// @ts-nocheck: DOM-heavy UI, to be typed in a later pass
+// ===== Inspector: what a thing is, what it holds now, why it matters, its status =====
+const TAGS = { orch: ['orchestrating, near idle', 'orquestando, casi inactiva'], busy: ['busy', 'ocupado'], idle: ['idle', 'inactivo'], waiting: ['waiting on memory', 'esperando a la memoria'], unused: ['unused by this engine', 'sin uso en este motor'], full: ['full', 'llena'], spilled: ['spilled', 'desbordado'], loaded: ['loaded', 'cargado'], loading: ['loading', 'cargando'], reading: ['being read', 'leyéndose'], growing: ['growing', 'creciendo'], fixed: ['fixed size', 'tamaño fijo'], nominal: ['nominal', 'normal'], caution: ['caution', 'atención'], critical: ['critical', 'crítico'], cold: ['not loaded', 'sin cargar'], free: ['free', 'libre'], chosen: ['chosen this token', 'elegido en este token'], skipped: ['not chosen', 'no elegido'], written: ['written', 'escrito'], pending: ['pending', 'pendiente'], cached: ['cached', 'en caché'] };
+const tagCls = { orch: 'idle', busy: 'busy', idle: 'idle', waiting: 'caution', unused: 'unused', full: 'critical', spilled: 'critical', loaded: 'nominal', loading: 'busy', reading: 'busy', growing: 'busy', fixed: 'idle', nominal: 'nominal', caution: 'caution', critical: 'critical', cold: 'caution', free: 'idle', chosen: 'busy', skipped: 'idle', written: 'nominal', pending: 'idle', cached: 'nominal' };
+const tg = k => [TAGS[k][lang === 'es' ? 1 : 0], tagCls[k]];
+function inspect(sel) {
+  const ex = inspectExtra(sel); if (ex) return ex;
+  const n = now(), { mc, m } = R, phase = n.seg ? n.seg.k : '', decoding = phase === 'decode' || phase === 'round', inCache = tokensInCache(P.t);
+  const util = utilNow(n), loaded = !(R.cold && (P.t === 0 || phase === 'load'));
+  const computeTag = util > .5 ? tg('busy') : phase && phase !== 'load' && phase !== 'restore' ? tg('waiting') : tg('idle');
+  const memTag = decoding || phase === 'prefill' ? tg('reading') : tg('idle');
+  if (sel.k === 'part') {
+    const id = sel.id, perTok = R.mid.bytesGB;
+    const P2 = {
+      ssd: [L('SSD', 'SSD'), phase === 'load' ? tg('reading') : tg('idle'), [[L('GGUF file', 'Archivo GGUF'), dec(fmtGB(R.weights))], [L('Read speed used', 'Velocidad de lectura usada'), dec(`${ssdGBs(S.machine)} GB/s`)], [L('Load from it', 'Carga desde él'), S_(fileGB(m, S.quant) / ssdGBs(S.machine))]],
+        L('Where the model file lives. Nothing is computed here: it is read once, when the model loads, and again only if the server unloads it.', 'Donde vive el archivo del modelo. Aquí no se calcula nada: se lee una vez, al cargar el modelo, y otra solo si el servidor lo descarga.'),
+        L('A cold load is the first thing a request after keep_alive pays. Saved KV caches can live here too and come back in a second instead of a full prefill.', 'Una carga en frío es lo primero que paga una petición tras keep_alive. Las cachés KV guardadas también pueden vivir aquí y volver en un segundo en vez de un prefill entero.')],
+      sys: [L('System and apps', 'Sistema y apps'), tg('fixed'), [[L('Memory', 'Memoria'), dec(fmtGB(mc.kind === 'unified' ? sysGB() : sysGB() / 2))]],
+        L('Windows, Chrome, Cursor, Claude Code and the rest, measured on the article’s laptop before any model loaded.', 'Windows, Chrome, Cursor, Claude Code y el resto, medidos en el portátil del artículo antes de cargar ningún modelo.'),
+        L('On unified memory the model shares the same RAM with all of this; what is left is what the model, its KV cache and its buffers can use.', 'Con memoria unificada el modelo comparte la misma RAM con todo esto; lo que queda es lo que pueden usar el modelo, su caché KV y sus buffers.')],
+      weights: [L('Weights', 'Pesos'), !loaded ? tg('cold') : phase === 'load' ? tg('loading') : R.pl.fastShare < .999 ? tg('spilled') : memTag, [[L('Loaded', 'Cargados'), `${dec(fmtGB(R.weights * (mc.kind === 'unified' ? 1 : R.pl.fastShare)))} · ${GiB(R.weights * (mc.kind === 'unified' ? 1 : R.pl.fastShare))}`], [L('Layers', 'Capas'), num(m.layers)], [L('Read per token', 'Leídos por token'), B(readGB(m, S.quant) * 1e9)], [L('Bits per weight', 'Bits por peso'), dec(QUANTS[S.quant].bpw)]],
+        L('The model itself: one slab per layer, the numbers learned in training, fixed while you use it. Every written token passes through all the layers and reads the active part of each.', 'El modelo en sí: una losa por capa, los números aprendidos en el entrenamiento, fijos mientras lo usas. Cada token escrito pasa por todas las capas y lee la parte activa de cada una.'),
+        L('Their size decides what fits; the bytes a token reads decide how fast it writes. They never move into the chip: they are re-read from memory for every token.', 'Su tamaño decide qué cabe; los bytes que lee un token deciden lo rápido que escribe. Nunca se mudan al chip: se releen de memoria en cada token.')],
+      spill: [L('Spilled weights', 'Pesos desbordados'), tg('spilled'), [[L('In system RAM', 'En la RAM del sistema'), dec(fmtGB(R.weights * (1 - R.pl.fastShare)))], [L('Read at', 'Leídos a'), dec(`${mc.hostBw} GB/s`)]],
+        L('Weights that did not fit in VRAM. The CPU reads them from system RAM at a fraction of the card’s speed.', 'Pesos que no cupieron en la VRAM. La CPU los lee de la RAM del sistema a una fracción de la velocidad de la tarjeta.'),
+        L('Every token waits for this slow part, so a small spill costs far more than its share.', 'Cada token espera a esta parte lenta, así que un desborde pequeño cuesta mucho más que su proporción.')],
+      kv: [L('KV cache', 'Caché KV'), inCache >= R.ctx - .5 ? tg('full') : decoding || phase === 'prefill' ? tg('growing') : tg('idle'), [[L('Filled', 'Llena'), `${num(Math.floor(inCache))} ${L('tokens', 'tokens')}`], [L('Bytes', 'Bytes'), B(kvBytesPerToken(m, S.kv) * inCache)], [L('Reserved', 'Reservada'), B(R.kvRes * 1e9)], [L('Per token', 'Por token'), `${num(kvBytesPerToken(m, S.kv))} B`]],
+        L(`Keys and values of every token so far, at each of the ${m.kvLayers} attention layers. Written once per token and read in full by every later token.`, `Claves y valores de cada token anterior, en cada una de las ${m.kvLayers} capas de atención. Se escriben una vez por token y cada token posterior las lee enteras.`),
+        L('It is why a token does not recompute the past, and why a long context costs memory and slows decode a little.', 'Es por lo que un token no recalcula el pasado, y por lo que un contexto largo cuesta memoria y frena un poco el decode.')],
+      state: [L('Recurrent state', 'Estado recurrente'), tg('fixed'), [[L('Size', 'Tamaño'), B(m.stateMB * 1e6)], [L('Layers with it', 'Capas que lo tienen'), num(m.layers - m.kvLayers)]],
+        L('The Gated DeltaNet layers keep a fixed-size summary of everything read so far instead of one entry per token. It is rewritten at every token and never grows.', 'Las capas Gated DeltaNet guardan un resumen de tamaño fijo de todo lo leído en vez de una entrada por token. Se reescribe en cada token y nunca crece.'),
+        L('Three layers in four of the Qwen hybrids use it, which is why their KV cache is four times smaller than a plain transformer of the same shape.', 'Tres de cada cuatro capas de los Qwen híbridos lo usan, y por eso su caché KV es cuatro veces menor que la de un transformer normal de la misma forma.')],
+      buf: [L('Compute buffers', 'Buffers de cálculo'), phase && phase !== 'load' ? tg('busy') : tg('idle'), [[L('Size', 'Tamaño'), B(R.buf * 1e9)]],
+        L('Scratch for the numbers in flight: activations and logits, overwritten layer after layer. Only the KV cache and the state survive a layer.', 'Borrador para los números en tránsito: activaciones y logits, sobrescritos capa tras capa. Solo la caché KV y el estado sobreviven a una capa.'),
+        L('Intermediate results are not stored: each layer’s output becomes the next layer’s input and the old one is forgotten.', 'Los resultados intermedios no se guardan: la salida de cada capa es la entrada de la siguiente y la anterior se olvida.')],
+      free: [L('Free memory', 'Memoria libre'), tg('free'), [[L('Free', 'Libre'), dec(fmtGB(Math.max(0, (mc.kind === 'unified' ? mc.ramGB - sysGB() : mc.fastGB) - R.weights * (mc.kind === 'unified' ? 1 : R.pl.fastShare) - R.kvRes - R.state - R.buf)))]],
+        L('Room left. Empty memory does not make anything faster: speed comes from bytes read per token and bandwidth, not from spare capacity.', 'Espacio que queda. La memoria vacía no acelera nada: la velocidad sale de los bytes leídos por token y del ancho de banda, no de la capacidad sobrante.'),
+        L('It is where a longer context, a second model or the apps you open next would go.', 'Es donde iría un contexto más largo, un segundo modelo o las apps que abras después.')],
+      bus: [L('Memory bus', 'Bus de memoria'), decoding ? tg('busy') : memTag, [[L('Bandwidth', 'Ancho de banda'), dec(`${mc.bw.toFixed(0)} GB/s`)], ...(mc.kind === 'unified' ? [[L('Width', 'Ancho'), `${S.bus} bits = ${S.bus / 8} B`], [L('Transfers', 'Transferencias'), `${num(S.mts)} MT/s`]] : []), [L('Reached in decode', 'Alcanzado en el decode'), dec(`${(perTok / R.mid.seconds).toFixed(0)} GB/s`)]],
+        L('The road between memory and arithmetic. Bandwidth is transfers per second times bytes per transfer; every weight has to cross it to be multiplied, once per token in decode.', 'El camino entre la memoria y la aritmética. El ancho de banda es transferencias por segundo por bytes por transferencia; cada peso tiene que cruzarlo para multiplicarse, una vez por token en el decode.'),
+        L('It sets the speed of writing. A wider bus costs pins, power and board space, which is why laptops have 128 bits and big GPUs a thousand or more.', 'Marca la velocidad de escritura. Un bus más ancho cuesta pines, energía y espacio en placa, y por eso los portátiles tienen 128 bits y las GPU grandes mil o más.')],
+      link: [L('Disk link', 'Enlace con el disco'), phase === 'load' || phase === 'restore' ? tg('busy') : tg('idle'), [[L('Speed used', 'Velocidad usada'), dec(`${ssdGBs(S.machine)} GB/s`)]],
+        L('The path from the SSD: used when the model loads and when a saved KV cache comes back, idle the rest of the time.', 'El camino desde el SSD: se usa al cargar el modelo y al recuperar una caché KV guardada, y está quieto el resto del tiempo.'),
+        L('Fifty times slower than the memory bus, which is why weights are loaded into memory once and kept there.', 'Cincuenta veces más lento que el bus de memoria, y por eso los pesos se cargan en memoria una vez y se quedan allí.')],
+      chip: [L('The chip', 'El chip'), computeTag, [[L('CPU cores', 'Núcleos CPU'), num(mc.cores)], [L('GPU units', 'Unidades GPU'), `${mc.units} ${mc.unitName}`], [L('Compute', 'Cómputo'), dec(`${S.tflops} TFLOPS`)]],
+        L('One piece of silicon with the CPU, the integrated GPU, the NPU and the memory controller, all reading the same RAM.', 'Una sola pieza de silicio con la CPU, la GPU integrada, la NPU y el controlador de memoria, todos leyendo la misma RAM.'),
+        L('Unified memory is why a laptop can hold a model no consumer card holds, and why it reads it slowly.', 'La memoria unificada es por lo que un portátil puede tener un modelo que ninguna tarjeta de consumo tiene, y por lo que lo lee despacio.')],
+      cpu: [L('CPU', 'CPU'), S.machine === 'thinkpadCpu' ? computeTag : phase && phase !== 'load' ? tg('orch') : tg('idle'), [[L('Cores', 'Núcleos'), num(mc.cores)]],
+        L(`A few strong cores for varied, sequential work. They run the system, the server, the tokenizer and the sampler${S.machine === 'thinkpadCpu' ? ', and here the whole model' : ''}.`, `Pocos núcleos fuertes para trabajo variado y secuencial. Ejecutan el sistema, el servidor, el tokenizador y el sampler${S.machine === 'thinkpadCpu' ? ', y aquí el modelo entero' : ''}.`),
+        L('In decode the CPU and the iGPU write at about the same speed on this laptop, because both wait on the same memory; the GPU wins at prefill.', 'En el decode la CPU y la iGPU escriben a velocidad parecida en este portátil, porque las dos esperan a la misma memoria; la GPU gana en el prefill.')],
+      gpu: [mc.kind === 'unified' ? L('Integrated GPU', 'GPU integrada') : 'GPU', S.machine === 'thinkpadCpu' ? tg('unused') : computeTag, [[L('Units', 'Unidades'), `${mc.units} ${mc.unitName}`], [L('Busy now', 'Ocupada ahora'), pct(util)], [L('Compute', 'Cómputo'), dec(`${S.tflops} TFLOPS`)]],
+        L('Many simple units doing the same multiplication on different numbers at once: the shape of a matrix product.', 'Muchas unidades sencillas haciendo la misma multiplicación sobre números distintos a la vez: la forma de un producto de matrices.'),
+        L('Arithmetic only happens on numbers that have arrived from memory: busy in prefill, mostly waiting in decode.', 'Solo se calcula sobre números que ya han llegado de la memoria: ocupada en el prefill, casi siempre esperando en el decode.')],
+      npu: ['NPU', tg('unused'), [[L('Peak', 'Pico'), '50 TOPS'], [L('Used by Ollama', 'Usada por Ollama'), L('no', 'no')]],
+        L('A low-power accelerator for small fixed networks (camera effects, transcription). It is not Google’s TPU; it is AMD’s XDNA 2 unit on this chip.', 'Un acelerador de bajo consumo para redes pequeñas y fijas (efectos de cámara, transcripción). No es la TPU de Google; es la unidad XDNA 2 de AMD en este chip.'),
+        L('Neither Ollama nor llama.cpp use it, so for this console it is honest to show it idle.', 'Ni Ollama ni llama.cpp la usan, así que en esta consola lo honesto es mostrarla parada.')],
+      memctl: [L('Memory controller', 'Controlador de memoria'), memTag, [[L('Bus served', 'Bus que atiende'), `${S.bus} bits`]],
+        L('Turns the chip’s requests into reads of the RAM chips, for the CPU, the iGPU and the NPU together.', 'Convierte las peticiones del chip en lecturas de los chips de RAM, para la CPU, la iGPU y la NPU a la vez.'),
+        L('Everything that reaches the arithmetic goes through it, shared by every part of the chip.', 'Todo lo que llega a la aritmética pasa por él, compartido por todas las partes del chip.')],
+      sram: ['SRAM', phase && phase !== 'load' ? tg('busy') : tg('idle'), [[L('Size', 'Tamaño'), L('a few MB', 'unos MB')]],
+        L('On-chip memory, caches and registers: an order of magnitude faster than RAM and far too small for a model. Weights pass through it on their way to the arithmetic.', 'Memoria en el chip, cachés y registros: un orden de magnitud más rápida que la RAM y demasiado pequeña para un modelo. Los pesos pasan por ella camino de la aritmética.'),
+        L('FlashAttention works by keeping attention’s blocks here instead of writing the full grid to RAM.', 'FlashAttention funciona guardando aquí los bloques de la atención en vez de escribir la cuadrícula entera en la RAM.')],
+      card: [L('Graphics card', 'Tarjeta gráfica'), computeTag, [[L('VRAM', 'VRAM'), dec(fmtGB(mc.fastGB))], [L('VRAM bandwidth', 'Ancho de banda VRAM'), dec(`${mc.bw} GB/s`)], [L('Link to RAM', 'Enlace a la RAM'), dec(`${mc.linkBw} GB/s`)]],
+        L('Its own memory, its own compute units and a very wide bus between them, separate from the rest of the computer.', 'Su propia memoria, sus propias unidades de cómputo y un bus muy ancho entre ellas, aparte del resto del ordenador.'),
+        L('Fast as long as the model fits in its VRAM. CUDA is NVIDIA’s software for programming it, not a piece of hardware.', 'Rápida mientras el modelo quepa en su VRAM. CUDA es el software de NVIDIA para programarla, no una pieza de hardware.')],
+      vram: ['VRAM', R.pl.fastShare < .999 ? tg('full') : memTag, [[L('Size', 'Tamaño'), dec(fmtGB(mc.fastGB))], [L('Holds', 'Guarda'), dec(fmtGB(R.weights * R.pl.fastShare + R.kvRes + R.buf))], [L('Bandwidth', 'Ancho de banda'), dec(`${mc.bw} GB/s`)]],
+        L('The card’s own memory, read only by the card at a very high rate.', 'La memoria propia de la tarjeta, leída solo por ella a gran velocidad.'),
+        L('What does not fit spills to system RAM and slows every token.', 'Lo que no cabe se desborda a la RAM del sistema y frena cada token.')],
+      pcie: ['PCIe', R.pl.fastShare < .999 && decoding ? tg('busy') : tg('idle'), [[L('Bandwidth', 'Ancho de banda'), dec(`${mc.linkBw} GB/s`)]],
+        L('The link between the card and the rest of the computer.', 'El enlace entre la tarjeta y el resto del ordenador.'),
+        L('Fine for loading once, far too slow to read weights through on every token.', 'Sirve para cargar una vez y es demasiado lento para leer pesos por él en cada token.')],
+      host: [L('Desktop CPU', 'CPU del sobremesa'), R.pl.fastShare < .999 && decoding ? tg('busy') : tg('idle'), [[L('Cores', 'Núcleos'), num(mc.cores)], [L('RAM bandwidth', 'Ancho de banda RAM'), dec(`${mc.hostBw} GB/s`)]],
+        L('Reads system RAM over its own bus and computes any layer that spilled out of VRAM.', 'Lee la RAM por su propio bus y calcula cualquier capa que no cupo en la VRAM.'),
+        L('With a spill, every token waits for it.', 'Con desborde, cada token lo espera.')],
+    }[id];
+    if (P2) return { title: P2[0], tag: P2[1], rows: P2[2], what: P2[3], why: P2[4] };
+  }
+  if (sel.k === 'cu' || sel.k === 'sm' || sel.k === 'core') {
+    const on = sel.k === 'core' ? S.machine === 'thinkpadCpu' : S.machine !== 'thinkpadCpu';
+    return { title: sel.k === 'core' ? L(`CPU core ${sel.i + 1}`, `Núcleo de CPU ${sel.i + 1}`) : sel.k === 'sm' ? L(`Streaming multiprocessor ${sel.i + 1}`, `Streaming multiprocessor ${sel.i + 1}`) : L(`Compute unit ${sel.i + 1}`, `Unidad de cómputo ${sel.i + 1}`), tag: !on ? (sel.k === 'core' ? tg('idle') : tg('unused')) : util > .5 ? tg('busy') : phase && phase !== 'load' ? tg('waiting') : tg('idle'),
+      rows: [[L('Busy now', 'Ocupada ahora'), pct(on ? util : 0)], [L('Of', 'De'), `${sel.k === 'core' ? mc.cores : mc.units}`]],
+      what: sel.k === 'core' ? L('One of the CPU’s cores: strong at varied, sequential work.', 'Uno de los núcleos de la CPU: fuerte en trabajo variado y secuencial.') : L(`One of ${mc.units} groups of lanes that do the same multiplication on different numbers. ${sel.k === 'sm' ? 'NVIDIA calls them SMs; CUDA is the software that programs them.' : 'AMD calls them CUs.'}`, `Uno de ${mc.units} grupos de carriles que hacen la misma multiplicación sobre números distintos. ${sel.k === 'sm' ? 'NVIDIA los llama SM; CUDA es el software que los programa.' : 'AMD las llama CU.'}`),
+      why: L('In decode it spends most of its time waiting for weights to arrive; in prefill each weight it receives serves 512 tokens.', 'En el decode pasa casi todo el tiempo esperando a que lleguen los pesos; en el prefill cada peso que recibe sirve a 512 tokens.') };
+  }
+  if (sel.k === 'layer') {
+    const li = layerInfo(sel.i), seg = n.seg && n.layer >= 0 ? n.seg : R.segs[R.firstDecode], sp = seg && seg.k !== 'load' && seg.k !== 'restore' ? layerSpan(seg, sel.i) : null;
+    return { title: L(`Layer ${sel.i + 1} of ${m.layers}`, `Capa ${sel.i + 1} de ${m.layers}`), tag: n.layer === sel.i ? tg('reading') : n.layer > sel.i && n.seg ? tg('written') : tg('idle'),
+      rows: [[L('Kind', 'Tipo'), li.kind === 'attn' ? L('attention, keeps KV', 'atención, guarda KV') : 'Gated DeltaNet'], [L('Stored', 'Guardado'), B(li.stored)], [L('Read per token', 'Leído por token'), B(li.read)], [L('Share of the model', 'Parte del modelo'), `1/${num(Math.round(R.weights * 1e9 / li.stored))}`], ...(sp ? [[L('Time in this step', 'Tiempo en este paso'), TT(sp[1] - sp[0])]] : [])],
+      what: li.kind === 'attn' ? L('An attention layer: the token’s query is compared with the keys of every earlier token, their values are mixed in, and the result goes through the experts or the MLP.', 'Una capa de atención: la consulta del token se compara con las claves de todos los anteriores, se mezclan sus valores y el resultado pasa por los expertos o la MLP.') : L('A Gated DeltaNet layer: instead of looking at every earlier token it updates a fixed-size state, then the token goes through the experts or the MLP.', 'Una capa Gated DeltaNet: en vez de mirar cada token anterior actualiza un estado de tamaño fijo, y luego el token pasa por los expertos o la MLP.'),
+      why: L('A layer is a handful of matrices; using it is multiplying the token’s column by them. All layers run for every token.', 'Una capa es un puñado de matrices; usarla es multiplicar la columna del token por ellas. Todas las capas se ejecutan en cada token.') };
+  }
+  if (sel.k === 'mat') {
+    const li = layerInfo(sel.layer), s = [...li.mixer, ...(R.sh.router ? [R.sh.router] : []), ...(R.sh.mlp || [])].find(q => q[0] === sel.name) || li.mixer[0];
+    const active = n.layer === sel.layer && n.op && n.op.id === sel.name;
+    return { title: `${s[0]} · ${L('layer', 'capa')} ${sel.layer + 1}`, tag: active ? tg('reading') : tg('idle'),
+      rows: [[L('Shape, in × out', 'Forma, entrada × salida'), `${num(s[1])} × ${num(s[2])}`], [L('Weights', 'Pesos'), num(s[1] * s[2])], [L('Bytes', 'Bytes'), B(bytesOf(s))], [L('Of the layer', 'De la capa'), `1/${num(Math.round(li.stored / bytesOf(s)))}`], [L('Arithmetic per token', 'Aritmética por token'), `${num(2 * s[1] * s[2] / 1e6)} M FLOP`]],
+      what: L(`A matrix of ${num(s[2])} rows of ${num(s[1])} numbers. Multiplying the token’s column by it is ${num(s[2])} dot products: each row is read from memory once and meets the column once.`, `Una matriz de ${num(s[2])} filas de ${num(s[1])} números. Multiplicar la columna del token por ella son ${num(s[2])} productos escalares: cada fila se lee de memoria una vez y se cruza con la columna una vez.`),
+      why: L('Two operations per weight read: in decode the bytes arrive slower than the units can multiply them.', 'Dos operaciones por peso leído: en el decode los bytes llegan más despacio de lo que las unidades los multiplican.') };
+  }
+  if (sel.k === 'expert') {
+    const tok = decoding ? n.seg.tok : 0, chosen = sel.e < 0 || chosenExperts(tok, sel.layer).includes(sel.e);
+    return { title: sel.e < 0 ? L(`Shared expert · layer ${sel.layer + 1}`, `Experto compartido · capa ${sel.layer + 1}`) : L(`Expert ${sel.e} · layer ${sel.layer + 1}`, `Experto ${sel.e} · capa ${sel.layer + 1}`), tag: chosen ? tg('chosen') : tg('skipped'),
+      rows: [[L('Matrices', 'Matrices'), '2,048×512 ×2, 512×2,048'], [L('Bytes', 'Bytes'), B(layerInfo(sel.layer).one)], [L('In memory', 'En memoria'), L('always', 'siempre')]],
+      what: L('A small MLP of its own. The router picks 8 of the 256 for each token in each layer; the shared one always runs.', 'Una MLP pequeña propia. El router elige 8 de los 256 para cada token en cada capa; el compartido siempre se ejecuta.'),
+      why: L('All 256 must sit in memory because the next token may want others: a mixture of experts saves bytes read, not memory. Nothing is loaded or unloaded per token.', 'Los 256 tienen que estar en memoria porque el siguiente token puede querer otros: un mixture of experts ahorra bytes leídos, no memoria. No se carga ni se descarga nada por token.') };
+  }
+  if (sel.k === 'kvlayer') return { title: L(`Attention · layer ${sel.layer + 1}`, `Atención · capa ${sel.layer + 1}`), tag: n.layer === sel.layer && n.op && n.op.kind === 'kv' ? tg('reading') : tg('idle'),
+    rows: [[L('Tokens compared', 'Tokens comparados'), num(Math.floor(inCache))], [L('KV read', 'KV leída'), B(kvLayerBytes(inCache))], [L('Appended per token', 'Añadido por token'), B(kvLayerBytes(1))]],
+    what: L('The query of this token against the cached keys of every earlier token, a softmax, and a weighted sum of their values. Earlier tokens are never recomputed.', 'La consulta de este token contra las claves en caché de todos los anteriores, un softmax y una suma ponderada de sus valores. Los tokens anteriores nunca se recalculan.'),
+    why: L('This is the part of decode that grows with the context.', 'Es la parte del decode que crece con el contexto.') };
+  if (sel.k === 'state') return { title: L(`DeltaNet state · layer ${sel.layer + 1}`, `Estado DeltaNet · capa ${sel.layer + 1}`), tag: tg('fixed'), rows: [[L('Size', 'Tamaño'), B(R.sh.deltaState || 0)]],
+    what: L('A fixed-size memory this layer reads, updates with the token and writes back.', 'Una memoria de tamaño fijo que esta capa lee, actualiza con el token y vuelve a escribir.'), why: L('It does not grow with the context.', 'No crece con el contexto.') };
+  if (sel.k === 'head') return { title: L('Output head', 'Cabeza de salida'), tag: n.head ? tg('reading') : tg('idle'), rows: [[L('Shape', 'Forma'), `${num(m.hidden)} × ${num(m.vocab)}`], [L('Bytes', 'Bytes'), B(headBytes())], [L('Share of a token’s reads', 'Parte de lo leído por token'), pct(headBytes() / (readGB(m, S.quant) * 1e9))]],
+    what: L('The last column is compared with every token of the vocabulary: one score (logit) each.', 'La última columna se compara con cada token del vocabulario: una puntuación (logit) por cada uno.'),
+    why: L('You cannot skip it to compute only the top few: you do not know which are top until every score exists.', 'No se puede saltar para calcular solo los mejores: no sabes cuáles son hasta tener todas las puntuaciones.') };
+  if (sel.k === 'kvbin' || sel.k === 'kvtok') {
+    const t0 = sel.k === 'kvbin' ? Math.round(sel.b * sel.per) : sel.t, t1 = sel.k === 'kvbin' ? Math.round((sel.b + 1) * sel.per) : sel.t + 1, filled = Math.max(0, Math.min(t1, inCache) - t0);
+    return { title: sel.k === 'kvbin' ? L(`KV cells, tokens ${num(t0 + 1)} to ${num(t1)}`, `Celdas KV, tokens ${num(t0 + 1)} a ${num(t1)}`) : L(`KV of token ${num(sel.t + 1)}`, `KV del token ${num(sel.t + 1)}`), tag: filled >= t1 - t0 ? tg('written') : filled > 0 ? tg('growing') : tg('pending'),
+      rows: [[L('Filled', 'Llenas'), `${num(filled)} / ${num(t1 - t0)}`], [L('Bytes', 'Bytes'), B(kvBytesPerToken(m, S.kv) * filled)], [L('Kind', 'Tipo'), t0 < R.prompt ? L('prompt', 'prompt') : L('answer', 'respuesta')]],
+      what: L('Keys and values of these tokens at every attention layer, written when each token passed and kept for every later token.', 'Claves y valores de estos tokens en cada capa de atención, escritos cuando pasó cada token y guardados para todos los posteriores.'),
+      why: L('Appending a token changes nothing before it, at any layer: that is what lets the cache be reused.', 'Añadir un token no cambia nada de lo anterior, en ninguna capa: eso es lo que permite reutilizar la caché.') };
+  }
+  if (sel.k === 'pchip') { const t0 = Math.round(sel.i * sel.per); return { title: L(`Prompt tokens ${num(t0 + 1)} to ${num(Math.round((sel.i + 1) * sel.per))}`, `Tokens del prompt ${num(t0 + 1)} a ${num(Math.round((sel.i + 1) * sel.per))}`), tag: t0 < R.startAt ? tg('cached') : inCache > t0 ? tg('written') : tg('pending'), rows: [[L('Part', 'Parte'), t0 < S.sys ? L('system prompt', 'prompt de sistema') : t0 < S.sys + S.docs ? L('history and documents', 'historia y documentos') : L('question', 'pregunta')]], what: L('Prompt tokens are read all together in prefill, 512 at a time per pass, never one by one.', 'Los tokens del prompt se leen juntos en el prefill, 512 por pasada, nunca uno a uno.'), why: L('Their KV is what a prefix cache keeps for the next call.', 'Su KV es lo que guarda una caché de prefijo para la siguiente llamada.') }; }
+  if (sel.k === 'tok') { const s0 = SAMPLED[sel.i], segT = R.segs.find(q => (q.k === 'decode' || q.k === 'round') && q.tok <= sel.i && sel.i < q.tok + (q.n || 1)); return { title: L(`Answer token ${num(sel.i + 1)}`, `Token de respuesta ${num(sel.i + 1)}`), tag: s0.script ? tg('written') : tg('caution'), rows: [[L('Text', 'Texto'), s0.word.trim()], [L('Probability after sampler', 'Probabilidad tras el sampler'), pct(s0.p || 0)], ...(segT ? [[L('Written at', 'Escrito a los'), S_(segT.a + segT.d)], [L('Its pass took', 'Su pasada tardó'), TT(segT.d)]] : [])], what: s0.script ? L('The token the script expected, drawn by the sampler.', 'El token que esperaba el guion, sorteado por el sampler.') : L('The sampler drew another candidate here; temperature and top-p decide how often.', 'Aquí el sampler sorteó otro candidato; la temperatura y el top-p deciden con qué frecuencia.'), why: L('Each answer token is one full pass through every layer; the cost does not depend on which word comes out.', 'Cada token de respuesta es una pasada entera por todas las capas; el coste no depende de qué palabra salga.') }; }
+  if (sel.k === 'cand') { const d = distribution(sel.i), it = [...d.items, d.rest][sel.j]; return { title: it.rest ? it.w : `${it.w.trim()}`, tag: d.finalP.has(it) ? tg('nominal') : tg('skipped'), rows: [...(it.l !== undefined ? [[L('Logit', 'Logit'), dec(it.l.toFixed(2))]] : []), [L('After temperature', 'Tras la temperatura'), pct(it.p)], [L('After top-k and top-p', 'Tras top-k y top-p'), d.finalP.has(it) ? pct(d.finalP.get(it)) : L('cut', 'cortado')]], what: L('Temperature divides every logit before softmax: low makes the top token dominate, high flattens. Top-k and top-p cut the tail and renormalise; none of them reorders.', 'La temperatura divide cada logit antes del softmax: baja hace que domine el primero, alta aplana. Top-k y top-p cortan la cola y renormalizan; ninguno reordena.'), why: L('The sampler lives outside the model, after the last layer.', 'El sampler vive fuera del modelo, después de la última capa.') }; }
+  if (sel.k === 'seg') { const s0 = R.segs[sel.i]; if (!s0) return null; const l = segLine(s0); return { title: { load: L('Load', 'Carga'), restore: L('KV restore', 'Restauración KV'), prefill: L(`Prefill chunk ${s0.i + 1}`, `Bloque de prefill ${s0.i + 1}`), decode: L(`Decode step, token ${num(s0.tok + 1)}`, `Paso de decode, token ${num(s0.tok + 1)}`), round: L(`Speculative round at token ${num(s0.tok + 1)}`, `Ronda especulativa en el token ${num(s0.tok + 1)}`) }[s0.k], tag: P.t >= s0.a + s0.d ? tg('written') : P.t >= s0.a ? tg('busy') : tg('pending'), rows: [[L('Starts', 'Empieza'), S_(s0.a)], [L('Lasts', 'Dura'), TT(s0.d)], ...(s0.bytes ? [[L('Bytes read', 'Bytes leídos'), B(s0.bytes * 1e9)]] : [])], what: l.txt, why: '' }; }
+  if (sel.k === 'inst') { const ins = INSTR.find(i => i.id === sel.id), inf = ins.info(), lv = ins.level(); return { title: ins.label(), tag: lv ? tg(lv) : tg('idle'), rows: [[L('Now', 'Ahora'), ins.val().replace(/<[^>]+>/g, '')]], what: inf[0], why: inf[1], moves: inf[2] }; }
+  if (sel.k === 'mark' || sel.k === 'minimap') return { title: sel.n ? `${sel.n}: ${B(sel.b)}` : L('Size ladder', 'Escala de tamaños'), tag: tg('nominal'), rows: [], what: L('A ruler of sizes in powers of ten, each big tick a thousand times the last: 1 B, 1 KB, 1 MB, 1 GB. The dots are real things of this run, from one weight on the left to all the memory on the right; hover one to read it. The yellow dot is what the open view is drawing.', 'Una regla de tamaños en potencias de diez, cada marca grande mil veces la anterior: 1 B, 1 KB, 1 MB, 1 GB. Los puntos son cosas reales de esta ejecución, de un peso a la izquierda a toda la memoria a la derecha; pasa el ratón por uno para leerlo. El punto amarillo es lo que dibuja la vista abierta.'), why: L('Drawings have to shrink or enlarge things to fit; this keeps their true size in sight. A matrix is thousands of times smaller than the model, one token of KV millions of times smaller than the memory.', 'Los dibujos tienen que encoger o ampliar para caber; esto mantiene a la vista el tamaño real. Una matriz es miles de veces menor que el modelo, un token de KV millones de veces menor que la memoria.') };
+  if (sel.k === 'alert') { const a = alerts().find(q => q.id === sel.id); if (a) return { title: a.title, tag: tg(a.lv), rows: [], what: a.txt, why: a.why || '' }; }
+  return null;
+}
+let inspKey = '', inspT = 0;
+// Where the last click landed, so the explainer opens beside it.
+let LAST_PT = null, LS_PLACE = false;
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#lesson')) LAST_PT = { x: e.clientX, y: e.clientY }; }, true);
+const LS_ICON = { what: 'info', why: 'warning', moves: 'tune' };
+function renderInspector(force) {
+  const box = $('lesson');
+  if (!UI.sel) { if (!box.hidden) { box.hidden = true; inspKey = ''; } return; }
+  const nowT = performance.now(); if (!force && nowT - inspT < 200) return; inspT = nowT;
+  const d = inspect(UI.sel); if (!d) return;
+  const ins = UI.sel.k === 'inst' ? INSTR.find(i => i.id === UI.sel.id) : null, trd = UI.sel.k === 'trend' ? TRENDS.find(q => q.id === UI.sel.id) : null, gdr = UI.sel.k === 'term' ? GLOSS_DRAW[UI.sel.id] : null;
+  const html = `<div class="lsl"><h2 id="lsTitle">${esc(d.title)}</h2>${ins || trd || gdr ? '<canvas id="lsChart"></canvas>' : ''}` +
+    (d.rows.length ? `<dl>${d.rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : '') + '</div><div class="lsr">' + [['what', L('What it is', 'Qué es'), d.what], ['why', L('Why it matters', 'Por qué importa'), d.why], ['moves', L('What moves it', 'Qué lo mueve'), d.moves]].filter(r => r[2]).map(([k, h, t]) => `<section>${ICON(LS_ICON[k])}<div><h5>${esc(h)}</h5><p>${linkify(esc(t))}</p></div></section>`).join('') + '</div>';
+  let fresh = false; if (html !== inspKey) { inspKey = html; $('lsBody').innerHTML = html; fresh = true; }
+  const tg = $('lsTag'); tg.textContent = d.tag[0]; tg.hidden = !d.tag[0];
+  $('lsFoot').innerHTML = L('<span><kbd>Esc</kbd> or a click outside closes</span><span>The values update live</span>', '<span><kbd>Esc</kbd> o un clic fuera cierra</span><span>Los valores se actualizan en directo</span>');
+  const go = gotoHtml(UI.sel) + wikiHtml(UI.sel); if ($('lsGo').dataset.k !== go) { $('lsGo').dataset.k = go; $('lsGo').innerHTML = go; $('lsGo').querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => goTo(b.dataset.go))); }
+  if (box.hidden) box.hidden = false;
+  if (gdr) { const cv = $('lsChart'), w = Math.max(200, Math.floor(box.querySelector('.lsl').clientWidth)), x = fit(cv, w, 130); gdr(x, w, 130); }
+  if (trd) { const cv = $('lsChart'), w = Math.max(180, Math.floor(box.querySelector('.lsl').clientWidth)), x = fit(cv, w, 120); drawSpark(x, trd, w, 120, true); }
+  if (ins) { const cv = $('lsChart'), w = Math.max(180, Math.floor(box.querySelector('.lsl').clientWidth)), x = fit(cv, w, 64); ins.draw(x, w, 64); }
+  // No scroll, ever: the text steps down until the window holds it all.
+  if (fresh || LS_PLACE) { const card = box.querySelector('.card'), lb = $('lsBody'); let f = 13; card.style.setProperty('--lsf', f + 'px'); card.style.width = ''; while (lb.scrollHeight > lb.clientHeight + 1 && f > 10.5) { f -= .5; card.style.setProperty('--lsf', f + 'px'); } if (lb.scrollHeight > lb.clientHeight + 1) card.style.width = 'min(860px, calc(100vw - 24px))'; }
+  if (LS_PLACE) {
+    LS_PLACE = false; const card = box.querySelector('.card'), cw = card.offsetWidth, ch = card.offsetHeight;
+    const lx = Math.max(12, (innerWidth - cw) / 2), ty = Math.max(52, Math.min(innerHeight - ch - 12, (innerHeight - ch) * .42));
+    card.style.left = lx + 'px'; card.style.top = ty + 'px';
+  }
+}
+function inspHtml(d) {
+  if (!d) return '';
+  return (d.rows.length ? `<dl>${d.rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : '') +
+    `<p><b>${esc(L('what', 'qué es'))}</b> ${esc(d.what)}</p>` + (d.why ? `<p><b>${esc(L('why it matters', 'por qué importa'))}</b> ${esc(d.why)}</p>` : '') + (d.moves ? `<p><b>${esc(L('what moves it', 'qué lo mueve'))}</b> ${esc(d.moves)}</p>` : '');
+}
+// The view that best shows a selection. Clicks inside the stage keep their view; clicks elsewhere bring the view along.
+const STAGE_CV = ['cSystem', 'cModel', 'cMemory', 'cPrompt', 'cCand', 'ruler'];
+const LENS_OF_ID = { fit: 'memory', ram: 'memory', kv: 'memory', kvfull: 'memory', kvq: 'memory', ctx: 'memory', prefix: 'memory', cold: 'system', keep: 'system', bw: 'system', compute: 'system', intensity: 'system', bound: 'system', place: 'system', gpusplit: 'system', spill: 'system', slow: 'system', slowish: 'system', tps: 'system', ttft: 'system', spec: 'model', est: 'system', trunc: 'tokens' };
+function lensFor(sel) {
+  switch (sel.k) {
+    case 'tok': case 'cand': case 'pchip': return 'tokens';
+    case 'ctxseg': return sel.id === 'free' ? 'memory' : 'tokens';
+    case 'kvbin': case 'kvtok': case 'kvlayer': case 'state': return 'memory';
+    case 'layer': case 'head': case 'expert': case 'mat': case 'sub': return 'model';
+    case 'inst': case 'alert': return LENS_OF_ID[sel.id] || null;
+    default: return null;
+  }
+}
+let SEL_FROM = null;
+// Clicking what is already selected deselects it. Rows of Alerts and Details open in place; anything else opens the Inspect tab.
+function select(sel, inline?) {
+  if (sel && isSel(sel)) sel = null;
+  const from = SEL_FROM; SEL_FROM = null;
+  if (sel && UI.autoLens && !STAGE_CV.includes(from)) { const l = lensFor(sel); if (l && l !== UI.lens) { setLens(l); const b = $('lensSeg').querySelector(`[data-l=${l}]`); if (b) { b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); } } }
+  UI.sel = sel; inspKey = ''; streamKey = ''; alertKey = ''; LS_PLACE = !!sel;
+  renderInspector(true); renderAlerts(); renderDetails(); renderTrends();
+}

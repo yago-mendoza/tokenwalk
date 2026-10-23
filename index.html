@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>One request, end to end</title>
+<meta name="description" content="A control console for one local language model request: the machine, the model and the request, run token by token.">
+<!-- tokenwalk:style -->
+</head>
+<body data-zone="watch">
+<div id="app">
+  <header id="top">
+    <div class="brand"><span class="mark"></span><span class="t" data-t="title">One request, end to end</span><small>LLM · OLLAMA · LLAMA.CPP</small></div>
+    <div id="chip" role="button" tabindex="0"></div>
+    <span id="pill" class="pill idle"><i></i><span id="pillTxt">IDLE</span></span>
+    <button type="button" class="tbtn" id="alertBtn"><span id="alertIc"></span><span class="cnt" id="alertCnt">0</span></button>
+    <button type="button" class="tbtn" id="monBtn"></button>
+    <button type="button" class="tbtn quiet" id="reset"></button>
+    <button type="button" class="tbtn" id="gear"></button>
+    <button type="button" class="tbtn" id="helpBtn"></button>
+  </header>
+  <nav id="ztabs">
+    <button type="button" data-z="cfg"></button><button type="button" data-z="watch"></button><button type="button" data-z="mon"></button>
+  </nav>
+
+  <aside id="cfg" class="zone">
+    <div class="zh"><span class="zn">1</span><span class="zt" data-t="zCfg"></span><span class="zx" id="cfgState"><button type="button" class="tbtn" id="undoBtn"><svg class="ic s" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg><span data-t="undo"></span></button></span></div>
+    <div id="lock"><span data-ic="lock"></span><p data-t="locked"></p><small data-t="lockedSub"></small><button type="button" class="btnp" id="stopEdit"></button></div>
+    <div class="zb"><div id="cfgBody">
+      <div id="ctxBlock"><div class="lbl sec-t" style="margin:0 0 6px" data-t="ctxWin"></div><canvas id="cCtx"></canvas></div>
+      <div id="shield"></div>
+      <div class="acc" data-acc="scen"><button type="button"><span class="ic-slot" data-ic="bolt"></span><span class="ttl" data-t="scenarios"></span><span class="val" id="vScen"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in"><div class="scen" id="scen"></div></div></div>
+      <div class="acc" data-acc="machine"><button type="button"><span class="ic-slot" data-ic="memory"></span><span class="ttl" data-t="aMachine"></span><span class="val" id="vMachine"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in">
+          <div class="ch" id="chMachine"></div>
+          <div class="fld"><label for="machine"><span data-t="preset"></span></label><select id="machine"></select></div>
+          <div id="uniFields" class="in2" style="display:grid;gap:10px">
+            <div class="row2"><div class="fld"><label for="mts"><span data-t="mts"></span></label><input type="number" id="mts" min="1000" max="20000" step="100"></div>
+              <div class="fld"><label for="bus"><span data-t="bus"></span></label><select id="bus"><option>64</option><option>128</option><option>256</option><option>512</option></select></div></div>
+            <div class="formula" id="bwFormula"></div><div class="hint" data-hint="mts"></div>
+          </div>
+          <div id="cardFields" class="row2" style="display:none"><div class="fld"><label for="vram">VRAM, GB</label><input type="number" id="vram" min="4" max="256" step="1"></div>
+            <div class="fld"><label for="vbw"><span data-t="vbw"></span></label><input type="number" id="vbw" min="50" max="10000" step="10"></div></div>
+          <div class="row2"><div class="fld"><label for="ram"><span data-t="ram"></span></label><input type="number" id="ram" min="4" max="1024" step="1"></div>
+            <div class="fld"><label for="tflops"><span data-t="tflops"></span></label><input type="number" id="tflops" min=".05" max="2000" step=".05"></div></div>
+          <div class="note" id="estNote"></div>
+        </div></div>
+      <div class="acc" data-acc="model"><button type="button"><span class="ic-slot" data-ic="layers"></span><span class="ttl" data-t="aModel"></span><span class="val" id="vModel"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in">
+          <div class="ch" id="chModel"></div>
+          <div class="fld"><label for="model"><span data-t="model"></span></label><select id="model"></select></div>
+          <div class="fld"><label for="quant"><span data-t="weights"></span></label><select id="quant"></select><div class="hint" data-hint="quant"></div></div>
+          <div class="note" id="modelNote"></div>
+        </div></div>
+      <div class="acc" data-acc="request"><button type="button"><span class="ic-slot" data-ic="notes"></span><span class="ttl" data-t="aRequest"></span><span class="val" id="vRequest"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in">
+          <div class="fld"><label for="sys"><span data-t="sys"></span><output id="sysOut"></output></label><input type="range" id="sys" min="0" max="4000" step="50"></div>
+          <div class="fld"><label for="docs"><span data-t="docs"></span><output id="docsOut"></output></label><input type="range" id="docs" min="0" max="130000" step="50"><div class="hint" data-hint="docs"></div></div>
+          <div class="fld"><label for="q"><span data-t="q"></span><output id="qOut"></output></label><input type="range" id="q" min="5" max="1000" step="5"></div>
+          <div class="fld"><label for="ans"><span data-t="ans"></span><output id="ansOut"></output></label><input type="range" id="ans" min="10" max="2000" step="10"><div class="hint" data-hint="ans"></div></div>
+        </div></div>
+      <div class="acc" data-acc="engine"><button type="button"><span class="ic-slot" data-ic="tune"></span><span class="ttl" data-t="aEngine"></span><span class="val" id="vEngine"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in">
+          <div class="fld"><label for="ctx"><span data-t="ctx"></span><output id="ctxOut"></output></label><input type="range" id="ctx" min="11" max="18" step="0.25"><div class="hint" data-hint="ctx"></div><div class="note" id="ctxNote"></div></div>
+          <div class="fld"><label for="kv"><span data-t="kvType"></span></label><select id="kv"></select><div class="hint" data-hint="kv"></div></div>
+          <div class="fld"><label for="keepalive"><span data-t="keepAlive"></span><output id="keepaliveOut"></output></label><input type="range" id="keepalive" min="0" max="60" step="1"><div class="hint" data-hint="keepalive"></div></div>
+          <label class="sw"><input type="checkbox" id="cold"><i></i><span data-t="cold"></span></label>
+        </div></div>
+      <div class="acc" data-acc="samp"><button type="button"><span class="ic-slot" data-ic="token"></span><span class="ttl" data-t="aSamp"></span><span class="val" id="vSamp"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in">
+          <div class="fld"><label for="temp"><span>1 · <span data-t="temp"></span></span><output id="tempOut"></output></label><input type="range" id="temp" min="0" max="2" step=".05"><div class="hint" data-t="tempHint"></div></div>
+          <div class="fld"><label for="topk"><span>2 · Top-k</span><output id="topkOut"></output></label><input type="range" id="topk" min="1" max="6" step="1"><div class="hint" data-t="topkHint"></div></div>
+          <div class="fld"><label for="topp"><span>3 · Top-p</span><output id="toppOut"></output></label><input type="range" id="topp" min=".05" max="1" step=".05"><div class="hint" data-t="toppHint"></div></div>
+          <div class="fld"><label for="seed"><span data-t="seedL"></span></label><input type="number" id="seed" min="1" max="9999" step="1"></div>
+        </div></div>
+      <div class="acc" data-acc="adv"><button type="button"><span class="ic-slot" data-ic="bolt"></span><span class="ttl" data-t="aAdv"></span><span class="val" id="vAdv"></span><span class="chev" data-ic="chev"></span></button>
+        <div class="in">
+          <label class="sw"><input type="checkbox" id="cached"><i></i><span data-t="cached"></span></label>
+          <label class="sw"><input type="checkbox" id="disk"><i></i><span data-t="disk"></span></label>
+          <label class="sw"><input type="checkbox" id="spec"><i></i><span data-t="spec"></span></label>
+          <div id="specFields" style="display:none;gap:10px">
+            <div class="fld"><label for="gamma"><span data-t="gamma"></span><output id="gammaOut"></output></label><input type="range" id="gamma" min="1" max="8" step="1"></div>
+            <div class="fld"><label for="alpha"><span data-t="alpha"></span><output id="alphaOut"></output></label><input type="range" id="alpha" min=".3" max=".95" step=".01"></div>
+          </div>
+          <div class="hint" data-hint="spec"></div>
+        </div></div>
+    </div></div>
+  </aside>
+  <div class="split v" id="sp1" title=""></div>
+
+  <main id="watch" class="zone">
+    <div class="zh"><span class="zn">3</span><span class="zt" data-t="zWatch"></span><span class="zx"><button type="button" class="tbtn" id="scaleBtn"></button><span class="seg" id="lensSeg"></span><span class="seg" id="mmodeSeg"></span><button type="button" class="tbtn" id="aboutBtn"></button></span></div>
+    <div id="stageWrap"><div id="stage"><nav id="zbar" hidden><button type="button" id="zUp"></button><ol id="zCrumbs"></ol><span id="zStat"></span><button type="button" class="zb2" id="zJump"></button><button type="button" class="zb2" id="zInfo"></button></nav>
+      <canvas class="lens" id="cSystem" data-lens="system"></canvas>
+      <canvas class="lens" id="cModel" data-lens="model"></canvas>
+      <canvas class="lens" id="cMemory" data-lens="memory"></canvas>
+      <div id="tokLens" data-lens="tokens">
+        <canvas id="cPrompt"></canvas>
+        <div id="tokHint"></div><div id="stream"></div>
+        <canvas id="cCand"></canvas>
+      </div>
+      <div id="lensCap"></div>
+    </div></div>
+    <div id="wfoot"><button type="button" class="tbtn" id="legBtn" aria-expanded="false"></button><div id="legend"></div></div>
+  </main>
+  <div class="split v" id="sp2"></div>
+
+  <aside id="mon" class="zone">
+    <div class="zh"><span class="zn">4</span><span class="zt" data-t="zMon"></span><span class="zx"><button type="button" class="tbtn" id="pinBtn" style="height:24px;border-color:var(--line2);font-size:11px"></button><button type="button" class="ib" id="monClose" style="display:none"></button></span></div>
+    <div id="out"><div class="oh"><span class="lbl" data-t="output"></span><span style="font-size:10px;color:var(--faint)" data-t="illus"></span><span id="outCnt" class="num"></span></div><div id="outStream"></div><div id="outLogit"></div></div>
+    <div id="kpis"></div>
+    <div id="mbody">
+      <section class="msec"><h4 class="sech"><span data-t="secAlerts"></span><span class="cnt" id="secAlertCnt"></span></h4><ul id="alertList"></ul></section>
+      <section class="msec"><h4 class="sech"><span data-t="secInst"></span><small data-t="secInstSub"></small></h4><div id="trends"></div><div id="ichips"></div><div id="details" hidden></div></section>
+    </div>
+  </aside>
+  <div class="split h" id="sp3"></div>
+
+  <div id="lesson" hidden><div class="scrim"></div><article class="card" role="dialog" aria-labelledby="lsTitle"><header class="band"><span data-ic="school"></span><b data-t="lsBand"></b><span class="st" id="lsTag"></span><button type="button" id="lsClose"></button></header><div class="lsb" id="lsBody"></div><div id="lsGo"></div><footer id="lsFoot"></footer></article></div>
+  <div id="scaleWin" hidden><div class="scrim"></div><article class="card" role="dialog"><header class="band"><span data-ic="eq"></span><b data-t="scaleT"></b><button type="button" id="scaleClose"></button></header><div class="sw-body"><p id="scaleTxt"></p><canvas id="ruler"></canvas></div></article></div>
+  <div id="fsTip" hidden role="status"><span class="ic-slot" data-ic="info"></span><div><b data-t="fsT"></b><small data-t="fsS"></small></div><button type="button" class="btnp" id="fsGo"></button><button type="button" class="tbtn" id="fsLater"></button><button type="button" class="tbtn quiet" id="fsNever"></button></div>
+  <div id="chainWin" hidden><div class="scrim"></div><article class="card" role="dialog"><header class="band"><span data-ic="token"></span><b data-t="chainT"></b><button type="button" id="chainClose"></button></header><canvas id="cChainBig"></canvas></article></div>
+  <section id="run" class="zone">
+    <div class="zh"><span class="zn">2</span><span class="zt" data-t="zRun"></span><div class="now" id="nowLine"><span data-ic="info"></span><span id="nowTxt"></span></div><div id="nowFix"></div><span class="tlsl" data-t="tlScaleL"></span><div id="tlScale" role="group"></div><button type="button" class="tbtn" id="logBtn" aria-expanded="false"></button></div>
+    <div id="logPop" hidden><header><span class="lbl" data-t="logT"></span><small id="logScale"></small><button type="button" class="ib" id="logClose"></button></header><ol id="log"></ol></div>
+    <div id="runBody">
+      <div id="transport">
+        <div id="clockRow"><span id="clock">0.000000 s</span><span id="rateOut"></span></div>
+        <div id="stepDur"></div>
+        <div class="tp">
+          <button type="button" id="stop"></button>
+          <button type="button" id="play"></button>
+          <div id="jump"><button type="button" id="jumpGo"></button><button type="button" id="jumpMenu" aria-haspopup="menu" aria-expanded="false"></button><div id="jumpPop" role="menu" hidden></div></div>
+          <div class="rate"><button type="button" id="slower"></button><span id="rateTxt"></span><button type="button" id="faster"></button></div>
+        </div>
+        <div class="swrow">
+          <label class="sw"><input type="checkbox" id="pauseTok"><i></i><span data-t="pauseTok"></span></label>
+          <label class="sw"><input type="checkbox" id="pauseLayer"><i></i><span data-t="pauseLayer"></span></label>
+        </div>
+      </div>
+      <div id="trackCol">
+        <div id="posRow"><div id="track"></div><div id="counter"><div class="big" id="cntBig"></div><div class="sm" id="cntSm"></div></div></div>
+        <div id="tlWrap"><canvas id="cTime"></canvas><div id="tlPeek" hidden></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="settings" role="dialog" aria-label="Settings"></div>
+<div id="loadout" role="dialog" aria-label="Loadout"></div>
+<div id="help"><div class="hole"></div><div class="card"><h4><span class="n" id="hN"></span><span id="hT"></span></h4><p id="hP"></p><nav><span class="dots" id="hD"></span><button type="button" id="hBack"></button><button type="button" class="go" id="hNext"></button></nav></div></div>
+<div id="tip"></div>
+<!-- tokenwalk:script -->
+</body>
+</html>
