@@ -71,7 +71,7 @@ function drawMemory(n) {
       if (r === 0) hit(id, [X, ly + 22, zc, lh - 28], { k: 'kvtok', t: tk });
     }
     if (writing && !pt) { const j = last - 1 - t0; if (j >= 0 && j < zn) { x.save(); x.strokeStyle = C.cy; x.lineWidth = 2; x.shadowColor = C.cy; x.shadowBlur = 6; x.strokeRect(lx + 6 + j * zc - 1, ly + 21, zc + 1, lh - 26); x.restore(); } }
-  } else text(x, L('Hover the grid to magnify ten tokens', 'Pasa el ratón por la cuadrícula para ampliar diez tokens'), W, gy + gh + 14, C.dim, 'right', 9.5);
+  }
   const sy = gy + gh + 44;
   if (dl > 0) {
     textFit(x, L(`DeltaNet state · ${dl} layers · ${B(m.stateMB * 1e6)}, fixed size`, `Estado DeltaNet · ${dl} capas · ${B(m.stateMB * 1e6)}, tamaño fijo`), 0, sy - 8, W, C.mid, 'left', 9.5);

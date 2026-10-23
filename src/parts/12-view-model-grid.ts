@@ -15,7 +15,6 @@ function drawModelGrid(n) {
   const doneLayers = q => P.t >= q.a + q.d - 1e-12 ? m.layers : q === cur ? (n.head ? m.layers : Math.max(0, n.layer)) : 0;
   // titles and the mode switch
   text(x, L('Tokens across, layers up', 'Tokens a lo ancho, capas hacia arriba'), 0, 14, C.ink, 'left', 11.5, 650);
-  textFit(x, L('yellow: KV kept · grey: nothing kept · click a cell for its matrices', 'amarillo: KV guardada · gris: nada guardado · pulsa una celda: sus matrices'), 0, 30, W, C.dim, 'left', 10);
   // row labels: the kind of each layer
   for (let i = 0; i < m.layers; i++) { const y = top + (m.layers - 1 - i) * rh, attn = kinds[i] === 'attn' || m.kvLayers >= m.layers; x.fillStyle = attn ? 'rgba(231,194,47,.75)' : 'rgba(63,214,192,.55)'; x.fillRect(lab - 10, y + .5, 5, Math.max(.8, rh - 1)); if (rh >= 9 || (i + 1) % 5 === 0 || i === 0) text(x, String(i + 1), lab - 14, y + Math.min(rh, 10) - .5, i === curL ? C.cy : C.dim, 'right', 9.5); }
   text(x, L('layer', 'capa'), 0, top + (H - top - bot) / 2, C.dim, 'left', 9.5);

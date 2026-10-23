@@ -270,7 +270,7 @@ function drawZExpert(x, id, W, H, f, st, n) {
   const sumIn = mats.reduce((s2, m2) => s2 + m2[1], 0), maxOut = Math.max(...mats.map(m2 => m2[2])), k = Math.min((boxW - mats.length * 24) / sumIn, boxH / maxOut);
   const tok = n.seg && (n.seg.k === 'decode' || n.seg.k === 'round') ? n.seg.tok : 0, picked = f.e < 0 || chosenExperts(tok, f.layer).includes(f.e);
   text(x, f.e < 0 ? L('The shared expert: every token reads it', 'El experto compartido: todo token lo lee') : picked ? L(`Expert ${f.e}: the router picked it for this token`, `Experto ${f.e}: el router lo eligió para este token`) : L(`Expert ${f.e}: not picked for this token, so not read`, `Experto ${f.e}: no elegido para este token, así que no se lee`), X0, top - 30, picked ? C.hot : C.mid, 'left', 11, 650);
-  text(x, L('Its three matrices, to scale. Click one to go inside.', 'Sus tres matrices, a escala. Pulsa una para entrar.'), X0, top - 14, C.dim, 'left', 9.5);
+  text(x, L('Its three matrices, to scale', 'Sus tres matrices, a escala'), X0, top - 14, C.dim, 'left', 9.5);
   let cx = X0;
   mats.forEach((m2, j) => {
     const w = Math.max(8, m2[1] * k), h = Math.max(8, m2[2] * k), pr = st.where === 'past' ? 1 : st.where === 'now' ? Math.max(0, Math.min(1, st.pr * mats.length - j)) : 0;

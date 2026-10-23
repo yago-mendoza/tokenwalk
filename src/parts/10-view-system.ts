@@ -271,7 +271,7 @@ function drawModel(n) {
   textFit(x, L(`Layer ${focus + 1} of ${m.layers} · ${kindTxt}${away ? ` · the pass is at ${n.layer + 1}` : ''}`, `Capa ${focus + 1} de ${m.layers} · ${kindTxt}${away ? ` · la pasada va por la ${n.layer + 1}` : ''}`), ix, iy + 11, iw - (away ? 150 : 4), C.ink, 'left', 10.5, 600);
   const mats = li.mixer.slice(); if (sh.router) mats.push(sh.router); if (sh.mlp) mats.push(...sh.mlp);
   const expertsW = sh.expert ? Math.min(narrow ? 150 : 170, iw * .34) : 0;
-  const FLOW = 40, availW = iw - 8 - (expertsW ? expertsW + 12 : 0), availH = ih - 96 - FLOW;
+  const FLOW = 28, availW = iw - 8 - (expertsW ? expertsW + 12 : 0), availH = ih - 96 - FLOW;
   const maxOut = Math.max(...mats.map(s => s[2])), sumIn = mats.reduce((s, o) => s + o[1], 0);
   const k = Math.max(1e-6, Math.min((availH - 24) / maxOut, (availW - mats.length * 18) / sumIn));
   // progress of each operation in the focused layer
@@ -313,7 +313,7 @@ function drawModel(n) {
       if (i) { x.fillStyle = C.faint; x.beginPath(); x.moveTo(X - gap + 2, fy + 6); x.lineTo(X - 2, fy + 9); x.lineTo(X - gap + 2, fy + 12); x.fill(); }
       if (q.a !== undefined) hit(id, [X, fy, nw, 18], q.src === 'kv' ? { k: 'kvlayer', layer: focus } : q.src === 'st' ? { k: 'state', layer: focus } : q.id === 'experts' ? { k: 'expert', layer: focus, e: -1 } : { k: 'mat', layer: focus, name: q.id === 'router' && R.sh.router ? R.sh.router[0] : q.id });
     });
-    textFit(x, L('reads: cyan token · lilac weights · yellow KV · teal state', 'lee: cian token · lila pesos · amarillo KV · verde estado'), ix + 8, fy + 31, fw, C.dim, 'left', 9.5); }
+  }
   let cx = ix + 8; const baseY = iy + 28 + FLOW;
   for (const s of mats) { const w = drawMat(s, cx, baseY, k, s[0]); cx += Math.max(w + 10, 64); }
   // attention or state operation, drawn as what it reads
