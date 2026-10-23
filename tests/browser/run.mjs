@@ -25,6 +25,8 @@ async function check(name, fn) {
 const assert = (c, msg) => { if (!c) throw new Error(msg); };
 async function fresh(q = '', w = 1440, h = 900) {
   await p.size(w, h); await p.open(base + q);
+  // a Real session left behind by an earlier check would resume on load: forget it and load again
+  if (await p.ev(`(() => { const had = !!localStorage.getItem('tw.mode') && localStorage.getItem('tw.mode') !== 'sim'; ['tw.mode', 'tw.simS', 'tw.realS'].forEach(k => localStorage.removeItem(k)); return had; })()`)) await p.open(base + q);
   await p.ev(`showHelp(-1); document.getElementById('fsTip').hidden = true; window.__TRUNC = new Set()`);
 }
 const canvasHit = (cid, pred) => p.ev(`(() => { const c = document.getElementById('${cid}'), r = c.getBoundingClientRect(), h = (HITS['${cid}'] || []).find(q => Array.isArray(q.shape) && (${pred})(q.sel)); return h ? [r.x + h.shape[0] + Math.min(6, h.shape[2] / 2), r.y + h.shape[1] + Math.min(6, h.shape[3] / 2)] : null; })()`);
@@ -109,51 +111,171 @@ await check('explainers link other views and the wiki, with absolute URLs', asyn
 });
 
 // Live mode without a server: fetch is replaced in the page by one that answers from the recorded responses.
+// window.__down makes the server vanish (every request fails, as with nothing listening); window.__slow spaces the
+// streamed lines (ms) so a request can be caught while it runs; window.__lag delays every answer (ms).
 const fixture = f => JSON.stringify(fs.readFileSync(`tests/fixtures/${f}`, 'utf8'));
 const mockOllama = cors => `(() => {
   const files = { '/api/version': ${fixture('ollama-version.json')}, '/api/tags': ${fixture('ollama-tags.json')}, '/api/show': ${fixture('ollama-show-qwen36.json')}, '/api/generate': ${fixture('ollama-generate-warm.ndjson')} };
   window.fetch = async (url, opts = {}) => {
+    if (window.__down) throw new TypeError('Failed to fetch');
+    if (window.__lag) await new Promise(r => setTimeout(r, window.__lag));
     if (opts.mode === 'no-cors') return new Response('');
     if (${cors}) throw new TypeError('Failed to fetch');
     const path = new URL(url).pathname, body = files[path];
     if (body === undefined) return new Response('not found', { status: 404 });
-    if (path === '/api/generate') { const lines = body.split(String.fromCharCode(10)).filter(Boolean); let i = 0;
-      return new Response(new ReadableStream({ pull(c) { if (i < lines.length) c.enqueue(new TextEncoder().encode(lines[i++] + String.fromCharCode(10))); else c.close(); } }), { status: 200 }); }
+    if (path === '/api/generate') { const lines = body.split(String.fromCharCode(10)).filter(Boolean); let i = 0; const sig = opts.signal;
+      return new Response(new ReadableStream({ async pull(c) { if (window.__slow) await new Promise(r => setTimeout(r, window.__slow)); if (sig && sig.aborted) { c.error(new DOMException('aborted', 'AbortError')); return; } if (i < lines.length) c.enqueue(new TextEncoder().encode(lines[i++] + String.fromCharCode(10))); else c.close(); } }), { status: 200 }); }
     return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } });
   };
 })()`;
+const until = async (expr, ms = 4000) => { for (let t = 0; t < ms; t += 100) { if (await p.ev(expr)) return true; await sleep(100); } throw new Error('timed out waiting for ' + expr); };
+const shown = sel => p.ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); return !!(e && e.offsetParent); })()`);
+const toReal = async () => { await p.ev(`document.querySelector('#modeSw [data-mode=real]').click()`); await until(`MODE.m === 'real' && !!MODELS.live`); await sleep(300); };
+const MODES = process.env.MODES_DIR; // when set, a screenshot of each state is written there
+const snap = async name => { if (MODES) { await sleep(350); await p.shot(`${MODES}/${name}.png`); } };
 
-await check('live mode: a blocked origin explains the OLLAMA_ORIGINS fix', async () => {
-  await fresh(); await p.ev(mockOllama(true)); await p.ev(`document.querySelector('[data-acc=live] button').click()`);
-  await p.ev('liveDetect()');
-  assert((await p.ev('LIVE.status')) === 'cors', 'expected the CORS state');
-  assert(/OLLAMA_ORIGINS/.test(await p.ev(`document.getElementById('liveIn').textContent`)), 'the fix is not shown');
+await check('mode: Real machine with no server stays Simulated, and closing the window changes nothing', async () => {
+  await fresh(); await p.ev(mockOllama(true)); await snap('01-simulated');
+  const s0 = await p.ev('JSON.stringify(S)');
+  await p.ev(`document.querySelector('#modeSw [data-mode=real]').click()`);
+  assert(await p.ev(`!document.getElementById('liveWin').hidden`), 'the connect window did not open');
+  await until(`LIVE.status === 'cors'`);
+  assert(/OLLAMA_ORIGINS/.test(await p.ev(`document.getElementById('liveIn').textContent`)), 'the CORS fix is not shown');
+  assert(/Blocked by CORS/.test(await p.ev(`document.getElementById('liveIn').textContent`)), 'the CORS state is not named');
+  assert(!/Detect/.test(await p.ev(`document.getElementById('liveIn').textContent`)), 'the window still says Detect');
+  await snap('03-blocked-by-cors');
+  assert((await p.ev('MODE.m')) === 'sim' && !(await p.ev(`document.body.classList.contains('real')`)), 'left the simulation without a server');
+  await p.ev(`document.getElementById('liveClose').click()`); await sleep(200);
+  assert((await p.ev('MODE.connecting')) === false, 'still connecting after close');
+  assert((await p.ev('JSON.stringify(S)')) === s0, 'the simulated setup changed');
+  assert(/^Real machine$/.test(await p.ev(`document.querySelector('#modeSw [data-mode=real]').textContent.trim()`)), 'the switch does not read Real machine');
 });
 
-await check('live mode: detect, run, compare and calibrate against recorded Ollama responses', async () => {
-  await fresh(); await p.ev(mockOllama(false)); await p.ev(`document.getElementById('liveOpen').click()`);
-  assert(await p.ev(`!document.getElementById('liveWin').hidden`), 'the live window did not open');
-  await p.ev('liveDetect()');
-  assert((await p.ev(`LIVE.status + LIVE.version + LIVE.models.length`)) === 'ok0.40.72', 'not connected to the mock');
-  await p.ev(`LIVE.pick = 'qwen3.6:35b-a3b'; liveRun()`);
-  const run = await p.ev('LIVE.run && [LIVE.run.promptN, LIVE.run.evalN, LIVE.run.arrivalsMs.length]');
-  assert(run && run[0] === 36 && run[1] === 80 && run[2] === 80, 'run not parsed: ' + JSON.stringify(run));
+await check('mode: connect, send, record, then back to the simulation restored exactly', async () => {
+  await fresh(); await p.ev(mockOllama(false)); await p.ev(`P.t = R.ttft + 3; setPlaying(false)`);
+  const s0 = await p.ev('JSON.stringify(S)'), t0 = await p.ev('P.t');
+  await p.ev(`window.__lag = 500; document.querySelector('#modeSw [data-mode=real]').click()`);
+  await until(`LIVE.status === 'busy'`, 1500);
+  assert(/connecting/.test(await p.ev(`document.querySelector('#modeSw [data-mode=real]').textContent`)), 'the switch does not say connecting');
+  await snap('02-connecting');
+  await until(`MODE.m === 'real'`); await p.ev('window.__lag = 0'); await sleep(300);
+  assert(await p.ev(`document.getElementById('liveWin').hidden`), 'the connect window stayed open');
+  assert(await p.ev(`document.body.classList.contains('real')`), 'no Real accent');
+  assert(/this machine/.test(await p.ev(`document.getElementById('chip').textContent`)) && /num_ctx/.test(await p.ev(`document.getElementById('chip').textContent`)), 'the breadcrumb is not the real one');
+  assert(/Connected to Ollama 0\.40\.7 at http:\/\/localhost:11434 · qwen3\.6:35b-a3b/.test(await p.ev(`document.querySelector('#modeSw [data-mode=real]').title`)), 'the switch tooltip: ' + await p.ev(`document.querySelector('#modeSw [data-mode=real]').title`));
+  for (const sel of ['[data-acc=request]', '[data-acc=machine]', '[data-acc=model]', '[data-acc=adv]', '[data-acc=scen]']) assert(!(await shown(sel)), sel + ' is not hidden in Real');
+  assert(await shown('[data-acc=realreq]') && await shown('[data-acc=realmach]'), 'the real sections are missing');
+  await p.ev(`document.querySelector('[data-acc=engine]').classList.add('open')`); await sleep(100);
+  assert(!(await shown('#kv')) && !(await shown('#cold')) && await shown('#ctx'), 'KV type / cold start are not hidden, or num_ctx is');
+  await p.ev(`document.querySelector('[data-acc=engine]').classList.remove('open')`);
+  await sleep(300);
+  for (const id of ['jumpGo', 'slower', 'faster', 'pauseTok']) assert(await p.ev(`document.getElementById('${id}').disabled`), id + ' is not greyed');
+  assert(/Real time: a real server cannot be slowed, paused or stepped/.test(await p.ev(`document.getElementById('slower').title`)), 'no real-time tooltip');
+  assert(await p.ev(`!document.getElementById('estTag').hidden`), 'no estimate tag in the System view');
+  await snap('04-real-connected-idle');
+  await p.ev(`document.querySelector('#modeSw [data-mode=real]').click()`); await sleep(300);
+  const win = await p.ev(`document.getElementById('liveIn').textContent`);
+  assert(/Connected/.test(win) && /Change server/.test(win) && /Disconnect/.test(win) && !/Detect/.test(win), 'the window when connected: ' + win.slice(0, 200));
+  await snap('05-connect-window-connected'); await p.ev(`liveOpen(false)`);
+  await p.ev(`window.__slow = 15; document.getElementById('play').click()`); await until('LIVE.running');
+  await sleep(500); await snap('06-real-running');
+  await until('!LIVE.running && !!LIVE.run', 8000);
+  const run = await p.ev('[LIVE.run.promptN, LIVE.run.evalN, LIVE.run.arrivalsMs.length]');
+  assert(run[0] === 36 && run[1] === 80 && run[2] === 80, 'run not parsed: ' + JSON.stringify(run));
   assert((await p.ev(`document.querySelectorAll('#liveCmp .lv-r').length`)) === 5, 'the comparison table is missing');
-  await sleep(400); // Output is painted on the next frames, not when the run resolves
-  assert(/live/i.test(await p.ev(`document.getElementById('outStream').textContent`)), 'the live answer is not in Output');
-  await sleep(500);
-  assert((await p.ev(`document.querySelectorAll('.simonly').length`)) > 5, 'controls the server ignores are not marked');
-  assert(/temp/.test(await p.ev(`[...document.querySelectorAll('.livehon')].map(e => (e.querySelector('input,select') || {}).id).join(',')`)), 'temperature is not marked as sent');
+  assert((await p.ev(`document.getElementById('mbody').firstElementChild.id`)) === 'liveSec', 'Estimate vs measured is not first in Monitor');
+  await sleep(400);
+  assert(/real/i.test(await p.ev(`document.getElementById('outStream').textContent`)), 'the real answer is not in Output');
+  assert(/s$/.test(await p.ev(`document.getElementById('clock').textContent.trim()`)), 'the clock does not show the wall time');
   assert(/num_ctx/.test(await p.ev(`document.getElementById('liveSent').textContent`)), 'the sent options are not listed');
-  assert(await p.ev(`!!document.querySelector('#chip .lvseg')`), 'the breadcrumb has no live segment');
-  await p.ev(`document.getElementById('liveClose').click(); setLens('tokens')`); await sleep(500);
-  assert((await p.ev(`document.querySelectorAll('#stream .g.live').length`)) === 80, 'the live tokens are not in the Tokens view');
+  assert(/temp/.test(await p.ev(`[...document.querySelectorAll('.livehon')].map(e => (e.querySelector('input,select') || {}).id).join(',')`)), 'temperature is not marked as sent');
+  await snap('07-real-done-record');
+  await p.ev(`setLens('tokens')`); await sleep(500);
+  assert((await p.ev(`document.querySelectorAll('#stream .g.live').length`)) === 80, 'the real tokens are not in the Tokens view');
   await p.ev(`document.querySelector('#stream [data-ltok="3"]').click()`); await sleep(300);
-  assert((await p.ev('UI.liveTok')) === 3, 'a live token click is not handled'); await p.ev(`UI.liveTok = null; setLens('system')`);
-  await p.ev('liveUseModel()'); assert((await p.ev(`S.model + MODELS.live.layers`)) === 'live40', 'live model not drawn');
-  await p.ev('liveCalibrate()'); const d = await p.ev(`[LIVE.est.decodeTps, LIVE.run.evalN / LIVE.run.decodeS]`);
+  assert((await p.ev('UI.liveTok')) === 3, 'a real token click is not handled'); await snap('08-real-tokens'); await p.ev(`UI.liveTok = null; setLens('system')`);
+  assert((await p.ev(`S.model + MODELS.live.layers`)) === 'live40', 'the server model is not drawn');
+  await p.ev(`document.getElementById('lvCal').click()`); await sleep(200);
+  const d = await p.ev(`[LIVE.est.decodeTps, LIVE.run.evalN / LIVE.run.decodeS]`);
   assert(Math.abs(d[0] - d[1]) / d[1] < 0.02, 'calibrated decode ' + d.join(' vs '));
-  await p.ev(`select({ k: 'trend', id: 'tpt' })`); await sleep(300); await p.ev('select(null); liveResetCal(); registerLiveModel(null)');
+  await p.ev(`liveResetCal(); LIVE.maxTok = 48; saveReal()`);
+  await p.ev(`document.querySelector('#modeSw [data-mode=sim]').click()`); await sleep(400);
+  assert((await p.ev('MODE.m')) === 'sim' && !(await p.ev(`document.body.classList.contains('real')`)), 'did not go back to the simulation');
+  assert((await p.ev('JSON.stringify(S)')) === s0, 'the simulation was not restored exactly');
+  assert(Math.abs((await p.ev('P.t')) - t0) < 1e-9, 'the simulated time was not restored');
+  assert(!(await p.ev(`document.getElementById('slower').disabled`)), 'the speed control is still greyed');
+  assert(!/real/i.test(await p.ev(`document.getElementById('outStream').textContent.slice(0, 8)`)), 'the real answer leaked into the simulation');
+  await p.ev(`document.querySelector('#modeSw [data-mode=real]').click()`); await until(`MODE.m === 'real'`);
+  assert((await p.ev('LIVE.maxTok')) === 48 && (await p.ev(`document.getElementById('liveWin').hidden`)), 'Real did not come back instantly with its own settings');
+  await p.ev(`leaveReal(true)`);
+});
+
+await check('mode: switching back while a real request runs asks, and keeps running by default', async () => {
+  await fresh(); await p.ev(mockOllama(false)); await toReal();
+  await p.ev(`window.__slow = 120; document.getElementById('play').click()`); await until('LIVE.running');
+  await p.ev(`document.querySelector('#modeSw [data-mode=sim]').click()`); await sleep(200);
+  assert(await p.ev(`!document.getElementById('modeAsk').hidden`), 'no confirmation');
+  assert(/Stop the real request and go back to the simulation\?/.test(await p.ev(`document.getElementById('modeAsk').textContent`)), 'the confirmation text');
+  assert((await p.ev(`document.activeElement && document.activeElement.id`)) === 'askKeep', 'Keep running is not the default');
+  await snap('09-confirm-switch-while-running');
+  await p.ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`); await sleep(150);
+  assert((await p.ev(`MODE.m + LIVE.running`)) === 'realtrue', 'Esc did not keep it running');
+  await p.ev(`document.getElementById('liveOpen').click()`); await sleep(200);
+  for (const id of ['lvModel', 'lvChange', 'lvDisc']) assert(await p.ev(`document.getElementById('${id}').disabled`), id + ' is not disabled while running');
+  assert(/Wait for the real request to finish/.test(await p.ev(`document.getElementById('lvChange').title`)), 'no reason given');
+  await p.ev(`liveOpen(false); document.querySelector('#modeSw [data-mode=sim]').click()`); await sleep(150);
+  await p.ev(`document.getElementById('askStop').click()`); await sleep(300);
+  assert((await p.ev('MODE.m')) === 'sim', 'Stop and switch did not switch');
+  await until('!LIVE.running');
+  await p.ev('window.__slow = 0');
+});
+
+await check('mode: a lost server shows the banner, Retry and Back to simulation; Disconnect forgets it', async () => {
+  await fresh(); await p.ev(mockOllama(false)); await toReal();
+  await p.ev(`window.__down = true; realPoll(true)`); await sleep(300);
+  assert(await p.ev(`!document.getElementById('lostBar').hidden`), 'no lost banner');
+  assert(/Lost the server at http:\/\/localhost:11434/.test(await p.ev(`document.getElementById('lostBar').textContent`)), 'banner text');
+  await sleep(200); assert(await p.ev(`document.getElementById('play').disabled`), 'Send is still offered with no server');
+  await snap('10-server-lost');
+  await p.ev(`document.getElementById('lostRetry').click()`); await sleep(300);
+  assert(await p.ev('MODE.lost'), 'Retry cleared it with the server still gone');
+  await p.ev(`window.__down = false; document.getElementById('lostRetry').click()`); await sleep(300);
+  assert(await p.ev(`!MODE.lost && document.getElementById('lostBar').hidden`), 'Retry did not reconnect');
+  await p.ev(`window.__down = true; realPoll(true)`); await sleep(300);
+  await p.ev(`document.getElementById('lostBack').click()`); await sleep(300);
+  assert((await p.ev('MODE.m')) === 'sim' && await p.ev(`document.getElementById('lostBar').hidden`), 'Back to simulation');
+  await p.ev(`window.__down = false`); await toReal();
+  await p.ev(`liveOpen(true); document.getElementById('lvDisc').click()`); await sleep(300);
+  assert((await p.ev(`MODE.m + LIVE.status`)) === 'simidle', 'Disconnect did not return to the simulation');
+  await p.ev(`document.querySelector('#modeSw [data-mode=real]').click()`); await until(`MODE.m === 'real'`); await p.ev('leaveReal(true)');
+});
+
+await check('mode: on start, Real resumes only when the server answers', async () => {
+  for (const down of [false, true]) {
+    await p.cmd('Page.enable'); const { result } = await p.cmd('Page.addScriptToEvaluateOnNewDocument', { source: `window.__down = ${down}; ${mockOllama(false)}; try { localStorage.setItem('tw.mode', 'real') } catch (e) {}` });
+    await p.open(base, 3500); await p.cmd('Page.removeScriptToEvaluateOnNewDocument', { identifier: result.identifier });
+    await p.ev(`showHelp(-1); document.getElementById('fsTip').hidden = true`);
+    if (!down) { await until(`MODE.m === 'real'`, 3000); await p.ev('leaveReal(true)'); }
+    else {
+      assert((await p.ev('MODE.m')) === 'sim', 'started Real with no server');
+      assert(!/this machine|Live:/i.test(await p.ev(`document.getElementById('top').textContent`)), 'a connected look with no server');
+    }
+  }
+  await p.ev(`localStorage.removeItem('tw.mode')`);
+});
+
+await check('mode: no text is cut or overflows in Real machine mode, at 1440x900 and 1280x720', async () => {
+  for (const [w, h] of [[1440, 900], [1280, 720]]) {
+    await fresh('', w, h); await p.ev(mockOllama(false)); await toReal();
+    await p.ev(`document.getElementById('play').click()`); await until('!!LIVE.run', 8000); await sleep(300);
+    for (const l of ['system', 'model', 'memory', 'tokens']) { await p.ev(`setLens('${l}')`); await sleep(250); }
+    for (const a of ['realmach', 'realreq', 'engine', 'samp']) { await p.ev(`document.querySelectorAll('#cfgBody .acc').forEach(e => e.classList.toggle('open', e.dataset.acc === '${a}'))`); await sleep(150); }
+    await p.ev(`liveOpen(true)`); await sleep(200);
+    const cut = await p.ev(`[...window.__TRUNC]`);
+    const over = await p.ev(`[...document.querySelectorAll('body *')].filter(e => { if (!e.offsetParent || e.children.length) return false; const cs = getComputedStyle(e); return e.scrollWidth > e.clientWidth + 1 && (cs.textOverflow === 'ellipsis' || cs.overflow === 'hidden' || cs.overflowX === 'hidden'); }).map(e => (e.id || e.className || e.tagName) + ': ' + e.textContent.slice(0, 40))`);
+    assert(!cut.length && !over.length, `${w}x${h}: cut ${JSON.stringify(cut)} overflow ${JSON.stringify(over)}`);
+    await p.ev(`liveOpen(false); leaveReal(true)`);
+  }
 });
 
 if (SHOT) {
