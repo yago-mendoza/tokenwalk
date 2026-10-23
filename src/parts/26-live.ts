@@ -289,3 +289,7 @@ function renderEngineBadge() {
 }
 setInterval(renderEngineBadge, 500);
 document.addEventListener('click', e => { if (!e.target.closest('#engineBadge')) return; liveOpen(true); });
+
+// On start, look for a local server quietly: if one answers, the badge, the red dot and the server model appear by themselves.
+// Nothing is shown when nothing answers; a blocked origin still shows its fix when the window is opened.
+setTimeout(() => { try { if (LIVE.status === 'idle') liveDetect().catch(() => {}); } catch (e) {} }, 1200);

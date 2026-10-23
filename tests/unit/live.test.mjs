@@ -11,7 +11,7 @@ test('an Ollama /api/show maps onto the hand-written Qwen3.6 preset', () => {
   const p = M.modelFromOllama(JSON.parse(fx('ollama-show-qwen36.json')), 'qwen3.6:35b-a3b'), m = p.model, ref = M.MODELS.qwen36;
   for (const k of ['layers', 'kvLayers', 'qHeads', 'kvHeads', 'headDim', 'hidden', 'experts', 'expertsUsed', 'sharedExperts', 'ctxMax']) assert.equal(m[k], ref[k], k);
   near(m.total, ref.total, 0.01, 'total'); near(m.readParams, ref.readParams, 0.03, 'readParams'); near(m.stateMB, ref.stateMB, 0.05, 'stateMB');
-  assert.equal(p.quant, 'Q4_K_M'); assert.equal(m.live, true); assert.match(m.name, /^Live: /);
+  assert.equal(p.quant, 'Q4_K_M'); assert.equal(m.live, true); assert.match(m.name, /^qwen3.6:35b-a3b$/);
   assert.deepEqual(p.shapes.expert, M.SHAPES.qwen36.expert);
 });
 

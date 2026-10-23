@@ -43,7 +43,7 @@ function modelFromOllama(show: any, name: string) {
   const ssmHeads = g('ssm.time_step_rank') || 0, ssmState = g('ssm.state_size') || 0;
   const stateMB = every > 1 && ssmHeads ? ((layers - kvLayers) * ssmHeads * ssmState * ssmState * 4) / 1e6 : 0;
   const ctxMax = g('context_length') || (show.details && show.details.context_length) || 8192;
-  const model = { name: `Live: ${name}`, tag: name, moe, total, readParams, layers, kvLayers, qHeads, kvHeads, headDim, hidden, vocab,
+  const model = { name: name, tag: name, moe, total, readParams, layers, kvLayers, qHeads, kvHeads, headDim, hidden, vocab,
     experts, expertsUsed: used, sharedExperts: moe ? shared : 0, expertParams: moe ? expertParams : 0, ctxMax, stateMB: Math.round(stateMB), measured: true, live: true, mtp: nextn };
   const inner = g('ssm.inner_size') || 0, ffn = g('feed_forward_length') || 0, kvw = kvHeads * headDim;
   const shapes: any = { attn: [['attn_q', hidden, qHeads * headDim * (every > 1 ? 2 : 1)], ['attn_k', hidden, kvw], ['attn_v', hidden, kvw], ['attn_output', qHeads * headDim, hidden]] };
@@ -58,7 +58,7 @@ function modelFromLlama(models: any, props: any) {
   const d = (models && models.data && models.data[0]) || {}, meta = d.meta || {}, path = String((props && props.model_path) || d.id || 'model');
   const name = path.split(/[\\/]/).pop()!.replace(/\.gguf$/i, ''), hidden = meta.n_embd || 4096, vocab = meta.n_vocab || 32000, total = meta.n_params || 8e9;
   const layers = Math.max(8, Math.round(total / (12 * hidden * hidden))), qHeads = Math.max(1, Math.round(hidden / 128));
-  const model = { name: `Live: ${name}`, tag: name, moe: false, total, readParams: Math.max(1, total - vocab * hidden), layers, kvLayers: layers, qHeads, kvHeads: Math.max(1, qHeads / 4), headDim: 128,
+  const model = { name: name, tag: name, moe: false, total, readParams: Math.max(1, total - vocab * hidden), layers, kvLayers: layers, qHeads, kvHeads: Math.max(1, qHeads / 4), headDim: 128,
     hidden, vocab, experts: 0, expertsUsed: 0, sharedExperts: 0, expertParams: 0, ctxMax: meta.n_ctx_train || 8192, stateMB: 0, measured: false, live: true };
   const q = (name.match(/(BF16|F16|Q\d_\w+|IQ\d\w*)/i) || [])[1] || 'Q4_K_M';
   return { model, shapes: null, quant: quantKey(q) };
@@ -123,4 +123,4 @@ function registerLiveModel(p: { model: any; shapes: any; quant: string } | null,
   (MODELS as any).live = p.model; if (p.shapes) (SHAPES as any).live = p.shapes; else delete (SHAPES as any).live;
   if (persist) try { localStorage.setItem(LIVE_MODEL_KEY, JSON.stringify(p)); } catch (e) {}
 }
-try { const saved = JSON.parse(localStorage.getItem(LIVE_MODEL_KEY) || 'null'); if (saved && saved.model) registerLiveModel(saved, false); } catch (e) {}
+try { const saved = JSON.parse(localStorage.getItem(LIVE_MODEL_KEY) || 'null'); if (saved && saved.model) { saved.model.name = String(saved.model.name).replace(/^Live: /, ''); registerLiveModel(saved, false); } } catch (e) {}
