@@ -28,7 +28,9 @@ function bind() {
   { const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'tbtn'; rb.id = 'redoBtn'; rb.innerHTML = ICON('restart', 's'); rb.querySelector('.ic').style.transform = 'scaleX(-1)'; $('undoBtn').after(rb); rb.addEventListener('click', redo); renderUndo(); }
  
   $('play').addEventListener('click', () => { if (fitGate()) return; UI.stale = false; setPlaying(!P.on); });
-  $('jumpGo').addEventListener('click', () => doJump(UI.jump)); renderMmode();
+  $('jumpGo').addEventListener('click', () => doJump(UI.jump));
+  // The lock card sits in the flow after the sections, so it never covers a row (Sampling and Live stay usable above it).
+  $('cfgBody').appendChild($('lock')); renderMmode();
   { const mark = el => el.classList.toggle('more', el.scrollTop > 2); for (const id2 of ['log', 'stream', 'outStream']) { const el = $(id2); el.addEventListener('scroll', () => mark(el)); new MutationObserver(() => requestAnimationFrame(() => mark(el))).observe(el, { childList: true }); } }
   // Full screen: suggested once on entry when the window is not already full screen (F11 or the Fullscreen API).
   { const isFull = () => !!document.fullscreenElement || (innerHeight >= screen.height - 4 && innerWidth >= screen.width - 4);
