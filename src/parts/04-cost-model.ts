@@ -32,10 +32,12 @@ function compute() {
   if (useMtp) {
     // MTP: draft k tokens with the model's own next-n block, verify them in one pass of the full model.
     const k = MTP.k, alpha = mtpAlpha(S.temp), draftT = mtpDraftGB(m, S.quant) / bwEff + mc.layerMs / 1000;
-    const r = rngOf(9191 + Math.round(alpha * 1000));
-    let i = 0, rounds = 0, acc = 0;
+    // Accepted guesses per round by error diffusion: on average alpha + alpha^2 + ... + alpha^k, as the formula
+    // (mtpTokS) has it, with no random drift on short answers.
+    const eAcc = Array.from({ length: k }, (_, j) => alpha ** (j + 1)).reduce((s2, v) => s2 + v, 0);
+    let i = 0, rounds = 0, acc = 0, carry = 0;
     while (i < S.ans) {
-      let a = 0; while (a < k && r() < alpha) a++;
+      carry += eAcc; const a = Math.min(k, Math.floor(carry + 1e-9)); carry -= a;
       const n = Math.min(a + 1, S.ans - i), ctxNow = prompt + i;
       const vBytes = passReadGB(m, S.quant, k + 1) + kvGB(m, S.kv, ctxNow);
       const verifyT = Math.max(vBytes / bwEff, (2 * m.readParams * (k + 1)) / (mc.tflops * 1e12)) + (mc.layerMs * m.layers) / 1000;

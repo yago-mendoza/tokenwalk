@@ -131,7 +131,8 @@ await check('live mode: a blocked origin explains the OLLAMA_ORIGINS fix', async
 });
 
 await check('live mode: detect, run, compare and calibrate against recorded Ollama responses', async () => {
-  await fresh(); await p.ev(mockOllama(false)); await p.ev(`document.querySelector('[data-acc=live] button').click()`);
+  await fresh(); await p.ev(mockOllama(false)); await p.ev(`document.getElementById('liveOpen').click()`);
+  assert(await p.ev(`!document.getElementById('liveWin').hidden`), 'the live window did not open');
   await p.ev('liveDetect()');
   assert((await p.ev(`LIVE.status + LIVE.version + LIVE.models.length`)) === 'ok0.40.72', 'not connected to the mock');
   await p.ev(`LIVE.pick = 'qwen3.6:35b-a3b'; liveRun()`);
@@ -139,6 +140,15 @@ await check('live mode: detect, run, compare and calibrate against recorded Olla
   assert(run && run[0] === 36 && run[1] === 80 && run[2] === 80, 'run not parsed: ' + JSON.stringify(run));
   assert((await p.ev(`document.querySelectorAll('#liveCmp .lv-r').length`)) === 5, 'the comparison table is missing');
   assert(/live/i.test(await p.ev(`document.getElementById('outStream').textContent`)), 'the live answer is not in Output');
+  await sleep(500);
+  assert((await p.ev(`document.querySelectorAll('.simonly').length`)) > 5, 'controls the server ignores are not marked');
+  assert(/temp/.test(await p.ev(`[...document.querySelectorAll('.livehon')].map(e => (e.querySelector('input,select') || {}).id).join(',')`)), 'temperature is not marked as sent');
+  assert(/num_ctx/.test(await p.ev(`document.getElementById('liveSent').textContent`)), 'the sent options are not listed');
+  assert(await p.ev(`!!document.querySelector('#chip .lvseg')`), 'the breadcrumb has no live segment');
+  await p.ev(`document.getElementById('liveClose').click(); setLens('tokens')`); await sleep(500);
+  assert((await p.ev(`document.querySelectorAll('#stream .g.live').length`)) === 80, 'the live tokens are not in the Tokens view');
+  await p.ev(`document.querySelector('#stream [data-ltok="3"]').click()`); await sleep(300);
+  assert((await p.ev('UI.liveTok')) === 3, 'a live token click is not handled'); await p.ev(`UI.liveTok = null; setLens('system')`);
   await p.ev('liveUseModel()'); assert((await p.ev(`S.model + MODELS.live.layers`)) === 'live40', 'live model not drawn');
   await p.ev('liveCalibrate()'); const d = await p.ev(`[LIVE.est.decodeTps, LIVE.run.evalN / LIVE.run.decodeS]`);
   assert(Math.abs(d[0] - d[1]) / d[1] < 0.02, 'calibrated decode ' + d.join(' vs '));

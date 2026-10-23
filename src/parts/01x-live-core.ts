@@ -44,7 +44,7 @@ function modelFromOllama(show: any, name: string) {
   const stateMB = every > 1 && ssmHeads ? ((layers - kvLayers) * ssmHeads * ssmState * ssmState * 4) / 1e6 : 0;
   const ctxMax = g('context_length') || (show.details && show.details.context_length) || 8192;
   const model = { name: `Live: ${name}`, tag: name, moe, total, readParams, layers, kvLayers, qHeads, kvHeads, headDim, hidden, vocab,
-    experts, expertsUsed: used, sharedExperts: moe ? shared : 0, expertParams: moe ? expertParams : 0, ctxMax, stateMB: Math.round(stateMB), measured: true, live: true };
+    experts, expertsUsed: used, sharedExperts: moe ? shared : 0, expertParams: moe ? expertParams : 0, ctxMax, stateMB: Math.round(stateMB), measured: true, live: true, mtp: nextn };
   const inner = g('ssm.inner_size') || 0, ffn = g('feed_forward_length') || 0, kvw = kvHeads * headDim;
   const shapes: any = { attn: [['attn_q', hidden, qHeads * headDim * (every > 1 ? 2 : 1)], ['attn_k', hidden, kvw], ['attn_v', hidden, kvw], ['attn_output', qHeads * headDim, hidden]] };
   if (every > 1 && inner) { shapes.delta = [['attn_qkv', hidden, inner * 2], ['attn_gate', hidden, inner], ['ssm_out', inner, hidden]]; shapes.deltaState = ssmHeads * ssmState * ssmState * 4; }

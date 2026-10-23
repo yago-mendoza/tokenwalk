@@ -17,7 +17,7 @@ function bind() {
   $('topk').addEventListener('input', e => { S.topk = Math.round(+e.target.value); resample(); });
   $('seed').addEventListener('change', e => { const v = Math.round(+e.target.value); if (v > 0) { S.seed = v; resample(); } else e.target.value = S.seed; });
   // Closing a section never pulls the list up under the cursor: the body keeps its height (empty space below) until the pointer leaves the panel.
-  document.querySelectorAll('.acc > button').forEach(b => b.addEventListener('click', () => { const acc = b.parentElement; const was = acc.classList.contains('open'); fillHintbars(); document.querySelectorAll('#cfgBody .acc.open').forEach(o => o.classList.remove('open')); if (!was) { acc.classList.add('open'); placeFlyout(acc); } }));
+  document.querySelectorAll('.acc:not(.lvrow) > button').forEach(b => b.addEventListener('click', () => { const acc = b.parentElement; const was = acc.classList.contains('open'); fillHintbars(); document.querySelectorAll('#cfgBody .acc.open').forEach(o => o.classList.remove('open')); if (!was) { acc.classList.add('open'); placeFlyout(acc); } }));
   // A click outside an open panel only closes it; it does not also act on what lies beneath.
   let swallow = 0;
   document.addEventListener('pointerdown', e => { const o = document.querySelector('#cfgBody .acc.open'); if (o && !o.contains(e.target) && !e.target.closest('#loadout, #lesson, #settings, #chainWin')) { o.classList.remove('open'); if (!e.target.closest('#cfgBody .acc > button')) swallow = performance.now(); } }, true);
@@ -75,7 +75,7 @@ function bind() {
   $('monClose').addEventListener('click', () => document.body.classList.remove('monOpen'));
   $('chip').addEventListener('click', () => openLoadout('machine'));
   document.querySelectorAll('#ztabs button').forEach(b => b.addEventListener('click', () => setZone(b.dataset.z)));
-  for (const id2 of ['stream', 'outStream']) $(id2).addEventListener('click', e => { const t = e.target.closest('[data-tok]'); if (!t) return; const i = +t.dataset.tok; UI.logitTok = UI.logitTok === i ? null : i; if (UI.lens !== 'tokens') setLens('tokens'); streamKey = ''; outKey = ''; });
+  for (const id2 of ['stream', 'outStream']) $(id2).addEventListener('click', e => { const lt = e.target.closest('[data-ltok]'); if (lt) { const i = +lt.dataset.ltok; UI.liveTok = UI.liveTok === i ? null : i; streamKey = ''; return; } const t = e.target.closest('[data-tok]'); if (!t) return; const i = +t.dataset.tok; UI.logitTok = UI.logitTok === i ? null : i; if (UI.lens !== 'tokens') setLens('tokens'); streamKey = ''; outKey = ''; });
   const tip = $('tip');
   for (const cid of ['cSystem', 'cModel', 'cMemory', 'cPrompt', 'cCand', 'cChainBig', 'cTime', 'ruler', 'cCtx']) {
     const c = $(cid);

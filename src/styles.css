@@ -357,18 +357,18 @@ body.noFoot #wfoot { display: none; }
 #fsTip[hidden] { display: none; } #fsTip > .ic-slot { grid-column: 1 / -1; justify-self: center; } #fsTip .ic { color: var(--amber); width: 24px; height: 24px; } #fsTip > div { grid-column: 1 / -1; margin-bottom: 6px; } #fsTip b { display: block; color: var(--ink); font: 650 13.5px/1.3 var(--sans); margin-bottom: 4px; } #fsTip small { display: block; color: var(--dim); font-size: 11.5px; line-height: 1.4; }
 #fsTip #fsGo { grid-column: 1 / -1; justify-content: center; } #fsTip .tbtn { justify-content: center; font-size: 11px; }
 #fsTip .btnp, #fsTip .tbtn { height: 28px; white-space: nowrap; }
-#chainWin, #scaleWin { position: fixed; inset: 0; z-index: 58; } #chainWin[hidden], #scaleWin[hidden] { display: none; }
-:is(#chainWin, #scaleWin) .card { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); padding: 0; gap: 0; display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7); overflow: hidden; }
+#chainWin, #scaleWin, #liveWin { position: fixed; inset: 0; z-index: 58; } #chainWin[hidden], #scaleWin[hidden], #liveWin[hidden] { display: none; }
+:is(#chainWin, #scaleWin, #liveWin) .card { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); padding: 0; gap: 0; display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7); overflow: hidden; }
 #chainWin canvas { display: block; margin: 16px 18px 14px; }
 #scaleWin .card { width: min(1080px, calc(100vw - 40px)); } #scaleWin .sw-body { padding: 16px 18px; } #scaleWin p { margin: 0 0 12px; max-width: 640px; font: 400 13px/1.5 var(--sans); color: var(--mid); }
-:is(#lesson, #chainWin, #scaleWin) .scrim { position: absolute; inset: 0; background: rgb(4 4 7 / .5); animation: fadeIn .15s var(--ease); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin) .scrim { position: absolute; inset: 0; background: rgb(4 4 7 / .5); animation: fadeIn .15s var(--ease); }
 #lesson .card { --lsf: 13px; padding: 0; gap: 0; position: absolute; width: min(680px, calc(100vw - 24px)); max-height: calc(100vh - 72px); display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7), 0 0 0 1px rgb(0 0 0 / .6); overflow: hidden; animation: popIn .16s var(--ease); }
-:is(#lesson, #chainWin, #scaleWin) .band { flex: none; display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 4px 0 12px; color: #17130a; background: repeating-linear-gradient(-45deg, var(--hot) 0 10px, #f0c52a 10px 20px); }
-:is(#lesson, #chainWin, #scaleWin) .band b { font: 800 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: #17130a; }
-:is(#lesson, #chainWin, #scaleWin) .band .ic { width: 14px; height: 14px; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin) .band { flex: none; display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 4px 0 12px; color: #17130a; background: repeating-linear-gradient(-45deg, var(--hot) 0 10px, #f0c52a 10px 20px); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin) .band b { font: 800 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: #17130a; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin) .band .ic { width: 14px; height: 14px; }
 #lesson .band .st { font: 700 9.5px/1 var(--mono); padding: 3px 7px; border-radius: 9px; background: rgb(0 0 0 / .82); color: var(--hot); text-transform: uppercase; letter-spacing: .06em; }
-:is(#lesson, #chainWin, #scaleWin) .band button { margin-left: auto; display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 3px; background: rgb(0 0 0 / .12); color: #17130a; }
-:is(#lesson, #chainWin, #scaleWin) .band button:hover { background: rgb(0 0 0 / .28); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin) .band button { margin-left: auto; display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 3px; background: rgb(0 0 0 / .12); color: #17130a; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin) .band button:hover { background: rgb(0 0 0 / .28); }
 #lesson .lsb { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 250px) minmax(0, 1fr); gap: 0 22px; padding: 16px 18px 10px; }
 #lesson .lsl { min-width: 0; } #lesson .lsr { min-width: 0; }
 @media (max-width: 620px) { #lesson .lsb { grid-template-columns: 1fr; } }
@@ -647,3 +647,24 @@ body.reduced * { transition: none !important; animation: none !important; }
 #engineBadge .livedot.run { animation-duration: .7s; }
 @keyframes livepulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 body.reduced #engineBadge .livedot { animation: none; }
+
+/* Live mode window */
+#liveWin .card { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 80px); }
+#liveWin .lw-body { overflow: auto; padding: 16px 18px 14px; display: grid; gap: 10px; scrollbar-width: thin; }
+#liveIn { display: grid; gap: 10px; }
+#liveSent { font: 400 11px/1.5 var(--mono); color: var(--dim); border-top: 1px solid var(--line); padding-top: 8px; }
+#liveSent b { color: var(--mid); font-weight: 600; } #liveSent:empty { display: none; }
+.lvrow > button .chev .ic { transform: none !important; }
+/* Configure controls the live server does not honour: still usable for the simulation, marked */
+.simonly { opacity: .45; position: relative; }
+.simonly::after { content: 'sim'; position: absolute; top: 2px; right: 0; font: 700 8.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); border: 1px solid var(--line2); border-radius: 3px; padding: 1px 3px; pointer-events: none; }
+label.sw.simonly::after { top: 50%; transform: translateY(-50%); }
+.livehon > label span:first-child::after, label.sw.livehon > span::after { content: ' · live'; color: var(--cy); font: 600 9.5px/1 var(--mono); }
+/* Breadcrumb: the server segment */
+#chip .lvseg { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
+#chip .lvseg .ic { color: #ff5d6c; } #chip .lvseg b { color: #ffd2d7 !important; }
+/* Tokens view: live tokens */
+.g.live { background: rgb(255 93 108 / .1); box-shadow: inset 0 -1.5px 0 rgb(255 93 108 / .55); }
+.g.live:nth-of-type(even) { background: rgb(255 93 108 / .05); }
+.g.live.sel { outline: 1.5px solid #ff5d6c; }
+#stream .lv-tag { margin-right: 6px; }

@@ -5,7 +5,7 @@
 const LIVE = {
   ep: (() => { try { return localStorage.getItem('tw.liveEp') || 'http://localhost:11434'; } catch (e) { return 'http://localhost:11434'; } })(),
   kind: null, status: 'idle', version: '', error: '', fix: '', models: [], pick: '', caps: {},
-  promptMode: 'short', own: '', maxTok: 64, running: false, ctl: null, text: '', run: null, est: null, showOut: false, t0: 0,
+  promptMode: 'short', own: '', maxTok: 64, running: false, ctl: null, text: '', run: null, est: null, showOut: false, t0: 0, toks: [], sent: null,
 };
 const LIVE_PROMPTS = () => ({
   short: L('A patient on warfarin is started on amiodarone. In three sentences, what interaction should the clinician watch for, and what should they check?', 'Un paciente con warfarina empieza amiodarona. En tres frases, ¿qué interacción debe vigilar el clínico y qué debe comprobar?'),
@@ -72,9 +72,7 @@ async function liveRun() {
   LIVE.running = true; LIVE.text = ''; LIVE.run = null; LIVE.est = null; LIVE.showOut = true; LIVE.error = ''; LIVE.ctl = new AbortController(); LIVE.t0 = performance.now(); renderLive(true);
   const arrivals = []; let first = null, raw = '';
   try {
-    const body = LIVE.kind === 'ollama'
-      ? { model: LIVE.pick, prompt, stream: true, options: { num_predict: LIVE.maxTok, num_ctx: S.ctx, temperature: S.temp, top_p: S.topp, seed: S.seed, ...(S.topk < 6 ? { top_k: S.topk } : {}) }, ...((LIVE.caps[LIVE.pick] || []).includes('thinking') ? { think: false } : {}) }
-      : { prompt, stream: true, n_predict: LIVE.maxTok, temperature: S.temp, top_p: S.topp, seed: S.seed, cache_prompt: false, ...(S.topk < 6 ? { top_k: S.topk } : {}) };
+    const body = liveBody(prompt); LIVE.sent = liveSentList(body); LIVE.toks = []; UI.liveTok = null; streamKey = '';
     const r = await liveFetch(LIVE.kind === 'ollama' ? '/api/generate' : '/completion', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: LIVE.ctl.signal }, 15 * 60 * 1000);
     if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 200)}`);
     const rd = r.body.getReader(), dec = new TextDecoder(); let buf = '';
@@ -85,7 +83,7 @@ async function liveRun() {
         if (!l.trim()) continue; raw += l + '\n';
         const o = LIVE.kind === 'ollama' ? JSON.parse(l) : l.startsWith('data: ') && l.slice(6).trim() !== '[DONE]' ? JSON.parse(l.slice(6)) : null;
         const piece = o ? (LIVE.kind === 'ollama' ? o.response : o.content) || '' : '';
-        if (piece) { const t = performance.now() - LIVE.t0; if (first === null) first = t; arrivals.push(t); LIVE.text += piece; }
+        if (piece) { const t = performance.now() - LIVE.t0; if (first === null) first = t; arrivals.push(t); LIVE.text += piece; LIVE.toks.push({ s: piece, t, top: liveTop(o) }); streamKey = ''; }
       }
     }
     if (buf.trim()) raw += buf + '\n';
@@ -102,20 +100,111 @@ function liveStop() { if (LIVE.ctl) LIVE.ctl.abort(new Error('stopped')); }
 // The simulator's answer to the same request: the measured prompt and answer lengths, cold if the server loaded the model.
 function liveEstimate(run) {
   const keep = S, key = MODELS.live && MODELS.live.tag === run.model ? 'live' : S.model;
-  S = { ...S, model: key, sys: 0, docs: 0, q: Math.max(1, run.promptN), ans: Math.max(1, run.evalN), cold: (run.loadS || 0) > 1, cached: false, disk: false, spec: false, ctx: Math.max(S.ctx, run.promptN + run.evalN + 1) };
+  S = { ...S, model: key, sys: 0, docs: 0, q: Math.max(1, run.promptN), ans: Math.max(1, run.evalN), cold: (run.loadS || 0) > 1, cached: false, disk: false, spec: false, mtp: liveSentDraft() > 0, ctx: Math.max(S.ctx, run.promptN + run.evalN + 1) };
   let r; try { r = compute(); } finally { S = keep; }
   return { model: key, loadS: r.load, ttftS: r.ttft, prefillTps: r.newTokens / Math.max(1e-9, r.prefill), decodeTps: r.tps, totalS: r.total };
 }
 function liveCalibrate() {
   const run = LIVE.run; if (!run || locked()) return;
   const key = LIVE.est ? LIVE.est.model : S.model, keepCal = CALIB[S.machine]; saveCalib(S.machine, null);
-  const c = calibrateTo(machine(), MODELS[key], key === 'live' ? S.quant : S.quant, S.kv, run);
+  // A run decoded with MTP drafting is converted to plain decoding first, with the model's own MTP speed-up at this
+  // temperature, so the machine is calibrated on bandwidth and not on how predictable this answer happened to be.
+  const mc0 = machine(), m0 = MODELS[key], ctx0 = run.promptN + run.evalN / 2, dr = liveSentDraft();
+  // The MTP ratio depends on the bandwidth being solved for, so iterate to the fixed point (three rounds settle it).
+  let adj = 1, c = calibrateTo(mc0, m0, S.quant, S.kv, run);
+  if (dr > 0 && m0.mtp) for (let it = 0; it < 6; it++) { const mcC = { ...mc0, bwEff: mc0.bwEff * c.bw, tflops: mc0.tflops * c.fl }; adj = mtpTokS(mcC, m0, S.quant, S.kv, ctx0, mtpAlpha(S.temp), dr) / decodeTokS(mcC, m0, S.quant, S.kv, ctx0); c = calibrateTo(mc0, m0, S.quant, S.kv, { ...run, decodeS: run.decodeS * adj }); }
+  if (adj !== 1) c.notes.push(L(`decode taken as plain: MTP x${dec(adj.toFixed(2))} removed`, `decode tomado como normal: quitado el MTP x${dec(adj.toFixed(2))}`));
   saveCalib(S.machine, c); if (!keepCal) {} LIVE.calNotes = c.notes; changed(); LIVE.est = liveEstimate(run); renderLive(true);
 }
 function liveResetCal() { saveCalib(S.machine, null); LIVE.calNotes = []; changed(); if (LIVE.run) LIVE.est = liveEstimate(LIVE.run); renderLive(true); }
 
 // Measured seconds per token, from the arrival of each streamed piece after the first.
 function liveTpt() { const a = LIVE.run && LIVE.run.arrivalsMs; if (!a || a.length < 3) return null; const out = []; for (let i = 1; i < a.length; i++) out.push(a[i] - a[i - 1]); return out; }
+
+// The request, from the console's settings: only what this server honours per request is sent.
+function liveBody(prompt) {
+  if (LIVE.kind === 'ollama') {
+    const opts = { num_predict: LIVE.maxTok, num_ctx: S.ctx, temperature: S.temp, top_p: S.topp, seed: S.seed, ...(S.topk < 6 ? { top_k: S.topk } : {}) };
+    if (liveHasMtp()) opts.draft_num_predict = S.mtp ? MTP.k : 0;
+    return { model: LIVE.pick, prompt, stream: true, keep_alive: `${S.keepalive}m`, logprobs: true, top_logprobs: 5, options: opts, ...((LIVE.caps[LIVE.pick] || []).includes('thinking') ? { think: false } : {}) };
+  }
+  return { prompt, stream: true, n_predict: LIVE.maxTok, temperature: S.temp, top_p: S.topp, seed: S.seed, cache_prompt: !!S.cached, n_probs: 5, ...(S.topk < 6 ? { top_k: S.topk } : {}) };
+}
+function liveSentList(b) {
+  const o = LIVE.kind === 'ollama' ? { ...b.options, keep_alive: b.keep_alive } : { n_predict: b.n_predict, temperature: b.temperature, top_p: b.top_p, top_k: b.top_k, seed: b.seed, cache_prompt: b.cache_prompt };
+  return Object.entries(o).filter(([, v]) => v !== undefined);
+}
+// The server model has an MTP block when its GGUF says so (read in liveDetect / liveUseModel), or when it is a Qwen preset that does.
+const liveSentDraft = () => { const d = LIVE.sent && LIVE.sent.find(([k]) => k === 'draft_num_predict'); return d ? +d[1] : 0; };
+function liveHasMtp() { const mm = LIVE.models.find(q => q.name === LIVE.pick); if (mm && mm.mtp !== undefined) return !!mm.mtp; const pre = Object.values(MODELS).find(q => q.tag === LIVE.pick); return !!(pre && pre.mtp); }
+// Top alternatives for one streamed piece: Ollama logprobs[].top_logprobs, llama-server completion_probabilities[].top_logprobs (or .probs).
+function liveTop(o) {
+  if (!o) return null;
+  const lp = (o.logprobs && o.logprobs[0]) || (o.completion_probabilities && o.completion_probabilities[0]); if (!lp) return null;
+  const alts = lp.top_logprobs || lp.probs || [];
+  return { tok: lp.token || lp.content || '', p: lp.logprob !== undefined ? Math.exp(lp.logprob) : lp.prob, alts: alts.map(a => ({ tok: a.token || a.tok_str || '', p: a.logprob !== undefined ? Math.exp(a.logprob) : a.prob })) };
+}
+// What each Configure control means for the real run: honoured (sent with the request), or simulation only, with why.
+function liveScope() {
+  if (LIVE.status !== 'ok') return null;
+  const srv = L('the server decides this', 'esto lo decide el servidor'), ol = LIVE.kind === 'ollama';
+  const sim = { machine: L('Simulation only: the real machine is the one running the server', 'Solo simulación: la máquina real es la que ejecuta el servidor'), model: L(`Simulation only: the server runs ${LIVE.pick}`, `Solo simulación: el servidor ejecuta ${LIVE.pick}`),
+    request: L('Simulation only: the live prompt and Max tokens in the live window decide this', 'Solo simulación: el prompt en vivo y los tokens máx. de la ventana en vivo deciden esto'),
+    kv: ol ? L('Simulation only: set on the server (OLLAMA_KV_CACHE_TYPE)', 'Solo simulación: se fija en el servidor (OLLAMA_KV_CACHE_TYPE)') : L('Simulation only: set when llama-server starts (-ctk / -ctv)', 'Solo simulación: se fija al arrancar llama-server (-ctk / -ctv)'),
+    cached: ol ? L(`Simulation only: Ollama keeps its own prompt cache; ${srv}`, `Solo simulación: Ollama gestiona su propia caché de prompt; ${srv}`) : null,
+    disk: L(`Simulation only: ${srv}`, `Solo simulación: ${srv}`), cold: L(`Simulation only: ${srv}`, `Solo simulación: ${srv}`),
+    spec: ol ? L('Simulation only: Ollama has no separate draft model', 'Solo simulación: Ollama no tiene modelo borrador aparte') : L('Simulation only: a draft model is set when llama-server starts (-md)', 'Solo simulación: el modelo borrador se fija al arrancar llama-server (-md)'),
+    mtp: ol ? (liveHasMtp() ? null : L('Simulation only: this server model has no MTP block', 'Solo simulación: este modelo del servidor no tiene bloque MTP')) : L('Simulation only: not a per-request option of llama-server', 'Solo simulación: no es una opción por petición de llama-server'),
+    ctx: ol ? null : L('Simulation only: set when llama-server starts (-c)', 'Solo simulación: se fija al arrancar llama-server (-c)'),
+    keepalive: ol ? null : L('Simulation only: llama-server keeps the model loaded until it stops', 'Solo simulación: llama-server mantiene el modelo cargado hasta que se para') };
+  return sim;
+}
+const SCOPE_IDS = { machine: ['machine', 'mts', 'bus', 'vbw', 'ram', 'tflops'], model: ['model', 'quant'], request: ['sys', 'docs', 'q', 'ans'], kv: ['kv'], cached: ['cached'], disk: ['disk'], cold: ['cold'], spec: ['spec', 'gamma', 'alpha'], mtp: ['mtp'], ctx: ['ctx'], keepalive: ['keepalive'] };
+const LIVE_HONOURED = ['temp', 'topk', 'topp', 'seed', 'ctx', 'keepalive', 'mtp', 'cached'];
+let scopeKey = '';
+function liveSyncScope() {
+  const sc = liveScope(), key = sc ? JSON.stringify(sc) : '';
+  if (key === scopeKey) return; scopeKey = key;
+  document.querySelectorAll('.simonly, .livehon').forEach(el => { el.classList.remove('simonly', 'livehon'); if (el.dataset.lvTitle !== undefined) { el.title = el.dataset.lvTitle; delete el.dataset.lvTitle; } });
+  if (!sc) return;
+  const box = id => { const el = $(id); return el ? el.closest('.fld, label.sw, .row2 > .fld') || el : null; };
+  for (const [k, ids] of Object.entries(SCOPE_IDS)) { const why = sc[k]; for (const id of ids) { const b = box(id); if (!b) continue; if (why) { b.dataset.lvTitle = b.title || ''; b.title = why; b.classList.add('simonly'); } } }
+  for (const id of LIVE_HONOURED) { const b = box(id); if (b && !b.classList.contains('simonly')) { b.dataset.lvTitle = b.title || ''; b.title = L('Sent with the live run', 'Se envía con la ejecución en vivo'); b.classList.add('livehon'); } }
+}
+// The breadcrumb's live segment: the server's model and its quantization, behind a server icon.
+function liveChipHtml() {
+  // called by the setup line during start-up, before this part has run: LIVE does not exist yet then
+  try { if (LIVE.status !== 'ok' || !LIVE.pick) return ''; } catch (e) { return ''; }
+  const mm = LIVE.models.find(q => q.name === LIVE.pick);
+  return `<span class="sep">/</span><span class="lvseg" title="${esc(L('The model on the live server', 'El modelo en el servidor en vivo'))}">${ICON('server', 's')}<i class="livedot${LIVE.running ? ' run' : ''}"></i><b>${esc(LIVE.pick)}</b>${mm && mm.quant ? ` ${esc(mm.quant)}` : ''}</span>`;
+}
+function liveOpen(on) { $('liveWin').hidden = !on; if (on) { renderLive(true); const f = $('lvDetect'); if (f && LIVE.status !== 'ok') f.focus(); } }
+$('liveOpen').addEventListener('click', e => { e.stopPropagation(); liveOpen(true); }, true);
+$('liveClose').innerHTML = ICON('close', 's'); $('liveClose').addEventListener('click', () => liveOpen(false));
+$('liveWin').querySelector('.scrim').addEventListener('click', () => liveOpen(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('liveWin').hidden) { e.stopPropagation(); liveOpen(false); } }, true);
+// Tokens view: the live answer as tokens, each with its arrival time and, when the server sends them, its top alternatives.
+const liveShowing = () => LIVE.showOut && (LIVE.running || LIVE.toks.length > 0);
+function liveStreamHtml() {
+  const tk = LIVE.toks, from = Math.max(0, tk.length - 240);
+  let h = `<span class="lv-tag">${esc(L('live', 'en vivo'))}</span>${from ? '… ' : ''}`;
+  for (let i = from; i < tk.length; i++) h += `<span class="g live${UI.liveTok === i ? ' sel' : ''}" data-ltok="${i}" title="${esc(L(`live token ${i + 1} · ${Math.round(tk[i].t)} ms`, `token en vivo ${i + 1} · ${Math.round(tk[i].t)} ms`))}">${esc(i === from ? tk[i].s.trimStart() : tk[i].s)}</span>`;
+  if (!tk.length) h += `<span class="ph">${esc(L('Waiting for the first token…', 'Esperando el primer token…'))}</span>`;
+  return h;
+}
+function drawLiveChain(id2, W, H2) {
+  const x2 = fit($(id2), W, H2); hitReset(id2);
+  const i = UI.liveTok != null && UI.liveTok < LIVE.toks.length ? UI.liveTok : LIVE.toks.length - 1, tk = LIVE.toks[i];
+  if (!tk) { text(x2, L('Live answer: click a token to see what the server says about it', 'Respuesta en vivo: pulsa un token para ver qué dice el servidor de él'), 0, 14, C.mid, 'left', 10.5, 600); return; }
+  const gap = i > 0 ? tk.t - LIVE.toks[i - 1].t : null;
+  text(x2, L(`Live token ${num(i + 1)} “${tk.s.trim()}” · arrived at ${num(Math.round(tk.t))} ms${gap !== null ? ` · ${num(Math.round(gap))} ms after the previous` : ' · the first token'}`, `Token en vivo ${num(i + 1)} «${tk.s.trim()}» · llegó a los ${num(Math.round(tk.t))} ms${gap !== null ? ` · ${num(Math.round(gap))} ms después del anterior` : ' · el primer token'}`), 0, 14, '#ff8a95', 'left', 10.5, 650);
+  if (!tk.top || !tk.top.alts.length) { textFit(x2, LIVE.kind === 'ollama' ? L('No probabilities for this piece. With MTP drafting on, Ollama 0.40.7 sends logprobs for only a few tokens (measured: 2 of 16); switch MTP off and run again to get them for every token.', 'Sin probabilidades para este trozo. Con el borrador MTP activo, Ollama 0.40.7 solo envía logprobs para unos pocos tokens (medido: 2 de 16); apaga MTP y vuelve a ejecutar para tenerlos en todos.') : L('Not available from this server.', 'No disponible desde este servidor.'), 0, 40, W, C.dim, 'left', 10.5); return; }
+  text(x2, L('What the server says it chose from (top alternatives, real probabilities)', 'Entre qué eligió según el servidor (alternativas principales, probabilidades reales)'), 0, 36, C.dim, 'left', 10);
+  const lw = Math.min(190, W * .3), bw = W - lw - 70, rh = Math.min(26, (H2 - 50) / Math.max(1, tk.top.alts.length));
+  tk.top.alts.forEach((a, j) => { const Y = 48 + j * rh, chosen = a.tok === tk.top.tok; if (chosen) chipRound(x2, 2, Y + rh / 2 - 4, 8, '#ff5d6c'); textFit(x2, a.tok.replace(/\n/g, '⏎') || '∅', 16, Y + rh / 2 + 4, lw - 20, chosen ? '#ffd2d7' : C.ink, 'left', 11, chosen ? 700 : 500); x2.fillStyle = 'rgba(255,255,255,.04)'; x2.fillRect(lw, Y + 4, bw, rh - 9); x2.fillStyle = chosen ? '#ff5d6c' : 'rgba(255,93,108,.45)'; x2.fillRect(lw, Y + 4, Math.max(1.5, bw * (a.p || 0)), rh - 9); text(x2, pct(a.p || 0), lw + bw + 8, Y + rh / 2 + 4, C.mid, 'left', 10); });
+}
+let chipLive = '';
+setInterval(() => { liveSyncScope(); const c = liveChipHtml(); if (c !== chipLive) { chipLive = c; syncControls(); } }, 400);
 
 let liveKey = '', liveCmpKey = '';
 function renderLive(force) {
@@ -144,6 +233,8 @@ function renderLive(force) {
     if ($('lvRun')) $('lvRun').addEventListener('click', liveRun); if ($('lvStop')) $('lvStop').addEventListener('click', liveStop);
     if (ae && $(ae)) $(ae).focus();
   }
+  const sentH = LIVE.sent ? `<b>${esc(L('Sent with the last live run', 'Enviado con la última ejecución en vivo'))}:</b> ${LIVE.sent.map(([k, v]) => `${esc(k)} ${esc(String(v))}`).join(' · ')}` : (LIVE.status === 'ok' ? `<b>${esc(L('Will be sent', 'Se enviará'))}:</b> ${liveSentList(liveBody('')).map(([k, v]) => `${esc(k)} ${esc(String(v))}`).join(' · ')}` : '');
+  if ($('liveSent').innerHTML !== sentH) $('liveSent').innerHTML = sentH;
   renderLiveCompare();
 }
 
@@ -180,3 +271,15 @@ function liveOutput() {
 }
 $('outStream').addEventListener('click', () => { if (LIVE.showOut && !LIVE.running && LIVE.text) { LIVE.showOut = false; $('outStream').dataset.live = ''; outKey = ''; } });
 renderLive(true);
+
+// The engine badge in the top bar: what is producing the numbers now. Simulated by default; a click opens live mode.
+let engineKey = '';
+function renderEngineBadge() {
+  const on = LIVE.status === 'ok', name = LIVE.kind === 'llama' ? 'llama.cpp' : 'Ollama';
+  const h = on ? `${ICON('server', 's')}<span>${esc(name)}${LIVE.version ? ` ${esc(String(LIVE.version).slice(0, 12))}` : ''}</span><i class="livedot${LIVE.running ? ' run' : ''}"></i><b>LIVE</b>`
+    : `${ICON('memory', 's')}<span>${esc(L('Simulated', 'Simulado'))}</span>`;
+  const b = $('engineBadge'); if (!b) return;
+  if (h !== engineKey) { engineKey = h; b.innerHTML = h; b.classList.toggle('on', on); b.title = on ? L('Connected to a real server. Click to open live mode.', 'Conectado a un servidor real. Pulsa para abrir el modo en vivo.') : L('Numbers come from the cost model. Click to connect a real Ollama or llama.cpp server.', 'Los números salen del modelo de costes. Pulsa para conectar un servidor real de Ollama o llama.cpp.'); }
+}
+setInterval(renderEngineBadge, 500);
+document.addEventListener('click', e => { if (!e.target.closest('#engineBadge')) return; liveOpen(true); });

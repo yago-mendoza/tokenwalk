@@ -19,6 +19,7 @@ const STR = {
   cold: ['Cold start, model not loaded', 'Arranque en frío, modelo sin cargar'],
   cached: ['Prefix already cached in memory', 'Prefijo ya en caché en memoria'], disk: ['Restore the prefix KV from disk', 'Restaurar la KV del prefijo desde disco'],
   spec: ['Speculative decoding, 0.6B draft', 'Speculative decoding, borrador de 0,6B'],
+  liveT: ['Live: a real server', 'En vivo: un servidor real'],
   mtp: ['MTP, the model drafts its own next tokens (k = 2)', 'MTP, el modelo propone sus propios siguientes tokens (k = 2)'],
   gamma: ['Draft tokens per round', 'Tokens del borrador por ronda'], alpha: ['Acceptance rate', 'Tasa de aceptación'],
   temp: ['Temperature', 'Temperatura'], inspL: ['Inspector', 'Inspector'],

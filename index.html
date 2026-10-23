@@ -74,8 +74,7 @@
           <div class="fld"><label for="topp"><span>3 · Top-p</span><output id="toppOut"></output></label><input type="range" id="topp" min=".05" max="1" step=".05"><div class="hint" data-t="toppHint"></div></div>
           <div class="fld"><label for="seed"><span data-t="seedL"></span></label><input type="number" id="seed" min="1" max="9999" step="1"></div>
         </div></div>
-      <div class="acc" data-acc="live"><button type="button"><span class="ic-slot" data-ic="bolt"></span><span class="ttl" data-t="aLive"></span><span class="val" id="vLive"></span><span class="chev" data-ic="chev"></span></button>
-        <div class="in" id="liveIn"></div></div>
+      <div class="acc lvrow" data-acc="live"><button type="button" id="liveOpen" aria-haspopup="dialog"><span class="ic-slot" data-ic="server"></span><span class="ttl" data-t="aLive"></span><span class="val" id="vLive"></span><span class="chev" data-ic="chev"></span></button></div>
       <div class="acc" data-acc="adv"><button type="button"><span class="ic-slot" data-ic="bolt"></span><span class="ttl" data-t="aAdv"></span><span class="val" id="vAdv"></span><span class="chev" data-ic="chev"></span></button>
         <div class="in">
           <label class="sw"><input type="checkbox" id="cached"><i></i><span data-t="cached"></span></label>
@@ -124,6 +123,7 @@
   <div id="lesson" hidden><div class="scrim"></div><article class="card" role="dialog" aria-labelledby="lsTitle"><header class="band"><span data-ic="school"></span><b data-t="lsBand"></b><span class="st" id="lsTag"></span><button type="button" id="lsClose"></button></header><div class="lsb" id="lsBody"></div><div id="lsGo"></div><footer id="lsFoot"></footer></article></div>
   <div id="scaleWin" hidden><div class="scrim"></div><article class="card" role="dialog"><header class="band"><span data-ic="eq"></span><b data-t="scaleT"></b><button type="button" id="scaleClose"></button></header><div class="sw-body"><p id="scaleTxt"></p><canvas id="ruler"></canvas></div></article></div>
   <div id="fsTip" hidden role="alertdialog"><span class="ic-slot" data-ic="warning"></span><div><b data-t="fsT"></b><small data-t="fsS"></small></div><button type="button" class="btnp" id="fsGo"></button><button type="button" class="tbtn" id="fsLater"></button><button type="button" class="tbtn quiet" id="fsNever"></button></div>
+  <div id="liveWin" hidden><div class="scrim"></div><article class="card" role="dialog" aria-labelledby="liveWinT"><header class="band"><span data-ic="server"></span><b id="liveWinT" data-t="liveT"></b><button type="button" id="liveClose"></button></header><div class="lw-body"><div id="liveIn"></div><div id="liveSent"></div></div></article></div>
   <div id="chainWin" hidden><div class="scrim"></div><article class="card" role="dialog"><header class="band"><span data-ic="token"></span><b data-t="chainT"></b><button type="button" id="chainClose"></button></header><canvas id="cChainBig"></canvas></article></div>
   <section id="run" class="zone">
     <div class="zh"><span class="zn">2</span><span class="zt" data-t="zRun"></span><div class="now" id="nowLine"><span data-ic="info"></span><span id="nowTxt"></span></div><div id="nowFix"></div><span class="tlsl" data-t="tlScaleL"></span><div id="tlScale" role="group"></div><button type="button" class="tbtn" id="logBtn" aria-expanded="false"></button></div>

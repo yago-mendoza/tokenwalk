@@ -46,7 +46,7 @@ function syncControls() {
   $('vEngine').textContent = `${num(Math.min(S.ctx, m.ctxMax) / 1024)}k · ${S.kv} · ${S.keepalive}m`;
   $('vSamp').textContent = `T ${dec(S.temp.toFixed(2))} · k ${S.topk >= 6 ? L('off', 'no') : S.topk} · p ${dec(S.topp.toFixed(2))}`; if (document.activeElement !== $('seed')) $('seed').value = S.seed;
   $('vAdv').textContent = [S.cached ? L('prefix', 'prefijo') : '', S.disk ? 'KV disk' : '', S.spec ? `spec γ${S.gamma}` : '', !S.spec && S.mtp && MODELS[S.model].mtp ? 'MTP' : ''].filter(Boolean).join(' · ') || L('off', 'apagado');
-  $('chip').innerHTML = `${ICON('memory', 's')}<b>${esc(R.mc.short)}</b><span class="sep">/</span><b>${esc(m.name)}</b> ${esc(S.quant)}<span class="sep">/</span>${num(R.prompt)} + ${num(S.ans)} ${L('tokens', 'tokens')}<span class="sep">/</span>num_ctx ${num(R.ctx)}`;
+  $('chip').innerHTML = `${ICON('memory', 's')}<b>${esc(R.mc.short)}</b><span class="sep">/</span><b>${esc(m.name)}</b> ${esc(S.quant)}<span class="sep">/</span>${num(R.prompt)} + ${num(S.ans)} ${L('tokens', 'tokens')}<span class="sep">/</span>num_ctx ${num(R.ctx)}${typeof liveChipHtml === 'function' ? liveChipHtml() : ''}`;
   $('pauseTok').checked = UI.pauseTok; $('pauseLayer').checked = UI.pauseLayer;
   renderScen();
 }

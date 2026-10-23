@@ -35,8 +35,9 @@ function drawTokens(n) {
   { const wt = L(`${num(gen)} / ${num(S.ans)} written`, `${num(gen)} / ${num(S.ans)} escritos`); if ($('tokHint').textContent !== wt) $('tokHint').textContent = wt; }
   drawHover(id, x);
   const shown = gen + (ls.on && n.seg && n.seg.k !== 'prefill' ? 1 : 0);
-  const key = `${shown}|${lang}|${S.temp}|${S.topk}|${S.topp}|${S.seed}|${P.t > 0 && P.t < R.ttft}|${UI.logitTok}`;
-  if (key !== streamKey) {
+  const lvOn = liveShowing(), key = lvOn ? `live|${LIVE.toks.length}|${UI.liveTok}|${lang}` : `${shown}|${lang}|${S.temp}|${S.topk}|${S.topp}|${S.seed}|${P.t > 0 && P.t < R.ttft}|${UI.logitTok}`;
+  if (lvOn && key !== streamKey) { streamKey = key; $('stream').innerHTML = liveStreamHtml(); $('stream').scrollTop = $('stream').scrollHeight; }
+  else if (key !== streamKey) {
     streamKey = key;
     const from = Math.max(0, shown - 220);
     let h = from ? '… ' : '';
@@ -47,6 +48,7 @@ function drawTokens(n) {
   }
   // Docked under the answer: every row always visible. Expand opens the same chain in a window above everything.
   const lensH = $('tokLens').clientHeight, fixedH = 54 + $('tokHint').offsetHeight + 20 + 10 + 24, avail = Math.max(240, lensH - fixedH);
+  if (lvOn) { drawLiveChain('cCand', W, Math.round(Math.max(150, Math.min(320, avail * .52, avail - 64)))); $('chainWin').hidden = true; return; }
   drawChain('cCand', W, Math.round(Math.max(150, Math.min(320, avail * .52, avail - 64))), ls, gen, false);
   $('chainWin').hidden = !UI.logitsBig;
   if (UI.logitsBig) drawChain('cChainBig', Math.min(960, innerWidth - 64), Math.min(520, innerHeight - 140), ls, gen, true);
