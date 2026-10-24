@@ -177,7 +177,7 @@ function renderRealRun() {
   $('counter').className = ph === 'done' ? 'done' : ph === 'idle' ? 'idle' : ph === 'wait' ? 'prefill' : 'decode';
   $('pill').className = `pill ${MODE.lost ? 'load' : { idle: 'idle', wait: 'prefill', decode: 'decode', done: 'done' }[ph]}${LIVE.running ? ' run' : ''}`;
   $('pillTxt').textContent = MODE.lost ? L('LOST', 'PERDIDO') : { idle: 'IDLE', wait: L('WAITING', 'ESPERANDO'), decode: 'DECODE', done: L('DONE', 'FIN') }[ph];
-  $('nowFix').innerHTML = ''; $('nowFix').dataset.k = ''; $('reset').disabled = true; $('reset').title = L('Reset applies to the simulation', 'Restablecer se aplica a la simulación');
+  $('nowFix').innerHTML = ''; $('nowFix').dataset.k = '';
   $('cfg').classList.remove('locked');
   // controls that make no sense against a real server
   for (const id of ['jumpGo', 'jumpMenu', 'slower', 'faster']) { const b = $(id); b.disabled = true; b.title = REAL_TIME(); }
@@ -264,8 +264,10 @@ function drawRealTimeline() {
 // ---- start: resume Real only when the last session was Real and the server answers quickly ----
 {
   const saved = (() => { try { return localStorage.getItem(MODE_KEY); } catch (e) { return null; } })(), simS = loadJ(SIMS_KEY);
-  if (saved === 'real' && simS) { S = { ...S, ...simS }; fillSelects(); changed(); }
-  if (saved === 'real') {
+  // a link that sets the setup opens in the simulation, as written; it never resumes Real
+  const linked = urlHasSetup();
+  if (saved === 'real' && simS && !linked) { S = { ...S, ...simS }; fillSelects(); changed(); }
+  if (saved === 'real' && !linked) {
     const ctl = new AbortController(); setTimeout(() => ctl.abort(), 1500);
     fetch(LIVE.ep.replace(/\/+$/, '') + '/api/version', { signal: ctl.signal }).then(r => { if (r.ok) { MODE.connecting = true; liveDetect(); } }).catch(() => {});
   }

@@ -57,8 +57,7 @@ function renderRun(n) {
   const [txt, stale] = nowText(n); if ($('nowTxt').dataset.k !== txt) { $('nowTxt').dataset.k = txt; $('nowTxt').innerHTML = linkify(esc(txt)); } $('nowLine').classList.toggle('stale', stale);
   renderTrack(n);
   const lk = locked();
-  $('cfg').classList.toggle('locked', lk); $('reset').disabled = lk || isDefault();
-  $('reset').title = lk ? L('Locked during the run', 'Bloqueado durante la ejecución') : L('Back to the calibrated ThinkPad with a Radeon 860M and the default request', 'Volver al ThinkPad calibrado con una Radeon 860M y la petición por defecto');
+  $('cfg').classList.toggle('locked', lk);
   document.querySelectorAll('.sc').forEach(b => { b.disabled = lk; });
 }
 function renderTransport() {

@@ -336,6 +336,136 @@ await check('mode: no text is cut or overflows in Real machine mode, at 1440x900
   }
 });
 
+await check('What fits: opens, sorts, filters, and a row loads the setup (undoable)', async () => {
+  await fresh('', 1280, 720);
+  await p.ev(`document.getElementById('fitsOpen').click()`); await sleep(300);
+  assert(await p.ev(`!document.getElementById('fitsWin').hidden`), 'the popup did not open');
+  const n = await p.ev(`document.querySelectorAll('#fitsIn tbody tr').length`);
+  assert(n === 140, 'rows: ' + n);
+  const order = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].map(t => { const [m, mo, q] = t.dataset.fr.split('|'), r = FITS.rows.find(x => x.mk === m && x.mo === mo && x.q === q); return [r.fit, r.tps]; })`);
+  const rank = { yes: 0, tight: 1, no: 2 };
+  for (let i = 1; i < order.length; i++) { const a = order[i - 1], b = order[i]; assert(rank[a[0]] < rank[b[0]] || (rank[a[0]] === rank[b[0]] && a[1] >= b[1]), 'default order broken at ' + i + ': ' + JSON.stringify([a, b])); }
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].every(t => /860M/.test(t.cells[0].textContent) ? /calibrated/.test(t.cells[0].textContent) : /estimate/.test(t.cells[0].textContent))`), 'calibrated / estimate marks');
+  await p.ev(`document.querySelector('#fitsIn th[data-fs=ttft]').click()`); await sleep(150);
+  const tt = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].map(t => t.dataset.fr).slice(0, 3).map(id => { const [m, mo, q] = id.split('|'); return FITS.rows.find(r => r.mk === m && r.mo === mo && r.q === q).ttft; })`);
+  assert(tt[0] <= tt[1] && tt[1] <= tt[2], 'ttft sort ascending: ' + tt);
+  await p.ev(`document.querySelector('#fitsIn th[data-fs=ttft]').click()`); await sleep(150);
+  assert((await p.ev(`FITS.sort.dir`)) === -1 && /▼/.test(await p.ev(`document.querySelector('#fitsIn th[data-fs=ttft]').textContent`)), 'second click did not reverse the sort');
+  await p.ev(`(() => { const s = document.getElementById('fitsMach'); s.value = 'rtx4090'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].every(t => t.dataset.fr.startsWith('rtx4090|')) && document.querySelectorAll('#fitsIn tbody tr').length === 20`), 'machine filter');
+  await p.ev(`(() => { const c = document.getElementById('fitsOnly'); c.checked = true; c.dispatchEvent(new Event('change')); })()`); await sleep(150);
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn .fp')].every(f => !f.classList.contains('no')) && document.querySelectorAll('#fitsIn tbody tr').length < 20`), 'only what fits');
+  const s0 = await p.ev('JSON.stringify(S)');
+  const id = await p.ev(`document.querySelector('#fitsIn tbody tr:not(.cur)').dataset.fr`);
+  await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr="${id}"]').click()`); await sleep(250);
+  const [m, mo, q] = id.split('|');
+  assert(await p.ev(`document.getElementById('fitsWin').hidden`), 'the popup did not close');
+  assert(await p.ev(`S.machine === '${m}' && S.model === '${mo}' && S.quant === '${q}' && S.vram === MACHINES['${m}'].fastGB`), 'the row was not loaded: ' + await p.ev('JSON.stringify([S.machine, S.model, S.quant])'));
+  await p.ev(`document.getElementById('undoBtn').click()`); await sleep(150);
+  assert((await p.ev('JSON.stringify(S)')) === s0, 'Undo did not restore the setup');
+  await p.ev(`FITS.machine = 'all'; FITS.only = false; FITS.sort = { k: 'fit', dir: 1 }`);
+});
+
+await check('What fits and the new controls: nothing cut, no inner horizontal scroll, at 1280x720 in both languages', async () => {
+  for (const lg of ['en', 'es']) {
+    await fresh(lg === 'es' ? '?lang=es' : '', 1280, 720);
+    await p.ev(`document.getElementById('fitsOpen').click()`); await sleep(300);
+    const g = await p.ev(`(() => { const t = document.querySelector('#fitsIn .fw-tbl'), c = document.querySelector('#fitsWin .card').getBoundingClientRect(); return [t.scrollWidth, t.clientWidth, c.top, c.bottom, c.left, c.right, innerWidth, innerHeight]; })()`);
+    assert(g[0] <= g[1] + 1, `${lg}: horizontal scroll in the table ${g[0]} > ${g[1]}`);
+    assert(g[2] >= 0 && g[3] <= g[7] && g[4] >= 0 && g[5] <= g[6], `${lg}: the popup leaves the window ` + JSON.stringify(g));
+    const over = await p.ev(`[...document.querySelectorAll('#fitsWin *, #cfg .zh *, #top *, #cfgBody [data-acc=fits] *')].filter(e => { if (!e.offsetParent || e.children.length) return false; const cs = getComputedStyle(e); return e.scrollWidth > e.clientWidth + 1 && (cs.textOverflow === 'ellipsis' || cs.overflow === 'hidden' || cs.overflowX === 'hidden'); }).map(e => (e.id || e.className || e.tagName) + ': ' + e.textContent.slice(0, 40))`);
+    assert(!over.length, `${lg}: overflow ${JSON.stringify(over)}`);
+    await p.ev(`fitsOpen(false); S.temp = .3; changed()`); await sleep(300); await p.ev(`document.getElementById('rstBtn').click()`); await sleep(200);
+    await p.ev(`document.getElementById('linkBtn').click()`); await sleep(300);
+    const box = await p.ev(`['rstAsk', 'toast'].map(id => { const e = document.getElementById(id), r = e.getBoundingClientRect(); return [id, !e.hidden && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight]; })`);
+    for (const b of box) assert(b[1], `${lg}: ${b[0]} hidden or out of the window`);
+  }
+});
+
+const stateNow = () => p.ev(`JSON.stringify([S, UI.lens, UI.modelMode, +P.t.toFixed(6), UI.layer, UI.scale])`);
+await check('Copy link: the link round-trips in a fresh page, with and without the moment, and opens Simulated', async () => {
+  await fresh('', 1280, 720);
+  const setup = `S.machine = 'rtx4090'; Object.assign(S, machineFields('rtx4090')); S.vbw = 900; S.model = 'llama8b'; S.quant = 'Q6_K'; S.kv = 'q8_0'; S.ctx = 32768; S.docs = 12000; S.ans = 420; S.temp = .35; S.topk = 3; S.topp = .8; S.seed = 7; S.cached = true; S.mtp = false; S.spec = true; S.gamma = 5; S.keepalive = 12; changed(); setLens('memory'); UI.modelMode = 'stack'; renderMmode(); setPlaying(false)`;
+  await p.ev(setup); await p.ev(`LINK_AT = false; document.getElementById('linkBtn').click()`); await sleep(300);
+  assert(/Link copied|Copy failed/.test(await p.ev(`document.getElementById('toast').textContent`)), 'no toast');
+  const url = await p.ev('window.__link'); assert(url.length < 260 && /m=rtx4090/.test(url) && /vb=900/.test(url) && !/vr=/.test(url) && !/at=/.test(url), 'link: ' + url);
+  const a = await stateNow(); await fresh(url.replace(base, ''), 1280, 720); const b = await stateNow();
+  assert(a === b, 'not restored exactly:\n' + a + '\n' + b);
+  await p.ev(`P.t = R.ttft + 1.25; setPlaying(false); document.getElementById('linkBtn').click()`); await sleep(200);
+  await p.ev(`(() => { const c = document.getElementById('linkAt'); c.checked = true; c.dispatchEvent(new Event('change')); })()`); await sleep(300);
+  const url2 = await p.ev('window.__link'); assert(/at=/.test(url2), 'the moment is not in the link: ' + url2);
+  const a2 = await stateNow(); await fresh(url2.replace(base, ''), 1280, 720); const b2 = await stateNow();
+  assert(a2 === b2, 'not restored exactly with the moment:\n' + a2 + '\n' + b2);
+  await p.ev(`LINK_AT = false; localStorage.removeItem('tw.linkAt')`);
+  // a shared link opens Simulated even where the last session was Real
+  await p.ev(`localStorage.setItem('tw.mode', 'real')`); await p.open(url2); await sleep(300);
+  assert((await p.ev(`MODE.m`)) === 'sim' && (await p.ev(`S.machine + S.model`)) === 'rtx4090llama8b', 'the link did not open in the simulation as written');
+  await p.ev(`localStorage.removeItem('tw.mode')`);
+});
+
+await check('Copy link: defaults give a clean address; old and invalid params are handled', async () => {
+  await fresh('', 1280, 720);
+  await p.ev(`document.getElementById('linkBtn').click()`); await sleep(200);
+  assert((await p.ev('window.__link')) === base, 'defaults-only link is not clean: ' + await p.ev('window.__link'));
+  assert((await p.ev('location.search')) === '', 'the address bar is not clean at defaults');
+  await fresh('?machine=rtx5090&model=qwen38&quant=Q8_0&history=1000&question=40&answer=200&cache=1&view=memory&layer=3', 1280, 720);
+  assert(await p.ev(`S.machine === 'rtx5090' && S.model === 'qwen38' && S.quant === 'Q8_0' && S.docs === 1000 && S.q === 40 && S.ans === 200 && S.cached && UI.lens === 'memory' && UI.layer === 2`), 'an old link: ' + await p.ev('JSON.stringify(S)'));
+  await fresh('?m=nope&mo=live&qt=Q9&kv=x&ctx=abc&temp=99&ans=-4&doc=&pc=maybe&v=nowhere&mm=odd&at=zz', 1280, 720);
+  const d = await p.ev(`JSON.stringify(defaults())`);
+  assert((await p.ev('JSON.stringify(S)')) === d && (await p.ev('UI.lens')) === 'system' && (await p.ev('P.t')) === 0, 'invalid params were not ignored: ' + await p.ev('JSON.stringify(S)'));
+});
+
+await check('Restore defaults: asks when there are changes, restores, and Undo brings the change back', async () => {
+  await fresh('', 1280, 720); await sleep(300);
+  assert(await p.ev(`document.getElementById('rstBtn').disabled`), '↺ is enabled with nothing to restore');
+  assert(!(await p.ev(`!!document.getElementById('reset')`)), 'the top-bar Reference machine button is still there');
+  assert(/reference machine \(ThinkPad · Radeon 860M, calibrated\)/.test(await p.ev(`document.getElementById('rstBtn').title`)), 'tooltip: ' + await p.ev(`document.getElementById('rstBtn').title`));
+  await p.ev(`pushUndo(); S.machine = 'm4max'; Object.assign(S, machineFields('m4max')); S.ans = 900; S.temp = 1.2; changed()`); await sleep(300);
+  const s1 = await p.ev('JSON.stringify(S)');
+  await p.ev(`document.getElementById('rstBtn').click()`); await sleep(150);
+  assert(await p.ev(`!document.getElementById('rstAsk').hidden`), 'no confirmation');
+  await p.ev(`document.getElementById('rstNo').click()`); await sleep(100);
+  assert((await p.ev('JSON.stringify(S)')) === s1, 'Cancel changed the setup');
+  await p.ev(`document.getElementById('rstBtn').click()`); await sleep(150); await p.ev(`document.getElementById('rstGo').click()`); await sleep(200);
+  assert(await p.ev('isDefault()'), 'not restored');
+  await p.ev(`document.getElementById('undoBtn').click()`); await sleep(150);
+  assert((await p.ev('JSON.stringify(S)')) === s1, 'Undo did not bring the change back');
+});
+
+await check('Restore defaults in Real: only the request and sampling, never the connection; What fits sets only Estimate as', async () => {
+  await fresh(); await p.ev(mockOllama(false)); await toReal();
+  await p.ev(`LIVE.maxTok = 200; LIVE.promptMode = 'long'; S.temp = 1.4; S.seed = 9; saveReal(); changed()`); await sleep(400);
+  const before = await p.ev(`JSON.stringify([LIVE.ep, LIVE.pick, LIVE.status, S.machine, S.model])`);
+  await p.ev(`document.getElementById('rstBtn').click()`); await sleep(150); await p.ev(`document.getElementById('rstGo').click()`); await sleep(300);
+  assert((await p.ev(`JSON.stringify([LIVE.maxTok, LIVE.promptMode, S.temp, S.seed])`)) === JSON.stringify([64, 'short', 0.7, 1]), 'request / sampling not restored');
+  assert((await p.ev(`JSON.stringify([LIVE.ep, LIVE.pick, LIVE.status, S.machine, S.model])`)) === before && (await p.ev('MODE.m')) === 'real', 'the connection changed');
+  await p.ev(`document.getElementById('undoBtn').click()`); await sleep(200);
+  assert((await p.ev(`JSON.stringify([LIVE.maxTok, LIVE.promptMode, S.temp, S.seed])`)) === JSON.stringify([200, 'long', 1.4, 9]), 'Undo in Real');
+  await p.ev(`fitsOpen(true)`); await sleep(300);
+  assert(/Estimate as/.test(await p.ev(`document.getElementById('fitsIn').textContent`)), 'no Real note');
+  const pick = await p.ev('LIVE.pick');
+  await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr^="h100|qwen38|"]').click()`); await sleep(300);
+  assert((await p.ev(`S.machine + '|' + S.model + '|' + LIVE.pick`)) === 'h100|live|' + pick, 'the row changed more than Estimate as');
+  await p.ev(`leaveReal(true)`);
+});
+
+await check('History keeps the whole run: after 300 events the load and first prefill lines are still listed', async () => {
+  await fresh('?cold=1&mtp=0', 1280, 720);
+  await p.ev(`P.t = R.total; setPlaying(false); document.getElementById('logBtn').click()`); await sleep(400);
+  assert((await p.ev(`segAt(P.t)`)) > 300, 'fewer than 300 events');
+  assert(await p.ev(`!!document.querySelector('#log li.k-load') && /Chunk 1 of/.test(document.getElementById('log').textContent)`), 'the start of the run is gone');
+  const blocks = await p.ev(`document.querySelectorAll('#log [data-lblk]').length`); assert(blocks === 6, 'decode blocks: ' + blocks);
+  await p.ev(`document.querySelector('#log [data-lblk="0"]').click()`); await sleep(100);
+  assert(/Token 1 /.test(await p.ev(`document.getElementById('log').textContent`)), 'a block did not open');
+  await p.ev(`document.getElementById('log').scrollTop = 0; P.t = R.total - 0.5; setPlaying(false)`); await sleep(600);
+  assert((await p.ev(`document.getElementById('log').scrollTop`)) === 0, 'the history jumped while reading above');
+  assert(/Token 1 /.test(await p.ev(`document.getElementById('log').textContent`)), 'the open block closed on re-render');
+  await p.ev(`document.querySelector('#log [data-lph="prefill"]').click()`); await sleep(100);
+  const txt = await p.ev(`document.getElementById('log').textContent`);
+  assert(!/Chunk 1 of/.test(txt) && /First token/.test(txt), 'the prefill group did not collapse, or hid the first token');
+  await p.ev(`document.querySelector('#log [data-lph="prefill"]').click(); document.getElementById('logClose').click()`);
+});
+
 if (SHOT) {
   await fresh('?view=model'); await p.ev(`P.t = R.ttft + 8; setPlaying(false)`); await sleep(900);
   await p.shot('docs/screenshot.png'); console.log('wrote docs/screenshot.png');

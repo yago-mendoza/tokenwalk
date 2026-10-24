@@ -40,6 +40,10 @@ One screen, four zones that never scroll: **Setup** on the left, the **Observato
 
 The machine, the model and its quantization, the request in tokens, the engine (`num_ctx`, KV type, `keep_alive`), sampling, and caches and speculation; above them, the context window and how it is shared. Scenarios set everything in one click (the default machine, a dense 27B, an RTX 5090, a model that does not fit, a 128k context, a cold start). A setup that cannot run says so before you press play, and offers fixes that do fit.
 
+**What fits** runs the current request (prompt, answer length, `num_ctx`, KV type, sampling, MTP) on every machine preset, model and quantization in one table: memory needed against what the machine has, whether it fits (yes, tight, no), time to the first token, tokens a second and the bottleneck, fitting rows first. Sort by any column, filter by machine or to what fits; a row loads that machine, model and quantization into Setup (Undo takes it back). In Real machine a row sets only *Estimate as*. The header's ↺ restores the defaults (the reference machine and the default request) after asking; in Real machine it restores only the request and sampling.
+
+The address always holds the current setup, and the link button in the top bar copies it: machine (or its edited fields), model, quantization, the request, engine, sampling, caches and MTP, the view, and optionally the current moment. Short keys, only what differs from the defaults; older links still open, and a shared link always opens in Simulated.
+
 <p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/loadout-problem.webp" width="900" alt="A setup that does not fit, with fixes"><br><sub>A setup that cannot run says so before you press play, with one-click fixes.</sub></p>
 
 ### Observatory: four views of the same instant

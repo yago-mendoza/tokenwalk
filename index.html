@@ -17,7 +17,7 @@
     <span id="pill" class="pill idle"><i></i><span id="pillTxt">IDLE</span></span>
     <button type="button" class="tbtn" id="alertBtn"><span id="alertIc"></span><span class="cnt" id="alertCnt">0</span></button>
     <button type="button" class="tbtn" id="monBtn"></button>
-    <button type="button" class="tbtn quiet" id="reset"></button>
+    <button type="button" class="tbtn" id="linkBtn"></button>
     <button type="button" class="tbtn" id="gear"></button>
     <button type="button" class="tbtn" id="helpBtn"></button>
   </header>
@@ -37,6 +37,7 @@
         <div class="in"><div class="scen" id="scen"></div></div></div>
       <div class="rmcard realonly" data-acc="realmach"><div class="rmh"><span class="ic-slot" data-ic="laptop"></span><span class="ttl" data-t="aRealMach"></span><span class="val" id="vRealMach" hidden></span></div>
         <div id="realMachIn"></div></div>
+      <div class="acc lvrow" data-acc="fits"><button type="button" id="fitsOpen" aria-haspopup="dialog"><span class="ic-slot" data-ic="search"></span><span class="ttl" data-t="fits"></span><span class="val" id="vFits"></span><span class="chev" data-ic="chev"></span></button></div>
       <div class="acc realonly" data-acc="realreq"><button type="button"><span class="ic-slot" data-ic="notes"></span><span class="ttl" data-t="aRealReq"></span><span class="val" id="vRealReq"></span><span class="chev" data-ic="chev"></span></button>
         <div class="in" id="realReqIn"></div></div>
       <div class="acc" data-acc="machine"><button type="button"><span class="ic-slot" data-ic="memory"></span><span class="ttl" data-t="aMachine"></span><span class="val" id="vMachine"></span><span class="chev" data-ic="chev"></span></button>
@@ -132,6 +133,7 @@
   <div id="scaleWin" hidden><div class="scrim"></div><article class="card" role="dialog"><header class="band"><span data-ic="eq"></span><b data-t="scaleT"></b><button type="button" id="scaleClose"></button></header><div class="sw-body"><p id="scaleTxt"></p><canvas id="ruler"></canvas></div></article></div>
   <div id="fsTip" hidden role="alertdialog"><span class="ic-slot" data-ic="warning"></span><div><b data-t="fsT"></b><small data-t="fsS"></small></div><button type="button" class="btnp" id="fsGo"></button><button type="button" class="tbtn" id="fsLater"></button><button type="button" class="tbtn quiet" id="fsNever"></button></div>
   <div id="liveWin" hidden><div class="scrim"></div><article class="card" role="dialog" aria-labelledby="liveWinT"><header class="band"><span data-ic="server"></span><b id="liveWinT" data-t="liveT"></b><button type="button" id="liveClose"></button></header><div class="lw-body"><div id="liveIn"></div><div id="liveSent"></div></div></article></div>
+  <div id="fitsWin" hidden><div class="scrim"></div><article class="card" role="dialog" aria-labelledby="fitsT"><header class="band"><span data-ic="search"></span><b id="fitsT" data-t="fits"></b><button type="button" id="fitsClose"></button></header><div class="fw-body" id="fitsIn"></div></article></div>
   <div id="chainWin" hidden><div class="scrim"></div><article class="card" role="dialog"><header class="band"><span data-ic="token"></span><b data-t="chainT"></b><button type="button" id="chainClose"></button></header><canvas id="cChainBig"></canvas></article></div>
   <section id="run" class="zone">
     <div class="zh"><span class="zn">2</span><span class="zt" data-t="zRun"></span><div class="now" id="nowLine"><span data-ic="info"></span><span id="nowTxt"></span></div><div id="nowFix"></div><span class="tlsl" data-t="tlScaleL"></span><div id="tlScale" role="group"></div><button type="button" class="tbtn" id="logBtn" aria-expanded="false"></button></div>
@@ -163,6 +165,8 @@
 <div id="loadout" role="dialog" aria-label="Loadout"></div>
 <div id="help"><div class="hole"></div><div class="card"><h4><span class="n" id="hN"></span><span id="hT"></span></h4><p id="hP"></p><nav><span class="dots" id="hD"></span><button type="button" id="hBack"></button><button type="button" class="go" id="hNext"></button></nav></div></div>
 <div id="tip"></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<div id="rstAsk" role="alertdialog" hidden></div>
 <!-- tokenwalk:script -->
 </body>
 </html>

@@ -69,7 +69,7 @@ function resample() { const g = P.t >= R.total && R.total ? 0 : generatedAt(P.t)
 
 // ===== Lenses =====
 const LENS_DEF = [['system', 'memory', () => L('System', 'Sistema')], ['model', 'layers', () => L('Model', 'Modelo')], ['memory', 'grid', () => L('Memory', 'Memoria')], ['tokens', 'notes', () => L('Tokens', 'Tokens')]];
-function renderMmode() { const h = [['grid', L('Grid', 'Cuadrícula')], ['stack', L('Matrices', 'Matrices')]].map(([k, l]) => `<button type="button" data-mm="${k}" aria-pressed="${(UI.modelMode || 'grid') === k}">${esc(l)}</button>`).join(''); if ($('mmodeSeg').dataset.k !== h) { $('mmodeSeg').dataset.k = h; $('mmodeSeg').innerHTML = h; $('mmodeSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { UI.modelMode = b.dataset.mm; try { localStorage.setItem('llmc.modelMode', UI.modelMode); } catch (er) {} if (zTop('model')) zoomTo('model', 0); renderMmode(); })); } }
+function renderMmode() { const h = [['grid', L('Grid', 'Cuadrícula')], ['stack', L('Matrices', 'Matrices')]].map(([k, l]) => `<button type="button" data-mm="${k}" aria-pressed="${(UI.modelMode || 'grid') === k}">${esc(l)}</button>`).join(''); if ($('mmodeSeg').dataset.k !== h) { $('mmodeSeg').dataset.k = h; $('mmodeSeg').innerHTML = h; $('mmodeSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { UI.modelMode = b.dataset.mm; try { localStorage.setItem('llmc.modelMode', UI.modelMode); } catch (er) {} if (zTop('model')) zoomTo('model', 0); renderMmode(); writeUrl(); })); } }
 function setLens(l) { UI.lens = l; document.body.dataset.lens = l; if (legendLens !== l) buildLegend(); renderZbar(); document.querySelectorAll('#stage [data-lens]').forEach(el => el.classList.toggle('on', el.dataset.lens === l)); renderLensSeg(); writeUrl(); }
 function renderLensSeg() {
   // One lens switcher: each tab carries a live miniature of its view.
@@ -202,7 +202,6 @@ function applyText() {
   document.querySelectorAll('[data-t]').forEach(el => { el.textContent = T(el.dataset.t); });
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ICON(el.dataset.ic, el.dataset.ic === 'chev' ? 's' : ''); });
   document.title = `tokenwalk · ${T('title')}`; document.documentElement.lang = lang;
-  $('reset').innerHTML = `${ICON('restart', 's')}<span>${esc(L('Reference machine', 'Máquina de referencia'))}</span>`; $('reset').title = L('Back to the calibrated ThinkPad with a Radeon 860M and the default request', 'Volver al ThinkPad calibrado con una Radeon 860M y la petición por defecto');
   $('gear').innerHTML = ICON('settings'); $('gear').title = L('Settings', 'Ajustes'); $('helpBtn').innerHTML = ICON('help'); $('helpBtn').title = L('Wizard (?)', 'Wizard (?)');
   $('monBtn').innerHTML = `${ICON('eq', 's')}<span>${esc(L('Monitor', 'Monitor'))}</span>`; $('monClose').innerHTML = ICON('close', 's');
   $('stop').innerHTML = ICON('stop'); $('stop').title = L('Stop and back to the start', 'Parar y volver al principio');

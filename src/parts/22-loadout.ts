@@ -163,14 +163,15 @@ function renderGate() {
 }
 const UNDO = [], REDO = [];
 function pushUndo() { UNDO.push(JSON.stringify(S)); if (UNDO.length > 40) UNDO.shift(); REDO.length = 0; renderUndo(); }
-function undo() { if (!UNDO.length || locked() || isReal()) return; REDO.push(JSON.stringify(S)); S = JSON.parse(UNDO.pop()); KEEP.unloaded = false; changed(); renderUndo(); }
+const REAL_UNDO = []; // Real mode: the request and sampling before a Restore defaults
+function undo() { if (isReal()) { if (REAL_UNDO.length && !LIVE.running) realUndo(); return; } if (!UNDO.length || locked()) return; REDO.push(JSON.stringify(S)); S = JSON.parse(UNDO.pop()); KEEP.unloaded = false; changed(); renderUndo(); }
 function redo() { if (!REDO.length || locked() || isReal()) return; UNDO.push(JSON.stringify(S)); S = JSON.parse(REDO.pop()); KEEP.unloaded = false; changed(); renderUndo(); }
 let tlScaleKey = '';
 function renderTlScale() {
   const shown = UI.tlPeek != null ? 'token' : UI.scale, items = [['request', L('Request', 'Petición')], ['token', L('Pass', 'Pasada')], ['layer', L('Layer', 'Capa')], ['op', L('Op', 'Op')]], h = items.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${shown === k}" title="${esc(L('Timeline zoom', 'Zoom de la línea de tiempo'))}">${esc(l)}</button>`).join('');
   if (h !== tlScaleKey) { tlScaleKey = h; $('tlScale').innerHTML = h; $('tlScale').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { UI.tlPeek = null; UI.scale = b.dataset.k; UI.speed = 'fit'; ZSCALE0 = null; logKey = ''; writeUrl(); renderSettings(); renderTlScale(); })); }
 }
-function renderUndo() { renderTlScale(); const r = $('redoBtn'); if (r) { r.disabled = !REDO.length || locked(); r.title = REDO.length ? L('Redo (Ctrl+Shift+Z)', 'Rehacer (Ctrl+Mayús+Z)') : L('Nothing to redo', 'Nada que rehacer'); } const b = $('undoBtn'); b.disabled = !UNDO.length || locked(); b.title = UNDO.length ? L('Undo the last configuration change', 'Deshacer el último cambio de configuración') : L('Nothing to undo', 'Nada que deshacer'); }
+function renderUndo() { renderTlScale(); const r = $('redoBtn'); if (r) { r.disabled = !REDO.length || locked(); r.title = REDO.length ? L('Redo (Ctrl+Shift+Z)', 'Rehacer (Ctrl+Mayús+Z)') : L('Nothing to redo', 'Nada que rehacer'); } const b = $('undoBtn'), n = isReal() ? REAL_UNDO.length : UNDO.length; if (r && isReal()) r.disabled = true; b.disabled = !n || locked() || (isReal() && LIVE.running); b.title = n ? L('Undo the last configuration change', 'Deshacer el último cambio de configuración') : L('Nothing to undo', 'Nada que deshacer'); }
 let stopArm = 0;
 function stopEdit() {
   if (P.t > 0 && P.t < R.total && performance.now() - stopArm > 3000) { stopArm = performance.now(); $('stopEdit').innerHTML = `${ICON('warning', 's')}<span>${esc(L('Discard this run? Click again', '¿Descartar esta ejecución? Haz clic otra vez'))}</span>`; setTimeout(() => { if (performance.now() - stopArm >= 2900) applyText(); }, 3100); return; }

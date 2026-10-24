@@ -28,9 +28,8 @@ function bind() {
   document.addEventListener('pointerdown', e => { const o = document.querySelector('#cfgBody .acc.open'); if (o && !o.contains(e.target) && !e.target.closest('#loadout, #lesson, #settings, #chainWin')) { o.classList.remove('open'); if (!e.target.closest('#cfgBody .acc > button')) swallow = performance.now(); } }, true);
   document.addEventListener('click', e => { if (performance.now() - swallow < 400) { e.stopPropagation(); e.preventDefault(); swallow = 0; } }, true);
   $('cfg').addEventListener('pointerleave', () => { $('cfgBody').style.minHeight = ''; });
-  $('reset').addEventListener('click', () => { if (locked()) return; pushUndo(); S = defaults(); UI.layer = -1; KEEP.unloaded = false; KEEP.idle = 0; changed(); });
   $('undoBtn').addEventListener('click', undo);
-  { const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'tbtn'; rb.id = 'redoBtn'; rb.innerHTML = ICON('restart', 's'); rb.querySelector('.ic').style.transform = 'scaleX(-1)'; $('undoBtn').after(rb); rb.addEventListener('click', redo); renderUndo(); }
+  { const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'tbtn'; rb.id = 'redoBtn'; rb.innerHTML = ICON('redo', 's'); $('undoBtn').after(rb); rb.addEventListener('click', redo); renderUndo(); }
  
   $('play').addEventListener('click', () => { if (isReal()) { realSend(); return; } if (fitGate()) return; UI.stale = false; setPlaying(!P.on); });
   $('jumpGo').addEventListener('click', () => doJump(UI.jump));
@@ -60,7 +59,8 @@ function bind() {
   const hlOn = e => { const t = e.target.closest('[data-hl], .tk'); const v = t ? (t.dataset.hl || ['load', 'prefill', 'decode'].find(k => t.classList.contains(k)) || null) : null; if (UI.tlHl !== v) UI.tlHl = v; };
   for (const id2 of ['counter', 'track']) { $(id2).addEventListener('pointerover', hlOn); $(id2).addEventListener('pointerleave', () => { UI.tlHl = null; }); }
   $('lesson').querySelector('.scrim').addEventListener('click', () => select(null)); $('lsClose').addEventListener('click', () => select(null));
-  const logOpen = on => { $('logPop').hidden = !on; $('logBtn').setAttribute('aria-expanded', on); if (on) { logKey = ''; renderLog(now()); } };
+  const logOpen = on => { $('logPop').hidden = !on; $('logBtn').setAttribute('aria-expanded', on); if (on) { logKey = ''; LOGUI.stick = true; renderLog(now()); } };
+  { const tog = e => { const h = e.target.closest('[data-lph], [data-lblk]'); if (!h) return; if (e.type === 'keydown') { if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault(); } h.dataset.lph ? logToggle('ph', h.dataset.lph) : logToggle('blk', h.dataset.lblk); renderLog(now()); }; $('log').addEventListener('click', tog); $('log').addEventListener('keydown', tog); }
   $('logBtn').addEventListener('click', () => logOpen($('logPop').hidden)); $('logClose').addEventListener('click', () => logOpen(false));
   $('jumpMenu').addEventListener('click', e => { e.stopPropagation(); jumpPop($('jumpPop').hidden); });
   $('jumpPop').addEventListener('click', e => { const b = e.target.closest('[data-j]'); if (!b || b.getAttribute('aria-disabled') === 'true') return; UI.jump = b.dataset.j; try { localStorage.setItem('llmc.jump', UI.jump); } catch (er) {} jumpPop(false); renderJump(); doJump(UI.jump); });
