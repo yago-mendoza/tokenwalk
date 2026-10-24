@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "allowJs": false
   },
-  "include": ["src/parts/*.ts", "src/globals.d.ts"]
+  "include": ["src/parts/*.ts", "src/core/*.ts", "src/globals.d.ts"]
 }

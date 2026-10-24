@@ -1,5 +1,4 @@
 // ===== State and url =====
-function machineFields(key) { const p = MACHINES[key], b = BUS[key] || [8000, 128]; return { ram: p.ramGB, tflops: p.tflops, mts: b[0], bus: b[1], vram: p.fastGB, vbw: p.bw }; }
 function defaults() {
   return {
     machine: DEFAULTS.machine, model: DEFAULTS.model, quant: DEFAULTS.quant, kv: DEFAULTS.kv, ctx: DEFAULTS.ctx,
@@ -72,11 +71,5 @@ function writeUrl() {
   try { history.replaceState(null, '', u); } catch (e) {}
 }
 const isDefault = () => JSON.stringify(S) === JSON.stringify(defaults());
-function machine() {
-  const p = MACHINES[S.machine], mc = { ...p, ramGB: S.ram, tflops: S.tflops };
-  if (p.kind === 'unified') { mc.bw = (S.mts * S.bus) / 8 / 1000; mc.hostBw = mc.bw; mc.fastGB = S.ram * (p.fastGB / p.ramGB); }
-  else { mc.bw = S.vbw; mc.fastGB = S.vram; }
-  // A live run can calibrate this machine: its effective bandwidth and compute are scaled to match it.
-  const cal = CALIB[S.machine]; if (cal) { mc.bwEff *= cal.bw; mc.tflops *= cal.fl; mc.calibrated = true; }
-  return mc;
-}
+// The machine the request runs on: the preset with the Setup's overrides and any live calibration (resolveMachine, 01e).
+function machine() { return resolveMachine(MACHINES[S.machine], S, CALIB[S.machine]); }

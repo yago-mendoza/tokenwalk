@@ -55,16 +55,16 @@ const MODELS = {
 // synchronisation), which is what keeps a small model from reaching its bandwidth ceiling on the iGPU.
 // fastGB: memory the accelerator reads at `bw` (VRAM on a card, all usable RAM on unified memory);
 // hostBw: what a card falls back to for weights that do not fit (system RAM read by the CPU).
-const MACHINES = {
+const MACHINES: Record<string, MachineSpec> = {
   thinkpad: {
     name: 'ThinkPad · Radeon 860M', short: '860M iGPU', kind: 'unified',
     ramGB: 64, fastGB: 47.6, bw: 128, bwEff: 0.33, tflops: 0.75, layerMs: 0.9, hostBw: 128, linkBw: 0,
-    cores: 8, units: 8, unitName: 'CU', est: false,
+    cores: 8, units: 8, unitName: 'CU', est: false, diskGBs: 0.4,
   },
   thinkpadCpu: {
     name: 'ThinkPad · CPU only', short: 'CPU only', kind: 'unified',
     ramGB: 64, fastGB: 60, bw: 128, bwEff: 0.33, tflops: 0.42, layerMs: 0.9, hostBw: 128, linkBw: 0,
-    cores: 8, units: 8, unitName: 'core', est: false,
+    cores: 8, units: 8, unitName: 'core', est: false, diskGBs: 0.4,
   },
   strixHalo: {
     name: 'Ryzen AI Max+ 395, 128 GB', short: 'Strix Halo', kind: 'unified',
@@ -101,8 +101,10 @@ const DEFAULTS = {
 
 const SYSTEM_GB = 32; // Windows, Chrome, Cursor and the rest, measured before any model loaded
 
-const fileGB = (m, q) => (m.total * QUANTS[q].bpw) / 8 / GB;
-const readGB = (m, q) => (m.readParams * QUANTS[q].bpw) / 8 / GB;
+// A weight format is a preset name (QUANTS) or bits per weight as a number (a file's bytes × 8 / its weights).
+const bpwOf = (q: string | number): number => (typeof q === 'number' ? q : QUANTS[q].bpw);
+const fileGB = (m, q) => (m.total * bpwOf(q)) / 8 / GB;
+const readGB = (m, q) => (m.readParams * bpwOf(q)) / 8 / GB;
 // Multi-token prediction (MTP). Both Qwen GGUFs carry one extra "next-n" block (nextn_predict_layers: 1) and
 // Ollama runs it as a built-in draft (draft_num_predict 2): the MTP block guesses the next tokens, and one pass of
 // the full model checks them all. A draft step reads one block plus the output head; how many guesses survive
@@ -111,7 +113,7 @@ const readGB = (m, q) => (m.readParams * QUANTS[q].bpw) / 8 / GB;
 // (short and 3,505-token prompts alike); drafting on, temperature 0 on the long prompt 15.6 tok/s (x1.18);
 // temperature 0.7, 11.5 and 10.6 tok/s (x0.87, x0.80).
 const MTP = { k: 2, alphaT0: 0.55, alphaT07: 0.25 };
-const mtpDraftGB = (m, q) => (((m.readParams - m.vocab * m.hidden) / m.layers + m.vocab * m.hidden) * QUANTS[q].bpw) / 8 / GB;
+const mtpDraftGB = (m, q) => (((m.readParams - m.vocab * m.hidden) / m.layers + m.vocab * m.hidden) * bpwOf(q)) / 8 / GB;
 const mtpAlpha = T => { const t = Math.max(0, T); return Math.max(0.05, t <= 0.7 ? MTP.alphaT0 + (MTP.alphaT07 - MTP.alphaT0) * (t / 0.7) : MTP.alphaT07 * (1 - Math.min(1, (t - 0.7) / 1.3) * 0.6)); };
 const kvBytesPerToken = (m, kv) => 2 * m.kvLayers * m.kvHeads * m.headDim * KV_TYPES[kv].bytes;
 const kvGB = (m, kv, ctx) => (kvBytesPerToken(m, kv) * ctx) / GB;
@@ -123,7 +125,7 @@ const expertsTouched = (m, n) => (m.moe ? m.experts * (1 - (1 - m.expertsUsed / 
 // Weights read in one pass that carries n tokens at once (prefill chunk, speculative verification).
 function passReadGB(m, q, n) {
   if (!m.moe) return readGB(m, q);
-  const perExpert = (m.expertParams * QUANTS[q].bpw) / 8 / GB;
+  const perExpert = (m.expertParams * bpwOf(q)) / 8 / GB;
   const routedOne = m.expertsUsed * perExpert * m.layers;
   const rest = readGB(m, q) - routedOne;
   return rest + expertsTouched(m, n) * perExpert * m.layers;
@@ -194,14 +196,14 @@ const fmtN = n => (n >= 1e9 ? `${(n / 1e9).toFixed(n >= 1e10 ? 0 : 1)}B` : n >= 
 // Bus width and transfer rate behind the unified presets' bandwidth (bandwidth = MT/s × bits / 8 / 1000).
 const BUS = { thinkpad: [8000, 128], thinkpadCpu: [8000, 128], strixHalo: [8000, 256], m4max: [8533, 512] };
 // Disk reads: the article measured a 55 s cold load of the 21.7 GB file on the laptop (about 0.4 GB/s
-// through Ollama); the other machines are assumed to load at 2 GB/s.
-const ssdGBs = key => (key === 'thinkpad' || key === 'thinkpadCpu' ? 0.4 : 2);
+// through Ollama, the presets' diskGBs); the other machines are assumed to load at 2 GB/s.
+const ssdGBs = key => (MACHINES[key] && MACHINES[key].diskGBs) || 2;
 const DRAFT = { params: 0.6e9, layers: 28 }; // draft model for speculative decoding: 0.6B dense, same family
 const READING = [5, 8]; // tokens per second a person reads at
 
 // Matrices of one layer, as the GGUF headers list them (input × output). The two Qwen models are read from
 // the files on the laptop; Llama 3.1 8B and GPT-3 from their published configurations.
-const SHAPES = {
+const SHAPES: Record<string, LayerShapes> = {
   qwen36: {
     attn: [['attn_q', 2048, 8192], ['attn_k', 2048, 512], ['attn_v', 2048, 512], ['attn_output', 4096, 2048]],
     delta: [['attn_qkv', 2048, 8192], ['attn_gate', 2048, 4096], ['ssm_out', 4096, 2048]],
@@ -224,11 +226,7 @@ const SHAPES = {
     mlp: [['ffn_up', 12288, 49152], ['ffn_down', 49152, 12288]],
   },
 };
-function shapesOf(key) {
-  if (SHAPES[key]) return SHAPES[key];
-  const m = MODELS[key], h = m.hidden, kvw = m.kvHeads * m.headDim;
-  return { attn: [['attn_q', h, m.qHeads * m.headDim], ['attn_k', h, kvw], ['attn_v', h, kvw], ['attn_output', m.qHeads * m.headDim, h]], mlp: [['ffn_up', h, 4 * h], ['ffn_down', 4 * h, h]] };
-}
+function shapesOf(key) { return shapesFor(MODELS[key], SHAPES[key]); } // shapesFor: 01e-estimate.ts
 function layerKinds(m) {
   const every = Math.round(m.layers / m.kvLayers);
   return Array.from({ length: m.layers }, (_, i) => (m.kvLayers >= m.layers ? 'attn' : (i + 1) % every === 0 ? 'attn' : 'delta'));
