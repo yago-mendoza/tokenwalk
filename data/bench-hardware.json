@@ -1,0 +1,190 @@
+{
+ "schema": "tokenwalk-bench-hardware/1",
+ "compiled": "2026-10-24",
+ "about": "Hardware that appears in clean published benchmark rows but is not a preset: used only to fit and check the per-family factors (tools/fit-families.mjs), never shown in the app. Same fields and conventions as data/machines.json. The values come from vendor datasheets as cited; they were not re-fetched when this file was written (see uncertain).",
+ "machines": [
+  {
+   "id": "v100sxm2",
+   "name": "Tesla V100 SXM2 32 GB",
+   "short": "V100 SXM2",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda-pro",
+   "ramGB": 768,
+   "fastGB": 32,
+   "bwSpec": 900,
+   "tflopsSpec": 125,
+   "hostBw": 460.8,
+   "linkBw": 16,
+   "cores": 96,
+   "units": 80,
+   "unitName": "SM",
+   "sources": {
+    "bwSpec": "https://images.nvidia.com/content/technologies/volta/pdf/volta-v100-datasheet-update-us-1165301-r5.pdf",
+    "tflopsSpec": "https://images.nvidia.com/content/technologies/volta/pdf/volta-v100-datasheet-update-us-1165301-r5.pdf"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Tensor FP16 125 TFLOPS (SXM2); Volta accumulates FP32 at full rate.",
+   "uncertain": [
+    "values and URL as remembered from the vendor datasheet, not fetched when this file was written"
+   ]
+  },
+  {
+   "id": "v100pcie",
+   "name": "Tesla V100 PCIe 16 GB",
+   "short": "V100 PCIe",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda-pro",
+   "ramGB": 768,
+   "fastGB": 16,
+   "bwSpec": 900,
+   "tflopsSpec": 112,
+   "hostBw": 460.8,
+   "linkBw": 16,
+   "cores": 96,
+   "units": 80,
+   "unitName": "SM",
+   "sources": {
+    "bwSpec": "https://images.nvidia.com/content/technologies/volta/pdf/volta-v100-datasheet-update-us-1165301-r5.pdf",
+    "tflopsSpec": "https://images.nvidia.com/content/technologies/volta/pdf/volta-v100-datasheet-update-us-1165301-r5.pdf"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Tensor FP16 112 TFLOPS (PCIe). The CUDA scoreboard's 'Tesla V100' (32 GB, variant not stated) is mapped to the SXM2 row.",
+   "uncertain": [
+    "values and URL as remembered from the vendor datasheet, not fetched when this file was written"
+   ]
+  },
+  {
+   "id": "t4",
+   "name": "Tesla T4 16 GB",
+   "short": "T4",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda-pro",
+   "ramGB": 768,
+   "fastGB": 16,
+   "bwSpec": 320,
+   "tflopsSpec": 65,
+   "hostBw": 460.8,
+   "linkBw": 16,
+   "cores": 96,
+   "units": 40,
+   "unitName": "SM",
+   "sources": {
+    "bwSpec": "https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/tesla-t4/t4-tensor-core-datasheet-951643.pdf",
+    "tflopsSpec": "https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/tesla-t4/t4-tensor-core-datasheet-951643.pdf"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Mixed-precision (FP16/FP32) tensor 65 TFLOPS; a 70 W card that rarely holds its boost clock.",
+   "uncertain": [
+    "values and URL as remembered from the vendor datasheet, not fetched when this file was written"
+   ]
+  },
+  {
+   "id": "mi100",
+   "name": "Instinct MI100 32 GB",
+   "short": "MI100",
+   "kind": "discrete",
+   "vendor": "AMD",
+   "family": "amd-rocm-instinct",
+   "ramGB": 768,
+   "fastGB": 32,
+   "bwSpec": 1228.8,
+   "tflopsSpec": 184.6,
+   "hostBw": 460.8,
+   "linkBw": 32,
+   "cores": 96,
+   "units": 120,
+   "unitName": "CU",
+   "sources": {
+    "bwSpec": "https://www.amd.com/en/products/accelerators/instinct/mi100.html",
+    "tflopsSpec": "https://www.amd.com/en/products/accelerators/instinct/mi100.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Peak FP16 matrix 184.6 TFLOPS; HBM2 4096-bit at 2.4 Gbps.",
+   "uncertain": [
+    "values and URL as remembered from the vendor page, not fetched when this file was written"
+   ]
+  },
+  {
+   "id": "strix395cpu",
+   "name": "Ryzen AI Max+ 395, CPU only",
+   "short": "395 CPU",
+   "kind": "unified",
+   "vendor": "CPU",
+   "family": "cpu",
+   "ramGB": 128,
+   "fastGB": 124,
+   "bwSpec": 256,
+   "tflopsSpec": 6.1,
+   "hostBw": 256,
+   "linkBw": 0,
+   "cores": 16,
+   "units": 16,
+   "unitName": "core",
+   "sources": {
+    "bwSpec": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "tflopsSpec": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "The CPU half of the strixHalo preset: 16 Zen 5 cores with the full 512-bit FPU, 128 BF16 flop/clk/core x 16 x 3.0 GHz base = 6.1 (the data/machines.json CPU convention), 256-bit LPDDR5x-8000.",
+   "uncertain": [
+    "tflopsSpec derived",
+    "product page not fetched when this file was written"
+   ]
+  },
+  {
+   "id": "r9900x3600",
+   "name": "Ryzen 9 9900X, 4x DDR5-3600",
+   "short": "9900X",
+   "kind": "unified",
+   "vendor": "CPU",
+   "family": "cpu",
+   "ramGB": 64,
+   "fastGB": 60,
+   "bwSpec": 57.6,
+   "tflopsSpec": 6.8,
+   "hostBw": 57.6,
+   "linkBw": 0,
+   "cores": 12,
+   "units": 12,
+   "unitName": "core",
+   "sources": {
+    "bwSpec": "https://openbenchmarking.org/",
+    "tflopsSpec": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9900x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Memory ran at DDR5-3600 with four DIMMs (2 ch x 64 bit x 3600 / 8 = 57.6 GB/s, as the benchmark row states). 12 Zen 5 cores x 128 BF16 flop/clk x 4.4 GHz base = 6.8.",
+   "uncertain": [
+    "tflopsSpec derived"
+   ]
+  },
+  {
+   "id": "r3950x3600",
+   "name": "Ryzen 9 3950X, DDR4-3600",
+   "short": "3950X",
+   "kind": "unified",
+   "vendor": "CPU",
+   "family": "cpu",
+   "ramGB": 64,
+   "fastGB": 60,
+   "bwSpec": 57.6,
+   "tflopsSpec": 1.8,
+   "hostBw": 57.6,
+   "linkBw": 0,
+   "cores": 16,
+   "units": 16,
+   "unitName": "core",
+   "sources": {
+    "bwSpec": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+    "tflopsSpec": "https://www.amd.com/en/products/processors/desktops/ryzen/3000-series/amd-ryzen-9-3950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Dual-channel DDR4-3600 = 57.6 GB/s (as the row states). Zen 2 has no BF16: tflopsSpec is the FP32 FMA ceiling, 16 cores x 32 flop/clk x 3.5 GHz base = 1.8, so it is not on the same footing as the Zen 5 rows.",
+   "uncertain": [
+    "tflopsSpec derived, FP32 not BF16"
+   ]
+  }
+ ]
+}

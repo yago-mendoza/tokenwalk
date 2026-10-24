@@ -58,9 +58,9 @@ function estimate(cfg: EstimateConfig, data: EstimateData): EstimateResult {
   const prefixLen = Math.min(prompt, cfg.systemTokens + cfg.docsTokens);
   const useCache = (cfg.prefixCached || cfg.diskCache) && prefixLen > 0, startAt = useCache ? prefixLen : 0;
   const pl = placement(mc, m, q);
-  const flopsEff = mc.tflops * 1e12 * (m.moe ? 0.75 : 1);
+  const flopsEff = mc.tflops * 1e12 * (m.moe ? moeComputeOf(mc) : 1);
   const bwEff = mc.bw * mc.bwEff * pl.fastShare + mc.hostBw * 0.6 * (1 - pl.fastShare);
-  const cold = cfg.cold, disk = mc.diskGBs || 2, overhead = (mc.layerMs * m.layers) / 1000;
+  const cold = cfg.cold, disk = mc.diskGBs || 2, overhead = (layerMsOf(mc, m) * m.layers) / 1000;
   const segs: Segment[] = []; let t = 0;
   const load = cold ? fileGB(m, q) / disk : 0;
   if (load > 0) { segs.push({ k: 'load', a: t, d: load }); t += load; }

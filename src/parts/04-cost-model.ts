@@ -50,7 +50,7 @@ function layerFractions(seg) {
   const { m, mc } = R, L1 = m.layers, w = [];
   if (seg.k === 'prefill') for (let i = 0; i < L1; i++) w.push(1);
   else {
-    const ov = mc.layerMs / 1000;
+    const ov = layerMsOf(mc, m) / 1000;
     for (let i = 0; i < L1; i++) { const li = layerInfo(i); w.push((li.read + (li.kind === 'attn' ? kvLayerBytes(seg.ctx) : 0)) / (R.bwEff * 1e9) + ov); }
     w.push(headBytes() / (R.bwEff * 1e9));
   }

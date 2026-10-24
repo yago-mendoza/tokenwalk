@@ -4,8 +4,9 @@
 
 /** A weight format preset (src/parts/01-data.ts, QUANTS). */
 export type QuantKey = 'F16' | 'Q8_0' | 'Q6_K' | 'Q4_K_M' | 'Q2_K';
-/** A weight format: a preset name, or bits per weight as a number (scales included), e.g. a file's size × 8 / its parameters. */
-export type Quant = QuantKey | number;
+/** A weight format: a preset name, bits per weight as a number (scales included, e.g. a file's size × 8 / its weights),
+ *  or { bpw, expertBpw } for a mixture of experts whose routed experts are stored at another width (MXFP4 at 4.25). */
+export type Quant = QuantKey | number | { bpw: number; expertBpw?: number };
 /** Number format of the KV cache (KV_TYPES). */
 export type KvKey = 'f16' | 'q8_0' | 'q4_0';
 /** 'unified': CPU and GPU share one memory (APUs, Apple, CPU only). 'discrete': a card with its own VRAM over PCIe. */
@@ -13,7 +14,7 @@ export type MachineKind = 'unified' | 'discrete';
 /** Where a machine's effective numbers come from: measured on it, fitted to published benchmarks of its family, or assumed. */
 export type Provenance = 'calibrated' | 'family-fit' | 'assumed';
 /** The hardware families the published-benchmark fit is done per (tools/fit-families.mjs). */
-export type FamilyId = 'apple-metal' | 'apple-metal-na' | 'nvidia-cuda' | 'amd-rocm' | 'amd-vulkan' | 'intel' | 'cpu';
+export type FamilyId = 'apple-metal' | 'apple-metal-na' | 'nvidia-cuda' | 'nvidia-cuda-pro' | 'amd-rocm' | 'amd-rocm-instinct' | 'amd-vulkan' | 'intel' | 'cpu';
 
 export interface PriceUSD {
   /** Launch list price, USD, or null when not verified. */
@@ -46,6 +47,10 @@ export interface MachineSpec {
   /** Fixed cost per layer per pass, ms (kernel launches, synchronisation): the per-token overhead that keeps a small
    *  model from reaching the bandwidth ceiling, large on datacenter GPUs. Effective. */
   layerMs: number;
+  /** Extra fixed cost per mixture-of-experts layer per pass, ms (router, top-k, expert gather). Effective; absent: 0. */
+  moeLayerMs?: number;
+  /** Share of `tflops` a mixture-of-experts prefill reaches (tokens scatter over small per-expert batches); absent: 0.75. */
+  moeComputeEff?: number;
   /** GB/s a card falls back to for weights that do not fit in VRAM (host RAM read by the CPU). */
   hostBw: number;
   /** GB/s of the PCIe link (0 on unified memory). */
@@ -330,6 +335,10 @@ export interface FamilyFactors {
   basis: 'tflopsSpec' | 'units';
   /** Fixed cost per layer per pass, ms. */
   layerMs: number;
+  /** Extra fixed cost per mixture-of-experts layer, ms (fitted where the family has MoE and dense rows). */
+  moeLayerMs?: number;
+  /** Share of the dense prefill arithmetic a mixture of experts reaches (default 0.75). */
+  moeComputeEff?: number;
 }
 
 /** data/calibration.json, written by tools/fit-families.mjs. */

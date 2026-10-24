@@ -14,7 +14,8 @@
     "test": "node --test \"tests/unit/*.test.mjs\" && node tests/browser/run.mjs",
     "test:unit": "node --test \"tests/unit/*.test.mjs\"",
     "test:browser": "node tests/browser/run.mjs",
-    "test:live": "node tests/browser/live-smoke.mjs"
+    "test:live": "node tests/browser/live-smoke.mjs",
+    "fit": "node tools/fit-families.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

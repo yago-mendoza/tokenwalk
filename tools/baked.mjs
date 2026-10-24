@@ -10,6 +10,6 @@ export function bakedData(root = process.cwd(), { calibration } = {}) {
   // the page needs the spec values and sources; the long notes stay in the file
   const machines = cat.machines.map(({ uncertain, ...e }) => e);
   return `const TW_CATALOGUE = ${JSON.stringify({ compiled: cat.compiled, machines })};
-const TW_CALIBRATION = ${JSON.stringify(cal && { fitted: cal.fitted, families: Object.fromEntries(Object.entries(cal.families || {}).map(([k, f]) => [k, { label: f.label, bwEff: f.bwEff, computeEff: f.computeEff, basis: f.basis, layerMs: f.layerMs, rows: f.rows, machines: f.machines }])) })};
+const TW_CALIBRATION = ${JSON.stringify(cal && { fitted: cal.fitted, families: Object.fromEntries(Object.entries(cal.families || {}).map(([k, f]) => [k, { label: f.label, bwEff: f.bwEff, computeEff: f.computeEff, basis: f.basis, layerMs: f.layerMs, ...(f.moeLayerMs ? { moeLayerMs: f.moeLayerMs } : {}), ...(f.moeComputeEff ? { moeComputeEff: f.moeComputeEff } : {}), rows: f.rows, machines: f.machines }])) })};
 `;
 }

@@ -1,0 +1,57 @@
+{
+ "schema": "tokenwalk-ref-models/1",
+ "compiled": "2026-10-24",
+ "about": "Models the published benchmarks use, as their published configurations give them (Hugging Face config.json). modelFromConfig() (src/parts/01c-catalogue.ts) turns one into a model preset: total and read-per-token weights are computed from the dimensions, and checked against the published parameter count (publishedParams). Not shown in the app; tools/fit-families.mjs and tools/accuracy.mjs use them. 'llama8b' is the app's own Llama 3.1 8B preset.",
+ "models": {
+  "llama2-7b": {
+   "name": "Llama 2 7B", "hidden": 4096, "layers": 32, "qHeads": 32, "kvHeads": 32, "headDim": 128, "ffn": 11008, "vocab": 32000, "tied": false, "ctxMax": 4096,
+   "publishedParams": 6.74e9, "source": "https://huggingface.co/meta-llama/Llama-2-7b-hf/blob/main/config.json"
+  },
+  "qwen2.5-7b": {
+   "name": "Qwen2.5 7B (and Coder 7B)", "hidden": 3584, "layers": 28, "qHeads": 28, "kvHeads": 4, "headDim": 128, "ffn": 18944, "vocab": 152064, "tied": false, "ctxMax": 32768,
+   "publishedParams": 7.61e9, "source": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B/blob/main/config.json"
+  },
+  "qwen2.5-14b": {
+   "name": "Qwen2.5 14B", "hidden": 5120, "layers": 48, "qHeads": 40, "kvHeads": 8, "headDim": 128, "ffn": 13824, "vocab": 152064, "tied": false, "ctxMax": 32768,
+   "publishedParams": 14.7e9, "source": "https://huggingface.co/Qwen/Qwen2.5-14B/blob/main/config.json"
+  },
+  "qwen3-8b": {
+   "name": "Qwen3 8B", "hidden": 4096, "layers": 36, "qHeads": 32, "kvHeads": 8, "headDim": 128, "ffn": 12288, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "publishedParams": 8.19e9, "source": "https://huggingface.co/Qwen/Qwen3-8B/blob/main/config.json"
+  },
+  "qwen3-14b": {
+   "name": "Qwen3 14B", "hidden": 5120, "layers": 40, "qHeads": 40, "kvHeads": 8, "headDim": 128, "ffn": 17408, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "publishedParams": 14.8e9, "source": "https://huggingface.co/Qwen/Qwen3-14B/blob/main/config.json"
+  },
+  "qwen3-32b": {
+   "name": "Qwen3 32B", "hidden": 5120, "layers": 64, "qHeads": 64, "kvHeads": 8, "headDim": 128, "ffn": 25600, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "publishedParams": 32.8e9, "source": "https://huggingface.co/Qwen/Qwen3-32B/blob/main/config.json"
+  },
+  "qwen3-30b-a3b": {
+   "name": "Qwen3 30B-A3B (and Coder 30B-A3B)", "hidden": 2048, "layers": 48, "qHeads": 32, "kvHeads": 4, "headDim": 128, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "experts": 128, "expertsUsed": 8, "expertFfn": 768, "sharedExperts": 0,
+   "publishedParams": 30.5e9, "publishedActive": 3.3e9, "source": "https://huggingface.co/Qwen/Qwen3-30B-A3B/blob/main/config.json"
+  },
+  "gemma3-27b": {
+   "name": "Gemma 3 27B", "hidden": 5376, "layers": 62, "qHeads": 32, "kvHeads": 16, "headDim": 128, "ffn": 21504, "vocab": 262208, "tied": true, "ctxMax": 131072,
+   "publishedParams": 27.0e9, "source": "https://huggingface.co/google/gemma-3-27b-it/blob/main/config.json",
+   "notes": "Five of every six layers attend over a 1,024-token sliding window; the model treats all layers as full attention, which only matters at long context."
+  },
+  "gpt-oss-20b": {
+   "name": "gpt-oss-20b", "hidden": 2880, "layers": 24, "qHeads": 64, "kvHeads": 8, "headDim": 64, "vocab": 201088, "tied": false, "ctxMax": 131072,
+   "experts": 32, "expertsUsed": 4, "expertFfn": 2880, "sharedExperts": 0,
+   "publishedParams": 20.9e9, "publishedActive": 3.6e9, "source": "https://huggingface.co/openai/gpt-oss-20b/blob/main/config.json",
+   "notes": "Experts are MXFP4 (4.25 bits), attention and embeddings wider; one average bits-per-weight from the file size under-counts the bytes a token reads."
+  },
+  "gpt-oss-120b": {
+   "name": "gpt-oss-120b", "hidden": 2880, "layers": 36, "qHeads": 64, "kvHeads": 8, "headDim": 64, "vocab": 201088, "tied": false, "ctxMax": 131072,
+   "experts": 128, "expertsUsed": 4, "expertFfn": 2880, "sharedExperts": 0,
+   "publishedParams": 116.8e9, "publishedActive": 5.1e9, "source": "https://huggingface.co/openai/gpt-oss-120b/blob/main/config.json",
+   "notes": "As gpt-oss-20b: MXFP4 experts, wider attention and embeddings."
+  },
+  "llama3.1-70b": {
+   "name": "Llama 3.1 70B", "hidden": 8192, "layers": 80, "qHeads": 64, "kvHeads": 8, "headDim": 128, "ffn": 28672, "vocab": 128256, "tied": false, "ctxMax": 131072,
+   "publishedParams": 70.6e9, "source": "https://huggingface.co/meta-llama/Llama-3.1-70B/blob/main/config.json"
+  }
+ }
+}

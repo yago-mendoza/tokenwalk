@@ -4,8 +4,10 @@ import { loadModel, PURE_PARTS } from './load.mjs';
 
 // estimate(config, data) is the cost model with no state: these check it gives exactly what compute() gave before
 // the refactor (tests/unit/legacy, verbatim), and that it reads nothing but its arguments.
+// The comparison runs on the catalogue without the fitted calibration: the legacy function has no MoE layer term
+// (moeLayerMs, which a family fit may add), so it is the refactor, not the later calibration, that is compared.
 const parts = PURE_PARTS;
-const M = await loadModel(parts, { extra: ['tests/unit/legacy/compute-94424a6.ts'] });
+const M = await loadModel(parts, { extra: ['tests/unit/legacy/compute-94424a6.ts'], calibration: null });
 
 // The Setup's defaults (03-state.ts, defaults()) on a machine preset.
 const base = mk => ({

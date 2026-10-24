@@ -1,0 +1,4863 @@
+{
+ "schema": "tokenwalk-benchmarks/1",
+ "compiled": "2026-10-24",
+ "about": "Published local-inference benchmarks (mostly llama-bench pp/tg), every number copied from the cited source. tools/fit-families.mjs fits the per-family factors on the rows the model can represent; tools/accuracy.mjs reports estimate vs published for each.",
+ "fields": {
+  "pp": "{tokens, tps}: prompt processing, e.g. pp512 is tokens 512",
+  "tg": "{tokens, tps}: token generation, e.g. tg128",
+  "fileGB": "the size as printed, in fileUnit (llama-bench prints GiB)",
+  "batch": "parallel sequences (1 unless llama-batched-bench)",
+  "flashAttention": "0/1/null (null: not stated or the default of that build)",
+  "date": "the llama.cpp commit date for scoreboard rows (the run may be later), else the post date"
+ },
+ "caveats": [
+  "Build drift: the same hardware gains up to +33% tg and 2-4x pp across llama.cpp builds (M2 Ultra 2023-2026, Strix Halo ROCm, DGX Spark launch week vs Feb 2026).",
+  "Flash attention raises pp on CUDA and Strix Halo and lowers it on Intel; compare rows with the same setting.",
+  "Same label, different bytes: gpt-oss \"Q4_K_M\" keeps MXFP4 experts; early builds labelled the MXFP4 file BF16 at 12.83 GiB; unsloth UD-Q4_K_XL is not Q4_K_M. Use fileGB, not the label.",
+  "Test shapes differ: pp512 vs pp2048 with -ub 2048; tg128 vs tg32/tg16; batched-bench tg is an aggregate over the streams.",
+  "Build options: SYCL fp16 builds give about 3x the pp of fp32 builds with the same tg; a MinGW build decoded 5.4x slower than MSVC.",
+  "Scoreboards keep the highest submission per device, which biases them up.",
+  "One bandwidth fraction per family does not fit datacenter GPUs: a 3.8 GB model reaches 60-80% of nominal bandwidth on consumer GPUs and Apple, about 17% on the MI300X, so a fixed per-token overhead is needed."
+ ],
+ "rows": [
+  {
+   "id": "b001",
+   "hardware": "Apple M1 (8-core GPU, 68 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 117.96
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 14.15
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b002",
+   "hardware": "Apple M1 Pro (16-core GPU, 200 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 302.14
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 12.75
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b003",
+   "hardware": "Apple M1 Pro (16-core GPU, 200 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 266.25
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 36.41
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b004",
+   "hardware": "Apple M1 Max (32-core GPU, 400 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 530.06
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 61.19
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b005",
+   "hardware": "Apple M1 Ultra (64-core GPU, 800 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1030.04
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 83.73
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b006",
+   "hardware": "Apple M2 Ultra (76-core GPU, 800 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1401.85
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 41.02
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b007",
+   "hardware": "Apple M2 Ultra (76-core GPU, 800 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q8_0",
+   "fileGB": 6.67,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1248.59
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 66.64
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b008",
+   "hardware": "Apple M2 Ultra (76-core GPU, 800 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1238.48
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 94.27
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b009",
+   "hardware": "Apple M3 Max (40-core GPU, 400 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 779.17
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 25.09
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b010",
+   "hardware": "Apple M3 Max (40-core GPU, 400 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 759.7
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 66.31
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b011",
+   "hardware": "Apple M4 (10-core GPU, 120 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 230.18
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 7.43
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b012",
+   "hardware": "Apple M4 (10-core GPU, 120 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 221.29
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 24.11
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b013",
+   "hardware": "Apple M4 Pro (20-core GPU, 273 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 464.48
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 17.18
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b014",
+   "hardware": "Apple M4 Pro (20-core GPU, 273 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q8_0",
+   "fileGB": 6.67,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 449.62
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 30.69
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b015",
+   "hardware": "Apple M4 Pro (20-core GPU, 273 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 439.78
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 50.74
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b016",
+   "hardware": "Apple M4 Max (40-core GPU, 546 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 922.83
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 31.64
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b017",
+   "hardware": "Apple M4 Max (40-core GPU, 546 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q8_0",
+   "fileGB": 6.67,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 891.94
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 54.05
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b018",
+   "hardware": "Apple M4 Max (40-core GPU, 546 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8e672ef",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 885.68
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 83.06
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2023-11-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. "
+  },
+  {
+   "id": "b019",
+   "hardware": "Apple M5 Pro (20-core GPU, 307 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1588.78
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 21.55
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. Newer reference build (instructions updated 2026-08-25); not comparable 1:1 with 8e672ef rows."
+  },
+  {
+   "id": "b020",
+   "hardware": "Apple M5 Pro (20-core GPU, 307 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1620.64
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 66.33
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. Newer reference build (instructions updated 2026-08-25); not comparable 1:1 with 8e672ef rows."
+  },
+  {
+   "id": "b021",
+   "hardware": "Apple M5 Max (40-core GPU, 614 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3158.49
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 37.11
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. Newer reference build c1d0e7a; M5 GPU neural accelerators lift pp strongly."
+  },
+  {
+   "id": "b022",
+   "hardware": "Apple M5 Max (40-core GPU, 614 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q8_0",
+   "fileGB": 6.67,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3143.81
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 72.42
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. Newer reference build c1d0e7a; M5 GPU neural accelerators lift pp strongly."
+  },
+  {
+   "id": "b023",
+   "hardware": "Apple M5 Max (40-core GPU, 614 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3219.99
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 119.92
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. Newer reference build c1d0e7a; M5 GPU neural accelerators lift pp strongly."
+  },
+  {
+   "id": "b024",
+   "hardware": "Apple M5 Ultra (80-core GPU, 1228 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 5207.14
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 73.6
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. Newer reference build c1d0e7a."
+  },
+  {
+   "id": "b025",
+   "hardware": "Apple M5 Ultra (80-core GPU, 1228 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 4944.66
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 179.1
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. Newer reference build c1d0e7a."
+  },
+  {
+   "id": "b026",
+   "hardware": "Apple M6 (8-core GPU, 170 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 988.93
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 35.74
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Summary table of #4167; pp512 is bs=512, tg128 bs=1; ngl 99; FA off (default at that build). date = build commit date. Newer reference build c1d0e7a."
+  },
+  {
+   "id": "b027",
+   "hardware": "Apple M2 Ultra (76-core GPU, 800 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 86ed72d2 + FA",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1391.78
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 108.8
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2024-11-12",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Build-over-time table in #4167 header; FA on."
+  },
+  {
+   "id": "b028",
+   "hardware": "Apple M2 Ultra (76-core GPU, 800 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a00 + FA",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1488.81
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 125.21
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Build-over-time table; FA on. +33% tg vs 2023 build on identical hardware."
+  },
+  {
+   "id": "b029",
+   "hardware": "Apple M2 Ultra (76-core GPU, 800 GB/s)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1d0e7a00 + FA",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "F16",
+   "fileGB": 12.55,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1627.82
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 49.55
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-08-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167",
+   "notes": "Build-over-time table; FA on."
+  },
+  {
+   "id": "b030",
+   "hardware": "Apple M3 Ultra (80-core GPU, 512 GB)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b6310 (c8d0d14e)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2816.47
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 115.52
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-28",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. pp also at 8k/16k/32k in source."
+  },
+  {
+   "id": "b031",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b6123 (79c1160b0)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2191.13
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 116.08
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. "
+  },
+  {
+   "id": "b032",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b6123 (79c1160b0)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 1244.57
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 79.68
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. "
+  },
+  {
+   "id": "b033",
+   "hardware": "Apple M4 Max (36 GB)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b6123 (79c1160b0)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 1277.42
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 92.36
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. GPU core count not stated (36 GB config ships with 32-core GPU)."
+  },
+  {
+   "id": "b034",
+   "hardware": "Apple M1 Max (64 GB)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b6180 (2e2b22ba)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 994.75
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 75.15
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-16",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. GPU core count not stated."
+  },
+  {
+   "id": "b035",
+   "hardware": "Apple M1 Pro (32 GB)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b6123 (79c1160b0)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 515.76
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 45.68
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. GPU core count not stated."
+  },
+  {
+   "id": "b036",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b7948 (b828e18c7)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2713.4
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 129.97
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": 16,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/mac-m2-ultra/mac-m2-ultra.md",
+   "notes": "Official llama.cpp bench page; d=0 row (deeper-context rows in source); -fa 1 -ub 2048 -mmp 0."
+  },
+  {
+   "id": "b037",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b7948 (b828e18c7)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 1648.69
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 85.6
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": 16,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/mac-m2-ultra/mac-m2-ultra.md",
+   "notes": "Official llama.cpp bench page; d=0 row (deeper-context rows in source); -fa 1 -ub 2048 -mmp 0."
+  },
+  {
+   "id": "b038",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b7948 (b828e18c7)",
+   "model": "Qwen3-Coder-30B-A3B-Instruct",
+   "params": "30.53B (3B active)",
+   "quant": "Q8_0",
+   "fileGB": 30.25,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2453.11
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 78.97
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": 16,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/mac-m2-ultra/mac-m2-ultra.md",
+   "notes": "Official llama.cpp bench page; d=0 row (deeper-context rows in source); -fa 1 -ub 2048 -mmp 0."
+  },
+  {
+   "id": "b039",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b7948 (b828e18c7)",
+   "model": "Qwen2.5-Coder-7B",
+   "params": "7.62B",
+   "quant": "Q8_0",
+   "fileGB": 7.54,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 1565.91
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 79.68
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": 16,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/mac-m2-ultra/mac-m2-ultra.md",
+   "notes": "Official llama.cpp bench page; d=0 row (deeper-context rows in source); -fa 1 -ub 2048 -mmp 0."
+  },
+  {
+   "id": "b040",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b7948 (b828e18c7)",
+   "model": "GLM-4.7-Flash (30B-A3B)",
+   "params": "29.94B (3B active)",
+   "quant": "Q8_0",
+   "fileGB": 29.65,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 1629.33
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 59.58
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": 16,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/mac-m2-ultra/mac-m2-ultra.md",
+   "notes": "Official llama.cpp bench page; d=0 row (deeper-context rows in source); -fa 1 -ub 2048 -mmp 0."
+  },
+  {
+   "id": "b041",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b7948 (b828e18c7)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 4096,
+    "tps": 2668.73
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 426.94
+   },
+   "batch": 32,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/mac-m2-ultra/mac-m2-ultra.md",
+   "notes": "llama-batched-bench: 32 parallel sequences; pp = S_PP, tg = aggregate S_TG over 32 streams."
+  },
+  {
+   "id": "b042",
+   "hardware": "Apple M2 Ultra (76-core GPU, 192 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b7948 (b828e18c7)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 4096,
+    "tps": 2638.56
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 95.72
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/mac-m2-ultra/mac-m2-ultra.md",
+   "notes": "llama-batched-bench B=1 at 4096-token prompt."
+  },
+  {
+   "id": "b043",
+   "hardware": "Apple M4 Max (40-core GPU, 128 GB)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b4121 (75207b3a)",
+   "model": "Llama 3.1 70B Instruct",
+   "params": "70.55B",
+   "quant": "Q8_0",
+   "fileGB": 69.82,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 81.7
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 6.41
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 12,
+   "date": "2024-11-17",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-11286463",
+   "notes": "bartowski GGUF; backend Metal,BLAS; threads 12."
+  },
+  {
+   "id": "b044",
+   "hardware": "Apple M4 Max (32-core GPU, 36 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b5440 (b44890df)",
+   "model": "Gemma 3 27B it (QAT)",
+   "params": "27.01B",
+   "quant": "Q4_0",
+   "fileGB": 16.04,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 198.54
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 18.71
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 10,
+   "date": "2025-05-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-13219641",
+   "notes": "-ngl 99; threads 10."
+  },
+  {
+   "id": "b045",
+   "hardware": "Apple M4 (10-core, 24 GB, Mac mini)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "b9100 (2e97c5f96)",
+   "model": "Qwen2.5-Coder 7B",
+   "params": "7.62B",
+   "quant": "Q4_K_M",
+   "fileGB": 4.36,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 239.73
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 22.6
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 4,
+   "date": "2026-05-10",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-16886673",
+   "notes": "GGUF is the Ollama blob (qwen2.5-coder:7b); threads 4; -r 3."
+  },
+  {
+   "id": "b046",
+   "hardware": "Apple M3 Ultra (256 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "llama.cpp",
+   "engineVersion": "0.4.0 Homebrew, b10809 (5266f24da)",
+   "model": "Qwen3.5 9B",
+   "params": "9B",
+   "quant": "Q4_K_M (unsloth)",
+   "fileGB": 5.28,
+   "fileUnit": "GiB",
+   "pp": null,
+   "tg": {
+    "tokens": 128,
+    "tps": 77.8
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-09-20",
+   "sourceUrl": "https://terminalbytes.com/ollama-vs-llama-cpp-vs-mlx-mac-2026/",
+   "notes": "Blog post; tg128, three runs; pp not reported in post."
+  },
+  {
+   "id": "b047",
+   "hardware": "Apple M3 Ultra (256 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "Metal",
+   "engine": "Ollama",
+   "engineVersion": "0.32.13",
+   "model": "Qwen3.5 9B (qwen3.5:9b)",
+   "params": "9B",
+   "quant": "Q4_K_M",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": null,
+   "tg": {
+    "tokens": 1225,
+    "tps": 77.7
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-09-20",
+   "sourceUrl": "https://terminalbytes.com/ollama-vs-llama-cpp-vs-mlx-mac-2026/",
+   "notes": "Ollama GGUF path; 34-token prompt, 1225 tokens generated; thinking off."
+  },
+  {
+   "id": "b048",
+   "hardware": "Apple M3 Ultra (256 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "MLX",
+   "engine": "mlx-lm",
+   "engineVersion": "0.31.3",
+   "model": "Qwen3.5 9B (mlx-community 4-bit)",
+   "params": "9B",
+   "quant": "MLX 4-bit affine",
+   "fileGB": 6,
+   "fileUnit": "GB",
+   "pp": null,
+   "tg": {
+    "tokens": 1156,
+    "tps": 107.5
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-09-20",
+   "sourceUrl": "https://terminalbytes.com/ollama-vs-llama-cpp-vs-mlx-mac-2026/",
+   "notes": "1156 tokens generated, 5.24 GB peak memory; 34-token prompt; no MTP. 6.0 GB on disk (decimal GB)."
+  },
+  {
+   "id": "b049",
+   "hardware": "Apple M3 Ultra (256 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "MLX",
+   "engine": "rapid-mlx",
+   "engineVersion": "0.14.1",
+   "model": "Qwen3.5 9B (mlx-community 4-bit)",
+   "params": "9B",
+   "quant": "MLX 4-bit affine",
+   "fileGB": 6,
+   "fileUnit": "GB",
+   "pp": null,
+   "tg": {
+    "tokens": 128,
+    "tps": 105.9
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-09-20",
+   "sourceUrl": "https://terminalbytes.com/ollama-vs-llama-cpp-vs-mlx-mac-2026/",
+   "notes": "pp512-tg128 protocol, five rounds; TTFT 469 ms for 512-token prompt (pp rate not printed)."
+  },
+  {
+   "id": "b050",
+   "hardware": "Apple M3 Ultra (256 GB, Mac Studio)",
+   "hardwareFamily": "Apple",
+   "backend": "MLX",
+   "engine": "Ollama (MLX engine)",
+   "engineVersion": "0.32.13",
+   "model": "Qwen3.5 9B (qwen3.5:9b-mlx)",
+   "params": "9B",
+   "quant": "NVFP4",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": null,
+   "tg": {
+    "tokens": 1244,
+    "tps": 90.5
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-09-20",
+   "sourceUrl": "https://terminalbytes.com/ollama-vs-llama-cpp-vs-mlx-mac-2026/",
+   "notes": "MTP speculative decoding auto-enabled; not a pure decode measurement."
+  },
+  {
+   "id": "b051",
+   "hardware": "Apple M4 (MacBook Air, 24 GB)",
+   "hardwareFamily": "Apple",
+   "backend": "MLX",
+   "engine": "mlx-lm",
+   "engineVersion": "mlx_lm benchmark (Mar 2026, ~0.31)",
+   "model": "Qwen2.5-7B-Instruct (mlx-community 4bit)",
+   "params": "7.6B",
+   "quant": "MLX 4-bit",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 2048,
+    "tps": 201.295
+   },
+   "tg": {
+    "tokens": 2048,
+    "tps": 21.228
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-03-16",
+   "sourceUrl": "https://github.com/ml-explore/mlx-lm/pull/1010",
+   "notes": "Average of 5 trials with 120 s cooldown; without cooldown passively-cooled Air averaged pp 161.694 / tg 18.859 (thermal throttling). peak mem 5.114 GB."
+  },
+  {
+   "id": "b052",
+   "hardware": "Apple M4 Pro",
+   "hardwareFamily": "Apple",
+   "backend": "MLX",
+   "engine": "mlx-lm",
+   "engineVersion": "PR #990 baseline (Mar 2026)",
+   "model": "Qwen3.6-27B (4-bit)",
+   "params": "27B",
+   "quant": "MLX 4-bit",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": null,
+   "tg": {
+    "tokens": null,
+    "tps": 15.7
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-03-13",
+   "sourceUrl": "https://github.com/ml-explore/mlx-lm/pull/990",
+   "notes": "Pooled tok/s over 3 runs x 8 prompts, baseline without MTP (MTP gives 24.6). Generation length varies by prompt."
+  },
+  {
+   "id": "b053",
+   "hardware": "NVIDIA RTX 5090",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8cf6b42",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 14073.41
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 290.02
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-10-23",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 32 GB GDDR7 512-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b054",
+   "hardware": "NVIDIA RTX 5090",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8cf6b42",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 14970.15
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 300.4
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-10-23",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 32 GB GDDR7 512-bit; single GPU. date = build commit date. FA on."
+  },
+  {
+   "id": "b055",
+   "hardware": "NVIDIA RTX PRO 6000 Blackwell",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 79c1160",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 14854.63
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 274.2
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 96 GB GDDR7 512-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b056",
+   "hardware": "NVIDIA H100 80GB",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 5143fa8",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 9918.34
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 267.81
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-09-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 80 GB HBM3 5120-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b057",
+   "hardware": "NVIDIA H100 80GB",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 5143fa8",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 11263.29
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 280.74
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-09-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 80 GB HBM3 5120-bit; single GPU. date = build commit date. FA on."
+  },
+  {
+   "id": "b058",
+   "hardware": "NVIDIA A100 80GB",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 5143fa8",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 4849.53
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 190.88
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-09-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 80 GB HBM2e 5120-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b059",
+   "hardware": "NVIDIA RTX 4090",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 2241453",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 11992.7
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 186.21
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-06",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 24 GB GDDR6X 384-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b060",
+   "hardware": "NVIDIA RTX 4090",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 2241453",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 14770.63
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 188.96
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-06",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 24 GB GDDR6X 384-bit; single GPU. date = build commit date. FA on."
+  },
+  {
+   "id": "b061",
+   "hardware": "NVIDIA RTX 5080",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8a4280c",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 8297.36
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 181.99
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-28",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 16 GB GDDR7 256-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b062",
+   "hardware": "NVIDIA RTX 5070 Ti",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 933414c",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 6952.38
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 176.85
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-12-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 16 GB GDDR7 256-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b063",
+   "hardware": "NVIDIA RTX 3090",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c76b420",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 5174.69
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 158.16
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-01",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 24 GB GDDR6X 384-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b064",
+   "hardware": "NVIDIA RTX 3060",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit baa9255",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 2137.5
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 75.57
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-18",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 12 GB GDDR6 192-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b065",
+   "hardware": "NVIDIA RTX 4060 Ti 8GB",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 89d10295",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3394.63
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 63.86
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-07-27",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 8 GB GDDR6 128-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b066",
+   "hardware": "NVIDIA RTX 5060 Ti",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 89d10295",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3737.25
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 90.94
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-07-27",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 16 GB GDDR7 128-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b067",
+   "hardware": "NVIDIA Tesla V100",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 51f5a45",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3042.64
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 129.08
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-09-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 32 GB HBM2 4096-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b068",
+   "hardware": "NVIDIA Tesla P40",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c76b420",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1007.42
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 54.74
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-01",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 24 GB GDDR5 384-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b069",
+   "hardware": "NVIDIA Tesla T4",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit d32e03f",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1219.06
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 46.38
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-14",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 16 GB GDDR6 256-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b070",
+   "hardware": "NVIDIA DGX Spark (GB10)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 5acd455",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3062.31
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 57.21
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-10-15",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 128 GB LPDDR5x unified; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b071",
+   "hardware": "NVIDIA DGX Spark (GB10)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 5acd455",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3661.37
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 56.74
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-10-15",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 128 GB LPDDR5x unified; single GPU. date = build commit date. FA on."
+  },
+  {
+   "id": "b072",
+   "hardware": "NVIDIA Jetson AGX Orin",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "commit c1b1876",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 991.31
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 33.58
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-11-08",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013",
+   "notes": "CUDA scoreboard (Llama 2 7B Q4_0, TheBloke GGUF); llama-bench -ngl 99; memory 64 GB LPDDR5 256-bit; single GPU. date = build commit date. FA off."
+  },
+  {
+   "id": "b073",
+   "hardware": "NVIDIA RTX 3090 (1 of 4, PCIe 3.0 x16, X99)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "0.4.0 / b10809 (5266f24da)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 5153.91
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 168.95
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-09-04",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-18332268",
+   "notes": "Driver 550.163.01, CUDA 12.4, -DGGML_CUDA_FA_ALL_QUANTS=ON; --device cuda0. Compare scoreboard 3090 at c76b420 (158.16 tg)."
+  },
+  {
+   "id": "b074",
+   "hardware": "NVIDIA RTX 3090 (1 of 4, PCIe 3.0 x16, X99)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "0.4.0 / b10809 (5266f24da)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 5973.72
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 177.75
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-09-04",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-18332268",
+   "notes": "Same as above, FA on."
+  },
+  {
+   "id": "b075",
+   "hardware": "NVIDIA Tesla V100-SXM2-32GB",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6533 (51f5a45f)",
+   "model": "Qwen3 14B",
+   "params": "14.77B",
+   "quant": "Q4_K_M",
+   "fileGB": 8.38,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1536.27
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 64.87
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-09-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-14472498",
+   "notes": "Driver 580.65.06, CUDA 12.9; FA off."
+  },
+  {
+   "id": "b076",
+   "hardware": "NVIDIA Tesla V100-SXM2-32GB",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6533 (51f5a45f)",
+   "model": "Qwen3 32B",
+   "params": "32.76B",
+   "quant": "Q4_K_M",
+   "fileGB": 18.4,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 642.41
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 30.74
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-09-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-14472498",
+   "notes": "FA off (FA on: 613.13 / 31.80)."
+  },
+  {
+   "id": "b077",
+   "hardware": "NVIDIA RTX PRO 4500 Blackwell (32 GB GDDR7 256-bit)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7054 (becc4816d)",
+   "model": "Qwen3 14B",
+   "params": "14.77B",
+   "quant": "Q4_K_M",
+   "fileGB": 8.38,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3861.85
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 82.32
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-11-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-14964129",
+   "notes": "Driver 580.95.05, CUDA 13.0; FA on (off: 3583.82 / 79.37)."
+  },
+  {
+   "id": "b078",
+   "hardware": "NVIDIA RTX PRO 4500 Blackwell (32 GB GDDR7 256-bit)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7054 (becc4816d)",
+   "model": "Qwen3 32B",
+   "params": "32.76B",
+   "quant": "Q4_K_M",
+   "fileGB": 18.4,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1675.78
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 37.93
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-11-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-14964129",
+   "notes": "FA on (off: 1514.35 / 36.38)."
+  },
+  {
+   "id": "b079",
+   "hardware": "NVIDIA RTX PRO 4500 Blackwell (32 GB GDDR7 256-bit)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7054 (becc4816d)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "Q4_K_M label (10.81 GiB)",
+   "fileGB": 10.81,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 6760.29
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 240.75
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-11-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-14964129",
+   "notes": "llama-bench labels this file 'Q4_K - Medium' but gpt-oss experts stay MXFP4; FA on."
+  },
+  {
+   "id": "b080",
+   "hardware": "NVIDIA Tesla M40 24GB (GDDR5 384-bit)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7045 (97d511721)",
+   "model": "Qwen3 30B-A3B",
+   "params": "30.53B (3B active)",
+   "quant": "Q4_K_M",
+   "fileGB": 17.28,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 252.63
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 35.09
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-11-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-15012301",
+   "notes": "Maxwell sm_52, CUDA 12.9.1; FA on."
+  },
+  {
+   "id": "b081",
+   "hardware": "NVIDIA Tesla M40 24GB (GDDR5 384-bit)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7045 (97d511721)",
+   "model": "Qwen3 32B",
+   "params": "32.76B",
+   "quant": "Q4_K_M",
+   "fileGB": 18.4,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 60.66
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 6.91
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-11-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15013#discussioncomment-15012301",
+   "notes": "FA off."
+  },
+  {
+   "id": "b082",
+   "hardware": "NVIDIA RTX PRO 6000 Blackwell Workstation (96 GB)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6205 (a6d3cfe)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 11521.95
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 286.91
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-19",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. "
+  },
+  {
+   "id": "b083",
+   "hardware": "NVIDIA RTX PRO 6000 Blackwell Workstation (96 GB)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6205 (a6d3cfe)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 5518.07
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 196.31
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-19",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. "
+  },
+  {
+   "id": "b084",
+   "hardware": "NVIDIA RTX PRO 6000 Blackwell Max-Q (96 GB)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6199 (f08c4c0d)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 4494.2
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 170.62
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. Max-Q (300 W) variant; compare full-power row above."
+  },
+  {
+   "id": "b085",
+   "hardware": "NVIDIA RTX 5090 (32 GB)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6210 (a094f381)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 9848.38
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 282.51
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. n_batch 4096; CUDA 12.8."
+  },
+  {
+   "id": "b086",
+   "hardware": "NVIDIA RTX 4090 (24 GB)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6210 (a094f381)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 8022.33
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 221.95
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. n_batch 4096; CUDA 12.6."
+  },
+  {
+   "id": "b087",
+   "hardware": "NVIDIA RTX 3090 (24 GB)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6210 (a094f381)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 5170.56
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 161.77
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. n_batch 4096; CUDA 12.4."
+  },
+  {
+   "id": "b088",
+   "hardware": "NVIDIA RTX 5060 Ti (16 GB)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6208 (9ef6b0b8)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 3839.21
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 111.51
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-19",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 2048. n_batch 4096."
+  },
+  {
+   "id": "b089",
+   "hardware": "NVIDIA Tesla V100-PCIE-16GB",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6129 (228f724d9)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 3526.65
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 117.71
+   },
+   "batch": 1,
+   "ubatch": 4096,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-11",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; llama-bench -fa 1, n_ubatch 4096. n_batch 4096; pp stdev +/-346.86."
+  },
+  {
+   "id": "b090",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 4505.82
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 83.43
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "Official llama.cpp bench page; driver 580.95.05, CUDA 13.0; d=0 row; -fa 1 -ub 2048 -mmp 0 (direct I/O)."
+  },
+  {
+   "id": "b091",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2443.91
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 58.72
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "Official llama.cpp bench page; driver 580.95.05, CUDA 13.0; d=0 row; -fa 1 -ub 2048 -mmp 0 (direct I/O)."
+  },
+  {
+   "id": "b092",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "Qwen3-Coder-30B-A3B-Instruct",
+   "params": "30.53B (3B active)",
+   "quant": "Q8_0",
+   "fileGB": 30.25,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2986.97
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 61.06
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "Official llama.cpp bench page; driver 580.95.05, CUDA 13.0; d=0 row; -fa 1 -ub 2048 -mmp 0 (direct I/O)."
+  },
+  {
+   "id": "b093",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "Qwen2.5-Coder-7B",
+   "params": "7.62B",
+   "quant": "Q8_0",
+   "fileGB": 7.54,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2250.28
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 29.43
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "Official llama.cpp bench page; driver 580.95.05, CUDA 13.0; d=0 row; -fa 1 -ub 2048 -mmp 0 (direct I/O)."
+  },
+  {
+   "id": "b094",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "GLM-4.7-Flash (30B-A3B)",
+   "params": "29.94B (3B active)",
+   "quant": "Q8_0",
+   "fileGB": 29.65,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2364.18
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 48.68
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "Official llama.cpp bench page; driver 580.95.05, CUDA 13.0; d=0 row; -fa 1 -ub 2048 -mmp 0 (direct I/O)."
+  },
+  {
+   "id": "b095",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 4096,
+    "tps": 4513.91
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 78.54
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "llama-batched-bench, 1 parallel sequences of 4096-token prompts; tg = aggregate S_TG across all sequences."
+  },
+  {
+   "id": "b096",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 4096,
+    "tps": 4557.52
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 473.59
+   },
+   "batch": 32,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "llama-batched-bench, 32 parallel sequences of 4096-token prompts; tg = aggregate S_TG across all sequences."
+  },
+  {
+   "id": "b097",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 4096,
+    "tps": 2412.65
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 55.21
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "llama-batched-bench, 1 parallel sequences; tg aggregate."
+  },
+  {
+   "id": "b098",
+   "hardware": "NVIDIA DGX Spark (GB10, 128 GB LPDDR5x)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b7941 (11fb327bf)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 4096,
+    "tps": 2411.23
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 262.2
+   },
+   "batch": 32,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-02-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/blob/master/benches/dgx-spark/dgx-spark.md",
+   "notes": "llama-batched-bench, 32 parallel sequences; tg aggregate."
+  },
+  {
+   "id": "b099",
+   "hardware": "NVIDIA DGX Spark (GB10)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "b6771 (f9fb33f2)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 2008.85
+   },
+   "tg": {
+    "tokens": 32,
+    "tps": 60.85
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-10-15",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/16578#discussioncomment-14690612",
+   "notes": "Launch-week build; same command as official page. Shows +124% pp / +37% tg from build improvements by Feb 2026."
+  },
+  {
+   "id": "b100",
+   "hardware": "NVIDIA DGX Spark (GB10)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "CUDA",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Jan 2026)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3310.48
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 60.24
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-01-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-15544966",
+   "notes": "Same post compares CUDA/Vulkan/CPU on one box. date = post date."
+  },
+  {
+   "id": "b101",
+   "hardware": "NVIDIA DGX Spark (GB10)",
+   "hardwareFamily": "NVIDIA",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Jan 2026)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 2665.61
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 50.8
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2026-01-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-15544966",
+   "notes": "NV_coopmat2. date = post date."
+  },
+  {
+   "id": "b102",
+   "hardware": "NVIDIA RTX 5090",
+   "hardwareFamily": "NVIDIA",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit ca71fb9",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 10381.64
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 263.63
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-10-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date. coopmat2. FA off."
+  },
+  {
+   "id": "b103",
+   "hardware": "NVIDIA RTX 4090",
+   "hardwareFamily": "NVIDIA",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 4ae88d0",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 9452.03
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 187.97
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-09-24",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date. coopmat2. FA off."
+  },
+  {
+   "id": "b104",
+   "hardware": "NVIDIA RTX 4090",
+   "hardwareFamily": "NVIDIA",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 4ae88d0",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 10830.41
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 190.1
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-09-24",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date. coopmat2. FA on."
+  },
+  {
+   "id": "b105",
+   "hardware": "AMD Radeon RX 7900 XTX",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 304665f",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3726.99
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 182.63
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-09-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA off."
+  },
+  {
+   "id": "b106",
+   "hardware": "AMD Radeon RX 7900 XTX",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 304665f",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3889.54
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 190.92
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-09-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA on."
+  },
+  {
+   "id": "b107",
+   "hardware": "AMD Radeon RX 9070 XT",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit e9fd8dc",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 5036.04
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 137.11
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-01-24",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA off."
+  },
+  {
+   "id": "b108",
+   "hardware": "AMD Radeon RX 9070 XT",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit e9fd8dc",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 5048.07
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 131.54
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-01-24",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA on."
+  },
+  {
+   "id": "b109",
+   "hardware": "AMD Radeon AI Pro R9700",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit dd1ea5243",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 5609.82
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 145.67
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-08-10",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA off."
+  },
+  {
+   "id": "b110",
+   "hardware": "AMD Ryzen AI Max+ 300 series (Radeon 8060S iGPU)",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit fb4b273",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1487.08
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 51.81
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-10-02",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date. Same run as discussioncomment-18711544 (ddpasa, Strix Halo 128 GB, RADV). FA off."
+  },
+  {
+   "id": "b111",
+   "hardware": "AMD Ryzen AI Max+ 300 series (Radeon 8060S iGPU)",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit fb4b273",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1704.3
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 54.38
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-10-02",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date. Same run as discussioncomment-18711544 (ddpasa, Strix Halo 128 GB, RADV). FA on."
+  },
+  {
+   "id": "b112",
+   "hardware": "Intel Arc Pro B70",
+   "hardwareFamily": "Intel",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit b863507",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3379
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 112.02
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-04-04",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA off."
+  },
+  {
+   "id": "b113",
+   "hardware": "Intel Arc Pro B70",
+   "hardwareFamily": "Intel",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit b863507",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3150.55
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 114.19
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-04-04",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA on."
+  },
+  {
+   "id": "b114",
+   "hardware": "Intel Arc B580",
+   "hardwareFamily": "Intel",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 7f76692",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 620.94
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 70.14
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-09-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA off."
+  },
+  {
+   "id": "b115",
+   "hardware": "Intel Arc B580",
+   "hardwareFamily": "Intel",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 7f76692",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 419.49
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 72
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-09-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA on."
+  },
+  {
+   "id": "b116",
+   "hardware": "Intel Arc A770",
+   "hardwareFamily": "Intel",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit a69d54f",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1073.85
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 52.56
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-03-18",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA off."
+  },
+  {
+   "id": "b117",
+   "hardware": "Intel Core Ultra 200 series iGPU",
+   "hardwareFamily": "Intel",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 4a89937",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 864.99
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 24.37
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-09-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date.  FA off."
+  },
+  {
+   "id": "b118",
+   "hardware": "Apple M3 Ultra (MoltenVK)",
+   "hardwareFamily": "Apple",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 2d451c8",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1116.83
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 115.54
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-04-26",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date. Vulkan via MoltenVK on macOS; compare Metal rows. FA off."
+  },
+  {
+   "id": "b119",
+   "hardware": "Apple M4 Max",
+   "hardwareFamily": "Apple",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 1ece0cb6",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 724.77
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 75.02
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025/2026 (commit not resolvable)",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879",
+   "notes": "Vulkan scoreboard (Llama 2 7B Q4_0); -ngl 100; RADV_PERFTEST=nogttspill advised for RADV. date = build commit date. Vulkan on macOS; translation layer not stated. FA off."
+  },
+  {
+   "id": "b120",
+   "hardware": "AMD Instinct MI300X",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit ee3a9fc",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 11476.4
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 232.92
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 192 GB HBM3 8192-bit. date = build commit date.  FA off."
+  },
+  {
+   "id": "b121",
+   "hardware": "AMD Instinct MI300X",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit ee3a9fc",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 11945.97
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 218.53
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 192 GB HBM3 8192-bit. date = build commit date.  FA on."
+  },
+  {
+   "id": "b122",
+   "hardware": "AMD Radeon RX 7900 XTX",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 2f0c2db",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3552.27
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 167.11
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-11-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 24 GB GDDR6 384-bit. date = build commit date.  FA off."
+  },
+  {
+   "id": "b123",
+   "hardware": "AMD Radeon RX 7900 XTX",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 2f0c2db",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 3874.25
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 170.12
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-11-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 24 GB GDDR6 384-bit. date = build commit date.  FA on."
+  },
+  {
+   "id": "b124",
+   "hardware": "AMD Radeon RX 9070 XT",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 583cb83",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 5055.19
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 101.27
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-11-25",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 16 GB GDDR6 256-bit. date = build commit date.  FA off."
+  },
+  {
+   "id": "b125",
+   "hardware": "AMD Radeon AI PRO R9700",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit bd4ef13",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 4443.54
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 93.84
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-12-04",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 32 GB GDDR6 256-bit. date = build commit date.  FA off."
+  },
+  {
+   "id": "b126",
+   "hardware": "AMD Instinct MI100",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 9c35706",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 2732.83
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 110.48
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-01",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 32 GB HBM2 4096-bit. date = build commit date.  FA off."
+  },
+  {
+   "id": "b127",
+   "hardware": "AMD Instinct MI50",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 97d5117",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1057.24
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 98.95
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-11-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 32 GB HBM2 4096-bit. date = build commit date.  FA off."
+  },
+  {
+   "id": "b128",
+   "hardware": "AMD Ryzen AI Max+ 395 (iGPU)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit e60f241",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 911.36
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 50.01
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-10-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory 128 GB LPDDR5. date = build commit date. Same silicon as 'Radeon 8060S' row; different submitter/build. FA off."
+  },
+  {
+   "id": "b129",
+   "hardware": "AMD Radeon 8060S (Strix Halo iGPU)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 1d0125b",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 351.36
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 47.97
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-09-22",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021",
+   "notes": "ROCm scoreboard (Llama 2 7B Q4_0); -ngl 99; memory system shared. date = build commit date. Same chip as AI Max+ 395 row; pp 2.6x lower (older build / config) -> pitfall. FA off."
+  },
+  {
+   "id": "b130",
+   "hardware": "AMD Ryzen AI Max+ 395 / Radeon 8060S (128 GB)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "b11349 (fb4b2737a)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1313.76
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 47.36
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-10-02",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-18711544",
+   "notes": "Arch Linux kernel 7.2.8; same box also has Vulkan rows (scoreboard) and CPU row. ngl 100."
+  },
+  {
+   "id": "b131",
+   "hardware": "AMD Ryzen AI Max+ 395 / Radeon 8060S (128 GB)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "b11349 (fb4b2737a)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1456.15
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 51.33
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-10-02",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-18711544",
+   "notes": "Arch Linux kernel 7.2.8; same box also has Vulkan rows (scoreboard) and CPU row. ngl 100."
+  },
+  {
+   "id": "b132",
+   "hardware": "AMD Radeon AI PRO R9700 (Gigabyte, 32 GB)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "b6177 (e2c1bfff)",
+   "model": "Qwen3 32B",
+   "params": "32.76B",
+   "quant": "Q4_K_M",
+   "fileGB": 18.4,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 498.66
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 24.03
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-15",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021#discussioncomment-14124442",
+   "notes": "llama.cpp ROCm docker container; FA off."
+  },
+  {
+   "id": "b133",
+   "hardware": "AMD Radeon AI PRO R9700 (Gigabyte, 32 GB)",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "b6177 (e2c1bfff)",
+   "model": "Qwen3 32B",
+   "params": "32.76B",
+   "quant": "Q4_K_M",
+   "fileGB": 18.4,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 196.9
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 28.2
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2025-08-15",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021#discussioncomment-14124442",
+   "notes": "RADV (non-conformant warning) docker; FA off. Vulkan wins tg, ROCm 2.5x pp."
+  },
+  {
+   "id": "b134",
+   "hardware": "AMD Radeon RX 7900 XTX",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "b5431 (c9c64dee)",
+   "model": "Gemma 3 27B it (QAT)",
+   "params": "27.01B",
+   "quant": "Q4_0",
+   "fileGB": 16.04,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1008.91
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 32.73
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": 48,
+   "date": "2025-05-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-13223671",
+   "notes": "-fa 1 -t 48."
+  },
+  {
+   "id": "b135",
+   "hardware": "AMD Radeon RX 7900 XTX",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "b5431 (c9c64dee)",
+   "model": "Gemma 3 27B it (QAT)",
+   "params": "27.01B",
+   "quant": "Q4_0",
+   "fileGB": 16.04,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 500.3
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 35.25
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": 48,
+   "date": "2025-05-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-13223671",
+   "notes": "RADV NAVI31, coopmat; -fa 1."
+  },
+  {
+   "id": "b136",
+   "hardware": "AMD Radeon RX 9070 XT",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "b5083 (7538246e)",
+   "model": "Qwen2.5 14B",
+   "params": "14.77B",
+   "quant": "Q4_0",
+   "fileGB": 7.95,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 2039.45
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 58.78
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2025-04-08",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-12878591",
+   "notes": "AMD proprietary Vulkan driver, KHR_coopmat; single GPU run."
+  },
+  {
+   "id": "b137",
+   "hardware": "AMD Radeon RX 7900 XT (20 GB)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "b6194 (3007baf2)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (labelled BF16)",
+   "fileGB": 12.83,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 2048,
+    "tps": 4251.56
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 101.92
+   },
+   "batch": 1,
+   "ubatch": 2048,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-08-18",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15396",
+   "notes": "gpt-oss guide; early build labels the file 'BF16' at 12.83 GiB (later builds: MXFP4 11.27 GiB) -> naming pitfall; table shows n_batch 4096, n_ubatch 2048, fa 1; ROCm,RPC build."
+  },
+  {
+   "id": "b138",
+   "hardware": "AMD Instinct MI100 x2",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "post-9c35706 master (Oct 2025)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1223.08
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 110
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-10-30",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/15021#discussioncomment-14828992",
+   "notes": "Two GPUs (default layer split); FA on. Another user with 2x MI100 got 1054.51/82.51 (FA off) -> build/flag sensitivity."
+  },
+  {
+   "id": "b139",
+   "hardware": "AMD Ryzen AI Max+ 395 (Framework Desktop pre-prod, 128 GB LPDDR5x-8000)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP) + hipBLASLt",
+   "engine": "llama.cpp",
+   "engineVersion": "b5863",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_K_M",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 906.1
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 40.8
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2025-07-10",
+   "sourceUrl": "https://forum.level1techs.com/t/strix-halo-ryzen-ai-max-395-llm-benchmark-results/233796",
+   "notes": "Summary table (best backend per model), no raw llama-bench output; TheRock ROCm 7.0 nightly, kernel 6.15; date = build date given in post (posted 2025-07-22). best-pp config"
+  },
+  {
+   "id": "b140",
+   "hardware": "AMD Ryzen AI Max+ 395 (Framework Desktop pre-prod, 128 GB LPDDR5x-8000)",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "b5863",
+   "model": "Qwen3 30B-A3B",
+   "params": "30B (3B active)",
+   "quant": "UD-Q4_K_XL (unsloth)",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 604.8
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 66.3
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2025-07-10",
+   "sourceUrl": "https://forum.level1techs.com/t/strix-halo-ryzen-ai-max-395-llm-benchmark-results/233796",
+   "notes": "Summary table (best backend per model), no raw llama-bench output; TheRock ROCm 7.0 nightly, kernel 6.15; date = build date given in post (posted 2025-07-22). fa=1; best-pp config. b=256 gives 591.1/72.0."
+  },
+  {
+   "id": "b141",
+   "hardware": "AMD Ryzen AI Max+ 395 (Framework Desktop pre-prod, 128 GB LPDDR5x-8000)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP) + hipBLASLt",
+   "engine": "llama.cpp",
+   "engineVersion": "b5863",
+   "model": "Mistral Small 3.1 24B",
+   "params": "24B",
+   "quant": "UD-Q4_K_XL (unsloth)",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 316.9
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 13.6
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2025-07-10",
+   "sourceUrl": "https://forum.level1techs.com/t/strix-halo-ryzen-ai-max-395-llm-benchmark-results/233796",
+   "notes": "Summary table (best backend per model), no raw llama-bench output; TheRock ROCm 7.0 nightly, kernel 6.15; date = build date given in post (posted 2025-07-22). best-pp config"
+  },
+  {
+   "id": "b142",
+   "hardware": "AMD Ryzen AI Max+ 395 (Framework Desktop pre-prod, 128 GB LPDDR5x-8000)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP) + rocWMMA",
+   "engine": "llama.cpp",
+   "engineVersion": "b5863",
+   "model": "Shisa V2 70B (Llama 3 70B)",
+   "params": "70B",
+   "quant": "i1-Q4_K_M",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 94.7
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 4.5
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2025-07-10",
+   "sourceUrl": "https://forum.level1techs.com/t/strix-halo-ryzen-ai-max-395-llm-benchmark-results/233796",
+   "notes": "Summary table (best backend per model), no raw llama-bench output; TheRock ROCm 7.0 nightly, kernel 6.15; date = build date given in post (posted 2025-07-22). best-pp config"
+  },
+  {
+   "id": "b143",
+   "hardware": "AMD Ryzen AI Max+ 395 / Radeon 8060S (thread context, Framework)",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Nov 2025)",
+   "model": "gpt-oss-20b",
+   "params": "20.91B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 11.27,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 1385.64
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 77.31
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": 6,
+   "date": "2025-11-19",
+   "sourceUrl": "https://community.frame.work/t/ryzen-ai-max-not-so-much/77999",
+   "notes": "Post #4 (vdtdg); ngl 999, threads 6, fa 1; hardware inferred from thread, build not stated."
+  },
+  {
+   "id": "b144",
+   "hardware": "AMD Ryzen AI Max+ 395 / Radeon 8060S (thread context, Framework)",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Nov 2025)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 539.08
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 54.84
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": 6,
+   "date": "2025-11-19",
+   "sourceUrl": "https://community.frame.work/t/ryzen-ai-max-not-so-much/77999",
+   "notes": "Post #4 (vdtdg); ngl 999, threads 6, fa 1."
+  },
+  {
+   "id": "b145",
+   "hardware": "AMD Strix Halo (Ryzen AI Max+, Fedora 43)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "b7123 (c97c6d965)",
+   "model": "gpt-oss-120b",
+   "params": "116.83B",
+   "quant": "MXFP4 (MoE)",
+   "fileGB": 59.02,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 781.25
+   },
+   "tg": {
+    "tokens": 16,
+    "tps": 51.81
+   },
+   "batch": 1,
+   "ubatch": 4096,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2025-11-21",
+   "sourceUrl": "https://community.frame.work/t/ryzen-ai-max-not-so-much/77999",
+   "notes": "Post #13 (Djip); ROCm 6.4.4, -ub 4096 -fa 1 --mmap 0, tuned hpc-compute; pp2048 = 1018.35; tg measured as tg16."
+  },
+  {
+   "id": "b146",
+   "hardware": "AMD Ryzen AI 7 445 / Radeon 840M iGPU (64 GB)",
+   "hardwareFamily": "AMD",
+   "backend": "ROCm (HIP)",
+   "engine": "llama.cpp",
+   "engineVersion": "b10310 (cb26014d9)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 172.58
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 16.12
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-08-07",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-17937054",
+   "notes": "ROCm 7.15 nightly, gfx1153; FA on."
+  },
+  {
+   "id": "b147",
+   "hardware": "AMD Ryzen AI 7 445 / Radeon 840M iGPU (64 GB)",
+   "hardwareFamily": "AMD",
+   "backend": "Vulkan",
+   "engine": "llama.cpp",
+   "engineVersion": "b10310 (cb26014d9)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 150.12
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 19.03
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-08-07",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-17937054",
+   "notes": "RADV Mesa 26.1.6; FA on."
+  },
+  {
+   "id": "b148",
+   "hardware": "Intel Arc Pro B70 (host i5-12490F, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp16 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 4d19b2876",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 2830.14
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 105.64
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-08-26",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=ON; date = reported date. "
+  },
+  {
+   "id": "b149",
+   "hardware": "Intel Arc Pro B70 (host i5-12490F, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 4d19b2876",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 970.74
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 105.45
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-08-26",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. Same box as fp16 row: fp32 build has ~3x lower pp, same tg."
+  },
+  {
+   "id": "b150",
+   "hardware": "Intel Arc B580 LE (host Core Ultra 5 250K, CachyOS)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp16 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit not stated",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 1954.15
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 83.67
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-06-14",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=ON; date = reported date. "
+  },
+  {
+   "id": "b151",
+   "hardware": "Intel Arc A770 (host i7-13700K, Ubuntu 24.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 053e01dff",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 937.24
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 59.03
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-05-19",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. "
+  },
+  {
+   "id": "b152",
+   "hardware": "Intel Arc Graphics iGPU (Lunar Lake) (host Core Ultra 7 258V, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp16 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 6471e3c",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 535.62
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 24.61
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-06-12",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=ON; date = reported date. "
+  },
+  {
+   "id": "b153",
+   "hardware": "Intel Xe3 iGPU 12 EU (Panther Lake) (host Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp16 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit d5ab083",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 652.38
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 19.2
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-06-02",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=ON; date = reported date. "
+  },
+  {
+   "id": "b154",
+   "hardware": "Intel Arc Pro B70 (host i9-14900K, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8452824",
+   "model": "Llama 3.1 8B",
+   "params": "8B",
+   "quant": "Q4_K_M",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 1068.94
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 88.49
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-06-23",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. "
+  },
+  {
+   "id": "b155",
+   "hardware": "Intel Arc Pro B70 (host i9-14900K, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8452824",
+   "model": "Llama 3.1 8B",
+   "params": "8B",
+   "quant": "Q8_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 1061.11
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 56
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-06-23",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. "
+  },
+  {
+   "id": "b156",
+   "hardware": "Intel Arc Pro B70 (host i9-14900K, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8452824",
+   "model": "Qwen3 14B",
+   "params": "14.8B",
+   "quant": "Q4_K_M",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 570.98
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 49.21
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-07-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. "
+  },
+  {
+   "id": "b157",
+   "hardware": "Intel Arc Pro B70 (host i9-14900K, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8452824",
+   "model": "Qwen3 32B",
+   "params": "32.8B",
+   "quant": "Q4_K_M",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 243.74
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 23.47
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-07-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. "
+  },
+  {
+   "id": "b158",
+   "hardware": "Intel Arc Pro B70 (host i9-14900K, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8452824",
+   "model": "Qwen3 30B-A3B Instruct",
+   "params": "30.5B (3B active)",
+   "quant": "Q4_K_M",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 1187.5
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 92.95
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-07-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. "
+  },
+  {
+   "id": "b159",
+   "hardware": "Intel Arc Pro B70 (host i9-14900K, Ubuntu 26.04)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 8452824",
+   "model": "gpt-oss-20b",
+   "params": "20.9B",
+   "quant": "MXFP4",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 861.55
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 50.38
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "2026-07-09",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. "
+  },
+  {
+   "id": "b160",
+   "hardware": "Intel Arc A770 (host Core Ultra 5 245KF, Debian 13)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp16 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 2a66703",
+   "model": "Qwen3 14B",
+   "params": "14.8B",
+   "quant": "Q4_K_M",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 1058.26
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 18.01
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 1,
+   "threads": null,
+   "date": "not stated",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=ON; date = reported date. tg looks low vs 560 GB/s card (B70 gets 49 on same model) -> check host/driver."
+  },
+  {
+   "id": "b161",
+   "hardware": "Intel Arc Pro B70 (host EPYC 8124P, Linux)",
+   "hardwareFamily": "Intel",
+   "backend": "SYCL (fp32 build)",
+   "engine": "llama.cpp",
+   "engineVersion": "commit 6a257d446",
+   "model": "Qwen3.6 27B",
+   "params": "27B",
+   "quant": "Q8_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": {
+    "tokens": 512,
+    "tps": 833.93
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 15.48
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": null,
+   "date": "2026-05-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/23313",
+   "notes": "SYCL thread table; GGML_SYCL_F16=OFF; date = reported date. "
+  },
+  {
+   "id": "b162",
+   "hardware": "AMD Ryzen AI Max+ 395 CPU (16C Zen 5, LPDDR5x)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "b11349 (fb4b2737a)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 300.27
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 27.68
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": 16,
+   "date": "2026-10-02",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-18711544",
+   "notes": "16 threads; FA off (FA on: 340.11 / 29.52)."
+  },
+  {
+   "id": "b163",
+   "hardware": "NVIDIA GB10 Grace CPU (DGX Spark, 20 cores)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Jan 2026)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 313.01
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 24.08
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 20,
+   "date": "2026-01-20",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-15544966",
+   "notes": "20 threads, Arm; date = post date."
+  },
+  {
+   "id": "b164",
+   "hardware": "AMD Ryzen AI 7 445 CPU (64 GB)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "b10310 (cb26014d9)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 60.33
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 12.95
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": 6,
+   "date": "2026-08-07",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-17937054",
+   "notes": "6 threads; FA off."
+  },
+  {
+   "id": "b165",
+   "hardware": "AMD Ryzen 9 3950X (DDR4-3600 dual channel)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "b9626 (4988f6e86)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 75.84
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 9.57
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": 0,
+   "threads": 16,
+   "date": "2026-06-13",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/10879#discussioncomment-17294341",
+   "notes": "16 threads; release build, haswell CPU backend variant loaded; FA off."
+  },
+  {
+   "id": "b166",
+   "hardware": "Apple M2 Max CPU (8 vCPU in Parallels Ubuntu VM)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Jun 2024)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q8_0",
+   "fileGB": 6.67,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 52.83
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 13.79
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 8,
+   "date": "2024-06-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-9839020",
+   "notes": "Arm CPU-only inside VM (8 CPUs, 32 GB allocated); date = post date."
+  },
+  {
+   "id": "b167",
+   "hardware": "Apple M2 Max CPU (8 vCPU in Parallels Ubuntu VM)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Jun 2024)",
+   "model": "Llama 2 7B",
+   "params": "6.74B",
+   "quant": "Q4_0",
+   "fileGB": 3.56,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 49.04
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 22.86
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 8,
+   "date": "2024-06-21",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/4167#discussioncomment-9839020",
+   "notes": "Arm CPU-only inside VM (8 CPUs, 32 GB allocated); date = post date."
+  },
+  {
+   "id": "b168",
+   "hardware": "AMD Ryzen 9 9900X (4x DIMM DDR5-3600)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU (BLAS)",
+   "engine": "llama.cpp",
+   "engineVersion": "b6401 (Phoronix Test Suite pts/llama-cpp)",
+   "model": "Llama-3.1-Tulu-3-8B",
+   "params": "8B",
+   "quant": "Q8_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": null,
+   "tg": {
+    "tokens": 128,
+    "tps": 5.92
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2025-10-27",
+   "sourceUrl": "https://openbenchmarking.org/result/2510273-NE-PTSLLAMAC07",
+   "notes": "OpenBenchmarking user result; Arch Linux 6.16, GCC 15.2; memory ran at DDR5-3600; threads not stated. pp only run on CUDA in this result."
+  },
+  {
+   "id": "b169",
+   "hardware": "AMD Ryzen 9 9900X (4x DIMM DDR5-3600)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU (BLAS)",
+   "engine": "llama.cpp",
+   "engineVersion": "b6401 (Phoronix Test Suite pts/llama-cpp)",
+   "model": "Qwen3-8B",
+   "params": "8B",
+   "quant": "Q8_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": null,
+   "tg": {
+    "tokens": 128,
+    "tps": 5.87
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2025-10-27",
+   "sourceUrl": "https://openbenchmarking.org/result/2510273-NE-PTSLLAMAC07",
+   "notes": "OpenBenchmarking user result; Arch Linux 6.16, GCC 15.2; memory ran at DDR5-3600; threads not stated. pp only run on CUDA in this result."
+  },
+  {
+   "id": "b170",
+   "hardware": "AMD Ryzen 9 9900X (4x DIMM DDR5-3600)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU (BLAS)",
+   "engine": "llama.cpp",
+   "engineVersion": "b6401 (Phoronix Test Suite pts/llama-cpp)",
+   "model": "gpt-oss-20b (Q8_0 file)",
+   "params": "20.9B",
+   "quant": "Q8_0",
+   "fileGB": null,
+   "fileUnit": null,
+   "pp": null,
+   "tg": {
+    "tokens": 128,
+    "tps": 17.64
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": null,
+   "date": "2025-10-27",
+   "sourceUrl": "https://openbenchmarking.org/result/2510273-NE-PTSLLAMAC07",
+   "notes": "OpenBenchmarking user result; Arch Linux 6.16, GCC 15.2; memory ran at DDR5-3600; threads not stated. pp only run on CUDA in this result."
+  },
+  {
+   "id": "b171",
+   "hardware": "Intel Xeon w7-3565X (32C, 8-ch DDR5-4400)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Jan 2026)",
+   "model": "DeepSeek-V3-0324 (671B MoE)",
+   "params": "671.03B (37B active)",
+   "quant": "Q4_K_M",
+   "fileGB": 376.65,
+   "fileUnit": "GiB",
+   "pp": null,
+   "tg": {
+    "tokens": 128,
+    "tps": 6.33
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 32,
+   "date": "2026-01-23",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/19037",
+   "notes": "-ngl 0 -p 0 -n 128 -t 32; MLC-measured bandwidth 223.9 GB/s."
+  },
+  {
+   "id": "b172",
+   "hardware": "2x Intel Xeon Platinum 8580 (120C, 16-ch DDR5-4400)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "not stated (Jan 2026)",
+   "model": "DeepSeek-V3-0324 (671B MoE)",
+   "params": "671.03B (37B active)",
+   "quant": "Q4_K_M",
+   "fileGB": 376.65,
+   "fileUnit": "GiB",
+   "pp": null,
+   "tg": {
+    "tokens": 128,
+    "tps": 7.32
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 120,
+   "date": "2026-01-23",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/19037",
+   "notes": "Best of runs with numactl; default 4.03; MLC 466.3 GB/s -> poor NUMA scaling."
+  },
+  {
+   "id": "b173",
+   "hardware": "AMD Threadripper PRO 3975WX (4-ch DDR4-2667, ~46.6 GB/s measured)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "b11160 (unsloth MSVC 19.44 release)",
+   "model": "Qwen3.8-Flash-Next (qwen4exp, 176.9B MoE, ~10B active)",
+   "params": "176.9B",
+   "quant": "UD-Q3_K_XL",
+   "fileGB": 83.79,
+   "fileUnit": "GiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 55.86
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 6.83
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 20,
+   "date": "2026-10-05",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/29973",
+   "notes": "Windows; -t 20 best for decode; -r 3. MinGW gcc build of same tag: 52.60 / 1.27 (compiler pitfall)."
+  },
+  {
+   "id": "b174",
+   "hardware": "Raspberry Pi 5 (4x Cortex-A76, 2 GB LPDDR4X)",
+   "hardwareFamily": "CPU",
+   "backend": "CPU",
+   "engine": "llama.cpp",
+   "engineVersion": "836d571",
+   "model": "Qwen2.5 0.5B Instruct",
+   "params": "630.17M",
+   "quant": "Q4_0",
+   "fileGB": 403.2,
+   "fileUnit": "MiB",
+   "pp": {
+    "tokens": 512,
+    "tps": 289.92
+   },
+   "tg": {
+    "tokens": 128,
+    "tps": 27.28
+   },
+   "batch": 1,
+   "ubatch": null,
+   "flashAttention": null,
+   "threads": 4,
+   "date": "2026-10-03",
+   "sourceUrl": "https://github.com/ggml-org/llama.cpp/discussions/30069",
+   "notes": "4 threads; KleidiAI off; best tg at 2 threads = 33.84."
+  }
+ ]
+}

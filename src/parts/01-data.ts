@@ -101,10 +101,15 @@ const DEFAULTS = {
 
 const SYSTEM_GB = 32; // Windows, Chrome, Cursor and the rest, measured before any model loaded
 
-// A weight format is a preset name (QUANTS) or bits per weight as a number (a file's bytes × 8 / its weights).
-const bpwOf = (q: string | number): number => (typeof q === 'number' ? q : QUANTS[q].bpw);
-const fileGB = (m, q) => (m.total * bpwOf(q)) / 8 / GB;
-const readGB = (m, q) => (m.readParams * bpwOf(q)) / 8 / GB;
+// A weight format is a preset name (QUANTS), bits per weight as a number (a file's bytes × 8 / its weights), or
+// { bpw, expertBpw } when a mixture of experts stores its routed experts at another width (gpt-oss: MXFP4 experts,
+// 4.25 bits, with wider attention and embeddings).
+const bpwOf = (q: any): number => (typeof q === 'number' ? q : typeof q === 'object' && q ? q.bpw : QUANTS[q].bpw);
+const expertBpwOf = (q: any): number => (typeof q === 'object' && q && q.expertBpw ? q.expertBpw : bpwOf(q));
+const split = (q: any) => typeof q === 'object' && q && q.expertBpw && q.expertBpw !== q.bpw; // only then the two widths differ
+const routedParams = (m, n) => (m.moe ? n * m.expertParams * m.layers : 0); // weights of n routed experts in every layer
+const fileGB = (m, q) => (split(q) ? ((m.total - routedParams(m, m.experts)) * bpwOf(q) + routedParams(m, m.experts) * expertBpwOf(q)) / 8 / GB : (m.total * bpwOf(q)) / 8 / GB);
+const readGB = (m, q) => (split(q) ? ((m.readParams - routedParams(m, m.expertsUsed)) * bpwOf(q) + routedParams(m, m.expertsUsed) * expertBpwOf(q)) / 8 / GB : (m.readParams * bpwOf(q)) / 8 / GB);
 // Multi-token prediction (MTP). Both Qwen GGUFs carry one extra "next-n" block (nextn_predict_layers: 1) and
 // Ollama runs it as a built-in draft (draft_num_predict 2): the MTP block guesses the next tokens, and one pass of
 // the full model checks them all. A draft step reads one block plus the output head; how many guesses survive
@@ -125,7 +130,7 @@ const expertsTouched = (m, n) => (m.moe ? m.experts * (1 - (1 - m.expertsUsed / 
 // Weights read in one pass that carries n tokens at once (prefill chunk, speculative verification).
 function passReadGB(m, q, n) {
   if (!m.moe) return readGB(m, q);
-  const perExpert = (m.expertParams * bpwOf(q)) / 8 / GB;
+  const perExpert = (m.expertParams * expertBpwOf(q)) / 8 / GB;
   const routedOne = m.expertsUsed * perExpert * m.layers;
   const rest = readGB(m, q) - routedOne;
   return rest + expertsTouched(m, n) * perExpert * m.layers;
@@ -139,12 +144,18 @@ function placement(mc, m, q) {
   return { weightsGB: w, fastShare: frac, fits: w <= mc.fastGB - 1.5, ramFits: w + SYSTEM_GB * (mc.kind === 'unified' ? 1 : 0.5) <= mc.ramGB };
 }
 
+// Fixed cost per layer per pass, ms: a mixture-of-experts layer adds moeLayerMs when the machine has one (router,
+// top-k and the gather of the chosen experts launch more kernels than a dense layer).
+// Prefill arithmetic a mixture of experts reaches, as a share of a dense model's: its tokens scatter over the
+// experts, so each expert multiplies a small batch (0.75 unless the machine's family fit says otherwise).
+const moeComputeOf = mc => (mc.moeComputeEff != null ? mc.moeComputeEff : 0.75);
+const layerMsOf = (mc, m) => (m.moe && mc.moeLayerMs ? mc.layerMs + mc.moeLayerMs : mc.layerMs);
 // Seconds per generated token at a given context length.
 function decodeStep(mc, m, q, kv, ctx) {
   const pl = placement(mc, m, q);
   const bytes = readGB(m, q) + kvGB(m, kv, ctx);
   const fastBw = mc.bw * mc.bwEff, slowBw = mc.hostBw * 0.6;
-  const t = (bytes * pl.fastShare) / fastBw + (bytes * (1 - pl.fastShare)) / slowBw + (mc.layerMs * m.layers) / 1000;
+  const t = (bytes * pl.fastShare) / fastBw + (bytes * (1 - pl.fastShare)) / slowBw + (layerMsOf(mc, m) * m.layers) / 1000;
   return { seconds: t, bytesGB: bytes, ceiling: mc.bw / bytes, fastShare: pl.fastShare };
 }
 const decodeTokS = (mc, m, q, kv, ctx) => 1 / decodeStep(mc, m, q, kv, ctx).seconds;
@@ -152,7 +163,7 @@ const decodeTokS = (mc, m, q, kv, ctx) => 1 / decodeStep(mc, m, q, kv, ctx).seco
 // each round k draft steps (one block plus the head) and one verification pass carrying k + 1 tokens.
 function mtpTokS(mc, m, q, kv, ctx, alpha, k = MTP.k) {
   const bw = mc.bw * mc.bwEff, draftT = mtpDraftGB(m, q) / bw + mc.layerMs / 1000;
-  const verifyT = Math.max((passReadGB(m, q, k + 1) + kvGB(m, kv, ctx)) / bw, (2 * m.readParams * (k + 1)) / (mc.tflops * 1e12)) + (mc.layerMs * m.layers) / 1000;
+  const verifyT = Math.max((passReadGB(m, q, k + 1) + kvGB(m, kv, ctx)) / bw, (2 * m.readParams * (k + 1)) / (mc.tflops * 1e12)) + (layerMsOf(mc, m) * m.layers) / 1000;
   const perRound = alpha >= 1 ? k + 1 : (1 - alpha ** (k + 1)) / (1 - alpha);
   return perRound / (k * draftT + verifyT);
 }
@@ -163,7 +174,7 @@ function mtpTokS(mc, m, q, kv, ctx, alpha, k = MTP.k) {
 function prefillSeconds(mc, m, q, n, ub = 512) {
   if (n <= 0) return 0;
   const pl = placement(mc, m, q);
-  const flopsEff = mc.tflops * 1e12 * (m.moe ? 0.75 : 1);
+  const flopsEff = mc.tflops * 1e12 * (m.moe ? moeComputeOf(mc) : 1);
   const bwEff = mc.bw * mc.bwEff * pl.fastShare + mc.hostBw * 0.6 * (1 - pl.fastShare);
   let t = 0, done = 0;
   while (done < n) {
@@ -171,7 +182,7 @@ function prefillSeconds(mc, m, q, n, ub = 512) {
     const mem = passReadGB(m, q, c) / bwEff;
     const matmul = (2 * m.readParams * c) / flopsEff;
     const attn = (4 * m.kvLayers * m.qHeads * m.headDim * c * (done + c / 2)) / flopsEff;
-    t += Math.max(mem, matmul) + attn + (mc.layerMs * m.layers) / 1000;
+    t += Math.max(mem, matmul) + attn + (layerMsOf(mc, m) * m.layers) / 1000;
     done += c;
   }
   return t;

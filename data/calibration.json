@@ -1,0 +1,3494 @@
+{
+ "schema": "tokenwalk-calibration/1",
+ "fitted": "2026-10-24",
+ "inputs": {
+  "benchmarks": "2026-10-24",
+  "machines": "2026-10-24"
+ },
+ "method": "Least squares on the log of estimate / published over each family's usable rows (tools/bench.mjs): llama-bench pp (a prompt from an empty context) and tg (generation from an empty context), plain decoding, f16 KV, the row's micro-batch. Nelder-Mead in log space from a grid of starts, with a weak pull (weight 0.0002) towards {\"bwEff\":0.6,\"computeEff\":0.3,\"layerMs\":0.02,\"moeLayerMs\":0.02,\"moeComputeEff\":0.75} so a factor the rows cannot pin stays put. Of rows measuring the same thing only the newest build is kept (flash attention on, on a tie); builds before 2025-01-01 get a fitted build term (oldBuild) where the family also has newer rows. The reference ThinkPad is never fitted.",
+ "families": {
+  "apple-metal": {
+   "label": "Apple Metal (M1–M4)",
+   "basis": "tflopsSpec",
+   "bwEff": 0.9311,
+   "computeEff": 0.8137,
+   "layerMs": 0.1244,
+   "moeLayerMs": 0.07544,
+   "moeComputeEff": 0.8847,
+   "oldBuild": {
+    "pp": 0.8762,
+    "tg": 0.9192
+   },
+   "rows": 64,
+   "machines": [
+    "m1",
+    "m1pro",
+    "m1max",
+    "m1ultra",
+    "m2ultra",
+    "m3max40",
+    "m4",
+    "m4pro",
+    "m4max",
+    "m3ultra512",
+    "m4max32"
+   ],
+   "thin": false,
+   "rmsLogError": 0.0699,
+   "medianAbsErrorPct": {
+    "pp": 4.28,
+    "tg": 5.11
+   },
+   "used": [
+    {
+     "id": "b001:pp",
+     "machine": "m1",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 117.96,
+     "estimate": 138.7,
+     "errorPct": 17.6,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b001:tg",
+     "machine": "m1",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 14.15,
+     "estimate": 14.489,
+     "errorPct": 2.39,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b002:pp",
+     "machine": "m1pro",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 302.14,
+     "estimate": 277.06,
+     "errorPct": -8.3,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b002:tg",
+     "machine": "m1pro",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 12.75,
+     "estimate": 12.515,
+     "errorPct": -1.84,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b003:pp",
+     "machine": "m1pro",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 266.25,
+     "estimate": 277.06,
+     "errorPct": 4.06,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b003:tg",
+     "machine": "m1pro",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 36.41,
+     "estimate": 38.604,
+     "errorPct": 6.02,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b004:pp",
+     "machine": "m1max",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 530.06,
+     "estimate": 552.76,
+     "errorPct": 4.28,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b004:tg",
+     "machine": "m1max",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 61.19,
+     "estimate": 66.148,
+     "errorPct": 8.1,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b005:pp",
+     "machine": "m1ultra",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1030.04,
+     "estimate": 1110.6,
+     "errorPct": 7.82,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b005:tg",
+     "machine": "m1ultra",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 83.73,
+     "estimate": 102.84,
+     "errorPct": 22.8,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b006:pp",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1401.85,
+     "estimate": 1434.3,
+     "errorPct": 2.32,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b006:tg",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 41.02,
+     "estimate": 43.059,
+     "errorPct": 4.97,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b007:pp",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1248.59,
+     "estimate": 1434.3,
+     "errorPct": 14.9,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b007:tg",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 66.64,
+     "estimate": 69.472,
+     "errorPct": 4.25,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b027:pp",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1391.78,
+     "estimate": 1434.3,
+     "errorPct": 3.06,
+     "build": "commit 86ed72d2 + FA",
+     "date": "2024-11-12",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b027:tg",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 108.8,
+     "estimate": 102.84,
+     "errorPct": -5.48,
+     "build": "commit 86ed72d2 + FA",
+     "date": "2024-11-12",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b009:pp",
+     "machine": "m3max40",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 779.17,
+     "estimate": 753.38,
+     "errorPct": -3.31,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b009:tg",
+     "machine": "m3max40",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 25.09,
+     "estimate": 23.743,
+     "errorPct": -5.37,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b010:pp",
+     "machine": "m3max40",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 759.7,
+     "estimate": 753.38,
+     "errorPct": -0.832,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b010:tg",
+     "machine": "m3max40",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 66.31,
+     "estimate": 66.148,
+     "errorPct": -0.244,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b011:pp",
+     "machine": "m4",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 230.18,
+     "estimate": 213.24,
+     "errorPct": -7.36,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b011:tg",
+     "machine": "m4",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 7.43,
+     "estimate": 7.5014,
+     "errorPct": 0.96,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b012:pp",
+     "machine": "m4",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 221.29,
+     "estimate": 213.24,
+     "errorPct": -3.64,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b012:tg",
+     "machine": "m4",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 24.11,
+     "estimate": 24.302,
+     "errorPct": 0.794,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b013:pp",
+     "machine": "m4pro",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 464.48,
+     "estimate": 430.98,
+     "errorPct": -7.21,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b013:tg",
+     "machine": "m4pro",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 17.18,
+     "estimate": 16.387,
+     "errorPct": -4.62,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b014:pp",
+     "machine": "m4pro",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 449.62,
+     "estimate": 430.98,
+     "errorPct": -4.15,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b014:tg",
+     "machine": "m4pro",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 30.69,
+     "estimate": 28.961,
+     "errorPct": -5.63,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b015:pp",
+     "machine": "m4pro",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 439.78,
+     "estimate": 430.98,
+     "errorPct": -2,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b015:tg",
+     "machine": "m4pro",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 50.74,
+     "estimate": 48.745,
+     "errorPct": -3.93,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b016:pp",
+     "machine": "m4max",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 922.83,
+     "estimate": 858.68,
+     "errorPct": -6.95,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b016:tg",
+     "machine": "m4max",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 31.64,
+     "estimate": 30.602,
+     "errorPct": -3.28,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b017:pp",
+     "machine": "m4max",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 891.94,
+     "estimate": 858.68,
+     "errorPct": -3.73,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b017:tg",
+     "machine": "m4max",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 54.05,
+     "estimate": 51.467,
+     "errorPct": -4.78,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b018:pp",
+     "machine": "m4max",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 885.68,
+     "estimate": 858.68,
+     "errorPct": -3.05,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b018:tg",
+     "machine": "m4max",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 83.06,
+     "estimate": 80.497,
+     "errorPct": -3.09,
+     "build": "commit 8e672ef",
+     "date": "2023-11-21",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b028:pp",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1488.81,
+     "estimate": 1637,
+     "errorPct": 9.95,
+     "build": "commit c1d0e7a00 + FA",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b028:tg",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 125.21,
+     "estimate": 111.88,
+     "errorPct": -10.6,
+     "build": "commit c1d0e7a00 + FA",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b029:pp",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1627.82,
+     "estimate": 1637,
+     "errorPct": 0.562,
+     "build": "commit c1d0e7a00 + FA",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b029:tg",
+     "machine": "m2ultra",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 49.55,
+     "estimate": 46.844,
+     "errorPct": -5.46,
+     "build": "commit c1d0e7a00 + FA",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b030:pp",
+     "machine": "m3ultra512",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 2816.47,
+     "estimate": 2695.3,
+     "errorPct": -4.3,
+     "build": "b6310 (c8d0d14e)",
+     "date": "2025-08-28",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b030:tg",
+     "machine": "m3ultra512",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 115.52,
+     "estimate": 122.02,
+     "errorPct": 5.62,
+     "build": "b6310 (c8d0d14e)",
+     "date": "2025-08-28",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b036:pp",
+     "machine": "m2ultra",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 2713.4,
+     "estimate": 2555.3,
+     "errorPct": -5.83,
+     "build": "b7948 (b828e18c7)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b031:tg",
+     "machine": "m2ultra",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 116.08,
+     "estimate": 122.02,
+     "errorPct": 5.11,
+     "build": "b6123 (79c1160b0)",
+     "date": "2025-08-09",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b037:pp",
+     "machine": "m2ultra",
+     "model": "gpt-oss-120b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 1648.69,
+     "estimate": 1790.7,
+     "errorPct": 8.61,
+     "build": "b7948 (b828e18c7)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b032:tg",
+     "machine": "m2ultra",
+     "model": "gpt-oss-120b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 79.68,
+     "estimate": 83.048,
+     "errorPct": 4.23,
+     "build": "b6123 (79c1160b0)",
+     "date": "2025-08-09",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b033:pp",
+     "machine": "m4max32",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 1277.42,
+     "estimate": 1215.7,
+     "errorPct": -4.83,
+     "build": "b6123 (79c1160b0)",
+     "date": "2025-08-09",
+     "old": false,
+     "weight": 1,
+     "mapNote": "the 36 GB configuration ships with the 32-core GPU"
+    },
+    {
+     "id": "b033:tg",
+     "machine": "m4max32",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 92.36,
+     "estimate": 86.292,
+     "errorPct": -6.57,
+     "build": "b6123 (79c1160b0)",
+     "date": "2025-08-09",
+     "old": false,
+     "weight": 1,
+     "mapNote": "the 36 GB configuration ships with the 32-core GPU"
+    },
+    {
+     "id": "b034:pp",
+     "machine": "m1max",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 994.75,
+     "estimate": 980.65,
+     "errorPct": -1.42,
+     "build": "b6180 (2e2b22ba)",
+     "date": "2025-08-16",
+     "old": false,
+     "weight": 1,
+     "mapNote": "GPU core count not stated; the 32-core preset"
+    },
+    {
+     "id": "b034:tg",
+     "machine": "m1max",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 75.15,
+     "estimate": 86.242,
+     "errorPct": 14.8,
+     "build": "b6180 (2e2b22ba)",
+     "date": "2025-08-16",
+     "old": false,
+     "weight": 1,
+     "mapNote": "GPU core count not stated; the 32-core preset"
+    },
+    {
+     "id": "b035:pp",
+     "machine": "m1pro",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 515.76,
+     "estimate": 490.89,
+     "errorPct": -4.82,
+     "build": "b6123 (79c1160b0)",
+     "date": "2025-08-09",
+     "old": false,
+     "weight": 1,
+     "mapNote": "GPU core count not stated; the 16-core preset"
+    },
+    {
+     "id": "b035:tg",
+     "machine": "m1pro",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 45.68,
+     "estimate": 54.365,
+     "errorPct": 19,
+     "build": "b6123 (79c1160b0)",
+     "date": "2025-08-09",
+     "old": false,
+     "weight": 1,
+     "mapNote": "GPU core count not stated; the 16-core preset"
+    },
+    {
+     "id": "b036:tg",
+     "machine": "m2ultra",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 32,
+     "published": 129.97,
+     "estimate": 122.06,
+     "errorPct": -6.09,
+     "build": "b7948 (b828e18c7)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b037:tg",
+     "machine": "m2ultra",
+     "model": "gpt-oss-120b",
+     "kind": "tg",
+     "tokens": 32,
+     "published": 85.6,
+     "estimate": 83.08,
+     "errorPct": -2.94,
+     "build": "b7948 (b828e18c7)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b038:pp",
+     "machine": "m2ultra",
+     "model": "qwen3-30b-a3b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 2453.11,
+     "estimate": 2805.1,
+     "errorPct": 14.4,
+     "build": "b7948 (b828e18c7)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b038:tg",
+     "machine": "m2ultra",
+     "model": "qwen3-30b-a3b",
+     "kind": "tg",
+     "tokens": 32,
+     "published": 78.97,
+     "estimate": 72.272,
+     "errorPct": -8.48,
+     "build": "b7948 (b828e18c7)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b039:pp",
+     "machine": "m2ultra",
+     "model": "qwen2.5-7b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 1565.91,
+     "estimate": 1517.1,
+     "errorPct": -3.12,
+     "build": "b7948 (b828e18c7)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b039:tg",
+     "machine": "m2ultra",
+     "model": "qwen2.5-7b",
+     "kind": "tg",
+     "tokens": 32,
+     "published": 79.68,
+     "estimate": 74.969,
+     "errorPct": -5.91,
+     "build": "b7948 (b828e18c7)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b043:pp",
+     "machine": "m4max",
+     "model": "llama3.1-70b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 81.7,
+     "estimate": 82.541,
+     "errorPct": 1.03,
+     "build": "b4121 (75207b3a)",
+     "date": "2024-11-17",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b043:tg",
+     "machine": "m4max",
+     "model": "llama3.1-70b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 6.41,
+     "estimate": 5.9203,
+     "errorPct": -7.64,
+     "build": "b4121 (75207b3a)",
+     "date": "2024-11-17",
+     "old": true,
+     "weight": 1
+    },
+    {
+     "id": "b044:pp",
+     "machine": "m4max32",
+     "model": "gemma3-27b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 198.54,
+     "estimate": 192.83,
+     "errorPct": -2.87,
+     "build": "b5440 (b44890df)",
+     "date": "2025-05-21",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b044:tg",
+     "machine": "m4max32",
+     "model": "gemma3-27b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 18.71,
+     "estimate": 18.899,
+     "errorPct": 1.01,
+     "build": "b5440 (b44890df)",
+     "date": "2025-05-21",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b045:pp",
+     "machine": "m4",
+     "model": "qwen2.5-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 239.73,
+     "estimate": 228.16,
+     "errorPct": -4.83,
+     "build": "b9100 (2e97c5f96)",
+     "date": "2026-05-10",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b045:tg",
+     "machine": "m4",
+     "model": "qwen2.5-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 22.6,
+     "estimate": 23.576,
+     "errorPct": 4.32,
+     "build": "b9100 (2e97c5f96)",
+     "date": "2026-05-10",
+     "old": false,
+     "weight": 1
+    }
+   ]
+  },
+  "apple-metal-na": {
+   "label": "Apple Metal (M5 and later)",
+   "basis": "units",
+   "bwEff": 0.9357,
+   "computeEff": 1.078,
+   "layerMs": 0.06853,
+   "rows": 16,
+   "machines": [
+    "m5pro",
+    "m5max",
+    "m5ultra",
+    "m6"
+   ],
+   "thin": false,
+   "rmsLogError": 0.136,
+   "medianAbsErrorPct": {
+    "pp": 1.2,
+    "tg": 4.27
+   },
+   "used": [
+    {
+     "id": "b019:pp",
+     "machine": "m5pro",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1588.78,
+     "estimate": 1604.1,
+     "errorPct": 0.963,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b019:tg",
+     "machine": "m5pro",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 21.55,
+     "estimate": 20.701,
+     "errorPct": -3.94,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b020:pp",
+     "machine": "m5pro",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1620.64,
+     "estimate": 1604.1,
+     "errorPct": -1.02,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b020:tg",
+     "machine": "m5pro",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 66.33,
+     "estimate": 65.118,
+     "errorPct": -1.83,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b021:pp",
+     "machine": "m5max",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3158.49,
+     "estimate": 3186.3,
+     "errorPct": 0.88,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b021:tg",
+     "machine": "m5max",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 37.11,
+     "estimate": 39.604,
+     "errorPct": 6.72,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b022:pp",
+     "machine": "m5max",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3143.81,
+     "estimate": 3186.3,
+     "errorPct": 1.35,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b022:tg",
+     "machine": "m5max",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 72.42,
+     "estimate": 69.088,
+     "errorPct": -4.6,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b023:pp",
+     "machine": "m5max",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3219.99,
+     "estimate": 3186.3,
+     "errorPct": -1.05,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b023:tg",
+     "machine": "m5max",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 119.92,
+     "estimate": 113.96,
+     "errorPct": -4.97,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b024:pp",
+     "machine": "m5ultra",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 5207.14,
+     "estimate": 6286.7,
+     "errorPct": 20.7,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b024:tg",
+     "machine": "m5ultra",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 73.6,
+     "estimate": 72.919,
+     "errorPct": -0.926,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b025:pp",
+     "machine": "m5ultra",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 4944.66,
+     "estimate": 6286.7,
+     "errorPct": 27.1,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b025:tg",
+     "machine": "m5ultra",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 179.1,
+     "estimate": 182.42,
+     "errorPct": 1.85,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b026:pp",
+     "machine": "m6",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 988.93,
+     "estimate": 644.29,
+     "errorPct": -34.8,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1,
+     "mapNote": "the row names an 8-core GPU; the preset has 12 cores"
+    },
+    {
+     "id": "b026:tg",
+     "machine": "m6",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 35.74,
+     "estimate": 38.513,
+     "errorPct": 7.76,
+     "build": "commit c1d0e7a",
+     "date": "2026-08-25",
+     "old": false,
+     "weight": 1,
+     "mapNote": "the row names an 8-core GPU; the preset has 12 cores"
+    }
+   ]
+  },
+  "nvidia-cuda": {
+   "label": "NVIDIA CUDA (GeForce, DGX Spark)",
+   "basis": "tflopsSpec",
+   "bwEff": 0.8703,
+   "computeEff": 0.9576,
+   "layerMs": 0.02853,
+   "moeLayerMs": 0.05172,
+   "moeComputeEff": 0.4683,
+   "rows": 34,
+   "machines": [
+    "rtx5090",
+    "rtx4090",
+    "rtx5080",
+    "rtx5070ti",
+    "rtx3090",
+    "rtx3060",
+    "rtx4060ti16",
+    "rtx5060ti16",
+    "dgxSpark"
+   ],
+   "thin": false,
+   "rmsLogError": 0.173,
+   "medianAbsErrorPct": {
+    "pp": 18.6,
+    "tg": 2.13
+   },
+   "used": [
+    {
+     "id": "b054:pp",
+     "machine": "rtx5090",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 14970.15,
+     "estimate": 14637,
+     "errorPct": -2.22,
+     "build": "commit 8cf6b42",
+     "date": "2025-10-23",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b054:tg",
+     "machine": "rtx5090",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 300.4,
+     "estimate": 299.61,
+     "errorPct": -0.262,
+     "build": "commit 8cf6b42",
+     "date": "2025-10-23",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b060:pp",
+     "machine": "rtx4090",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 14770.63,
+     "estimate": 11606,
+     "errorPct": -21.4,
+     "build": "commit 2241453",
+     "date": "2025-08-06",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b060:tg",
+     "machine": "rtx4090",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 188.96,
+     "estimate": 191.44,
+     "errorPct": 1.31,
+     "build": "commit 2241453",
+     "date": "2025-08-06",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b061:pp",
+     "machine": "rtx5080",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 8297.36,
+     "estimate": 7963.1,
+     "errorPct": -4.03,
+     "build": "commit 8a4280c",
+     "date": "2025-08-28",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b061:tg",
+     "machine": "rtx5080",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 181.99,
+     "estimate": 183.86,
+     "errorPct": 1.03,
+     "build": "commit 8a4280c",
+     "date": "2025-08-28",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b062:pp",
+     "machine": "rtx5070ti",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 6952.38,
+     "estimate": 6235.7,
+     "errorPct": -10.3,
+     "build": "commit 933414c",
+     "date": "2025-12-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b062:tg",
+     "machine": "rtx5070ti",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 176.85,
+     "estimate": 173.54,
+     "errorPct": -1.87,
+     "build": "commit 933414c",
+     "date": "2025-12-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b074:pp",
+     "machine": "rtx3090",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 5973.72,
+     "estimate": 5061.7,
+     "errorPct": -15.3,
+     "build": "0.4.0 / b10809 (5266f24da)",
+     "date": "2026-09-04",
+     "old": false,
+     "weight": 1,
+     "mapNote": "one card of a four-card box, run alone (--device cuda0)"
+    },
+    {
+     "id": "b074:tg",
+     "machine": "rtx3090",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 177.75,
+     "estimate": 180.02,
+     "errorPct": 1.27,
+     "build": "0.4.0 / b10809 (5266f24da)",
+     "date": "2026-09-04",
+     "old": false,
+     "weight": 1,
+     "mapNote": "one card of a four-card box, run alone (--device cuda0)"
+    },
+    {
+     "id": "b064:pp",
+     "machine": "rtx3060",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 2137.5,
+     "estimate": 1823.4,
+     "errorPct": -14.7,
+     "build": "commit baa9255",
+     "date": "2025-08-18",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b064:tg",
+     "machine": "rtx3060",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 75.57,
+     "estimate": 77.027,
+     "errorPct": 1.93,
+     "build": "commit baa9255",
+     "date": "2025-08-18",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b065:pp",
+     "machine": "rtx4060ti16",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3394.63,
+     "estimate": 3145.9,
+     "errorPct": -7.33,
+     "build": "commit 89d10295",
+     "date": "2025-07-27",
+     "old": false,
+     "weight": 1,
+     "mapNote": "the 8 GB variant of the 16 GB preset: same chip and bandwidth"
+    },
+    {
+     "id": "b065:tg",
+     "machine": "rtx4060ti16",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 63.86,
+     "estimate": 62.501,
+     "errorPct": -2.13,
+     "build": "commit 89d10295",
+     "date": "2025-07-27",
+     "old": false,
+     "weight": 1,
+     "mapNote": "the 8 GB variant of the 16 GB preset: same chip and bandwidth"
+    },
+    {
+     "id": "b066:pp",
+     "machine": "rtx5060ti16",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3737.25,
+     "estimate": 3379.9,
+     "errorPct": -9.56,
+     "build": "commit 89d10295",
+     "date": "2025-07-27",
+     "old": false,
+     "weight": 1,
+     "mapNote": "VRAM not stated; same bandwidth either way"
+    },
+    {
+     "id": "b066:tg",
+     "machine": "rtx5060ti16",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 90.94,
+     "estimate": 94.236,
+     "errorPct": 3.62,
+     "build": "commit 89d10295",
+     "date": "2025-07-27",
+     "old": false,
+     "weight": 1,
+     "mapNote": "VRAM not stated; same bandwidth either way"
+    },
+    {
+     "id": "b100:pp",
+     "machine": "dgxSpark",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3310.48,
+     "estimate": 4448.1,
+     "errorPct": 34.4,
+     "build": "not stated (Jan 2026)",
+     "date": "2026-01-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b100:tg",
+     "machine": "dgxSpark",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 60.24,
+     "estimate": 59.422,
+     "errorPct": -1.36,
+     "build": "not stated (Jan 2026)",
+     "date": "2026-01-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b085:pp",
+     "machine": "rtx5090",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 9848.38,
+     "estimate": 12193,
+     "errorPct": 23.8,
+     "build": "b6210 (a094f381)",
+     "date": "2025-08-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b085:tg",
+     "machine": "rtx5090",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 282.51,
+     "estimate": 278.66,
+     "errorPct": -1.36,
+     "build": "b6210 (a094f381)",
+     "date": "2025-08-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b086:pp",
+     "machine": "rtx4090",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 8022.33,
+     "estimate": 9637.9,
+     "errorPct": 20.1,
+     "build": "b6210 (a094f381)",
+     "date": "2025-08-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b086:tg",
+     "machine": "rtx4090",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 221.95,
+     "estimate": 204.84,
+     "errorPct": -7.71,
+     "build": "b6210 (a094f381)",
+     "date": "2025-08-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b087:pp",
+     "machine": "rtx3090",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 5170.56,
+     "estimate": 4175.4,
+     "errorPct": -19.2,
+     "build": "b6210 (a094f381)",
+     "date": "2025-08-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b087:tg",
+     "machine": "rtx3090",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 161.77,
+     "estimate": 195.73,
+     "errorPct": 21,
+     "build": "b6210 (a094f381)",
+     "date": "2025-08-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b088:pp",
+     "machine": "rtx5060ti16",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 3839.21,
+     "estimate": 2783.4,
+     "errorPct": -27.5,
+     "build": "b6208 (9ef6b0b8)",
+     "date": "2025-08-19",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b088:tg",
+     "machine": "rtx5060ti16",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 111.51,
+     "estimate": 116.6,
+     "errorPct": 4.56,
+     "build": "b6208 (9ef6b0b8)",
+     "date": "2025-08-19",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b090:pp",
+     "machine": "dgxSpark",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 4505.82,
+     "estimate": 3667,
+     "errorPct": -18.6,
+     "build": "b7941 (11fb327bf)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b090:tg",
+     "machine": "dgxSpark",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 32,
+     "published": 83.43,
+     "estimate": 77.943,
+     "errorPct": -6.58,
+     "build": "b7941 (11fb327bf)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b091:pp",
+     "machine": "dgxSpark",
+     "model": "gpt-oss-120b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 2443.91,
+     "estimate": 2570,
+     "errorPct": 5.16,
+     "build": "b7941 (11fb327bf)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b091:tg",
+     "machine": "dgxSpark",
+     "model": "gpt-oss-120b",
+     "kind": "tg",
+     "tokens": 32,
+     "published": 58.72,
+     "estimate": 54.245,
+     "errorPct": -7.62,
+     "build": "b7941 (11fb327bf)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b092:pp",
+     "machine": "dgxSpark",
+     "model": "qwen3-30b-a3b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 2986.97,
+     "estimate": 4037.8,
+     "errorPct": 35.2,
+     "build": "b7941 (11fb327bf)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b092:tg",
+     "machine": "dgxSpark",
+     "model": "qwen3-30b-a3b",
+     "kind": "tg",
+     "tokens": 32,
+     "published": 61.06,
+     "estimate": 57.216,
+     "errorPct": -6.3,
+     "build": "b7941 (11fb327bf)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b093:pp",
+     "machine": "dgxSpark",
+     "model": "qwen2.5-7b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 2250.28,
+     "estimate": 4106.4,
+     "errorPct": 82.5,
+     "build": "b7941 (11fb327bf)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b093:tg",
+     "machine": "dgxSpark",
+     "model": "qwen2.5-7b",
+     "kind": "tg",
+     "tokens": 32,
+     "published": 29.43,
+     "estimate": 30.827,
+     "errorPct": 4.75,
+     "build": "b7941 (11fb327bf)",
+     "date": "2026-02-05",
+     "old": false,
+     "weight": 1
+    }
+   ]
+  },
+  "nvidia-cuda-pro": {
+   "label": "NVIDIA CUDA (workstation, datacenter)",
+   "basis": "tflopsSpec",
+   "bwEff": 0.618,
+   "computeEff": 0.3053,
+   "layerMs": 0.03401,
+   "moeLayerMs": 0.0289,
+   "moeComputeEff": 0.5662,
+   "rows": 18,
+   "machines": [
+    "rtxpro6000",
+    "a100_80",
+    "v100sxm2",
+    "t4",
+    "v100pcie"
+   ],
+   "thin": false,
+   "rmsLogError": 0.208,
+   "medianAbsErrorPct": {
+    "pp": 21.6,
+    "tg": 9.5
+   },
+   "used": [
+    {
+     "id": "b055:pp",
+     "machine": "rtxpro6000",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 14854.63,
+     "estimate": 11164,
+     "errorPct": -24.8,
+     "build": "commit 79c1160",
+     "date": "2025-08-09",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b055:tg",
+     "machine": "rtxpro6000",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 274.2,
+     "estimate": 222.08,
+     "errorPct": -19,
+     "build": "commit 79c1160",
+     "date": "2025-08-09",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b058:pp",
+     "machine": "a100_80",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 4849.53,
+     "estimate": 7029.3,
+     "errorPct": 44.9,
+     "build": "commit 5143fa8",
+     "date": "2025-09-05",
+     "old": false,
+     "weight": 1,
+     "mapNote": "SXM or PCIe not stated: the SXM preset (2039 GB/s; PCIe has 1935)"
+    },
+    {
+     "id": "b058:tg",
+     "machine": "a100_80",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 190.88,
+     "estimate": 244.54,
+     "errorPct": 28.1,
+     "build": "commit 5143fa8",
+     "date": "2025-09-05",
+     "old": false,
+     "weight": 1,
+     "mapNote": "SXM or PCIe not stated: the SXM preset (2039 GB/s; PCIe has 1935)"
+    },
+    {
+     "id": "b067:pp",
+     "machine": "v100sxm2",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3042.64,
+     "estimate": 2841.7,
+     "errorPct": -6.6,
+     "build": "commit 51f5a45",
+     "date": "2025-09-21",
+     "old": false,
+     "weight": 1,
+     "mapNote": "variant not stated (32 GB HBM2): the SXM2 row"
+    },
+    {
+     "id": "b067:tg",
+     "machine": "v100sxm2",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 129.08,
+     "estimate": 126.79,
+     "errorPct": -1.77,
+     "build": "commit 51f5a45",
+     "date": "2025-09-21",
+     "old": false,
+     "weight": 1,
+     "mapNote": "variant not stated (32 GB HBM2): the SXM2 row"
+    },
+    {
+     "id": "b069:pp",
+     "machine": "t4",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1219.06,
+     "estimate": 1482,
+     "errorPct": 21.6,
+     "build": "commit d32e03f",
+     "date": "2025-08-14",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b069:tg",
+     "machine": "t4",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 46.38,
+     "estimate": 49.481,
+     "errorPct": 6.69,
+     "build": "commit d32e03f",
+     "date": "2025-08-14",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b075:pp",
+     "machine": "v100sxm2",
+     "model": "qwen3-14b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1536.27,
+     "estimate": 1348.9,
+     "errorPct": -12.2,
+     "build": "b6533 (51f5a45f)",
+     "date": "2025-09-21",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b075:tg",
+     "machine": "v100sxm2",
+     "model": "qwen3-14b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 64.87,
+     "estimate": 59.864,
+     "errorPct": -7.72,
+     "build": "b6533 (51f5a45f)",
+     "date": "2025-09-21",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b076:pp",
+     "machine": "v100sxm2",
+     "model": "qwen3-32b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 642.41,
+     "estimate": 590.15,
+     "errorPct": -8.14,
+     "build": "b6533 (51f5a45f)",
+     "date": "2025-09-21",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b076:tg",
+     "machine": "v100sxm2",
+     "model": "qwen3-32b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 30.74,
+     "estimate": 27.112,
+     "errorPct": -11.8,
+     "build": "b6533 (51f5a45f)",
+     "date": "2025-09-21",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b082:pp",
+     "machine": "rtxpro6000",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 11521.95,
+     "estimate": 11253,
+     "errorPct": -2.33,
+     "build": "b6205 (a6d3cfe)",
+     "date": "2025-08-19",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b082:tg",
+     "machine": "rtxpro6000",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 286.91,
+     "estimate": 259.65,
+     "errorPct": -9.5,
+     "build": "b6205 (a6d3cfe)",
+     "date": "2025-08-19",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b083:pp",
+     "machine": "rtxpro6000",
+     "model": "gpt-oss-120b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 5518.07,
+     "estimate": 7884.7,
+     "errorPct": 42.9,
+     "build": "b6205 (a6d3cfe)",
+     "date": "2025-08-19",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b083:tg",
+     "machine": "rtxpro6000",
+     "model": "gpt-oss-120b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 196.31,
+     "estimate": 178.47,
+     "errorPct": -9.09,
+     "build": "b6205 (a6d3cfe)",
+     "date": "2025-08-19",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b089:pp",
+     "machine": "v100pcie",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 3526.65,
+     "estimate": 2537,
+     "errorPct": -28.1,
+     "build": "b6129 (228f724d9)",
+     "date": "2025-08-11",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b089:tg",
+     "machine": "v100pcie",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 117.71,
+     "estimate": 162.03,
+     "errorPct": 37.6,
+     "build": "b6129 (228f724d9)",
+     "date": "2025-08-11",
+     "old": false,
+     "weight": 1
+    }
+   ]
+  },
+  "amd-rocm": {
+   "label": "AMD ROCm (Radeon, Ryzen AI)",
+   "basis": "tflopsSpec",
+   "bwEff": 0.617,
+   "computeEff": 0.3221,
+   "layerMs": 0.006109,
+   "moeLayerMs": 0.03634,
+   "moeComputeEff": 0.9725,
+   "rows": 16,
+   "machines": [
+    "rx7900xtx",
+    "rx9070xt",
+    "r9700",
+    "strixHalo",
+    "rx7900xt"
+   ],
+   "thin": false,
+   "rmsLogError": 0.252,
+   "medianAbsErrorPct": {
+    "pp": 15.3,
+    "tg": 12.6
+   },
+   "used": [
+    {
+     "id": "b123:pp",
+     "machine": "rx7900xtx",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3874.25,
+     "estimate": 2964.7,
+     "errorPct": -23.5,
+     "build": "commit 2f0c2db",
+     "date": "2025-11-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b123:tg",
+     "machine": "rx7900xtx",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 170.12,
+     "estimate": 151.98,
+     "errorPct": -10.7,
+     "build": "commit 2f0c2db",
+     "date": "2025-11-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b124:pp",
+     "machine": "rx9070xt",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 5055.19,
+     "estimate": 4697,
+     "errorPct": -7.09,
+     "build": "commit 583cb83",
+     "date": "2025-11-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b124:tg",
+     "machine": "rx9070xt",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 101.27,
+     "estimate": 102.34,
+     "errorPct": 1.05,
+     "build": "commit 583cb83",
+     "date": "2025-11-25",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b125:pp",
+     "machine": "r9700",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 4443.54,
+     "estimate": 4600.8,
+     "errorPct": 3.54,
+     "build": "commit bd4ef13",
+     "date": "2025-12-04",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b125:tg",
+     "machine": "r9700",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 93.84,
+     "estimate": 102.34,
+     "errorPct": 9.05,
+     "build": "commit bd4ef13",
+     "date": "2025-12-04",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b131:pp",
+     "machine": "strixHalo",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1456.15,
+     "estimate": 1432.6,
+     "errorPct": -1.62,
+     "build": "b11349 (fb4b2737a)",
+     "date": "2026-10-02",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b131:tg",
+     "machine": "strixHalo",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 51.33,
+     "estimate": 41.432,
+     "errorPct": -19.3,
+     "build": "b11349 (fb4b2737a)",
+     "date": "2026-10-02",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b132:pp",
+     "machine": "r9700",
+     "model": "qwen3-32b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 498.66,
+     "estimate": 953.06,
+     "errorPct": 91.1,
+     "build": "b6177 (e2c1bfff)",
+     "date": "2025-08-15",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b132:tg",
+     "machine": "r9700",
+     "model": "qwen3-32b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 24.03,
+     "estimate": 20.293,
+     "errorPct": -15.6,
+     "build": "b6177 (e2c1bfff)",
+     "date": "2025-08-15",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b134:pp",
+     "machine": "rx7900xtx",
+     "model": "gemma3-27b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1008.91,
+     "estimate": 729.55,
+     "errorPct": -27.7,
+     "build": "b5431 (c9c64dee)",
+     "date": "2025-05-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b134:tg",
+     "machine": "rx7900xtx",
+     "model": "gemma3-27b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 32.73,
+     "estimate": 33.887,
+     "errorPct": 3.53,
+     "build": "b5431 (c9c64dee)",
+     "date": "2025-05-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b137:pp",
+     "machine": "rx7900xt",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 2048,
+     "published": 4251.56,
+     "estimate": 4226.9,
+     "errorPct": -0.58,
+     "build": "b6194 (3007baf2)",
+     "date": "2025-08-18",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b137:tg",
+     "machine": "rx7900xt",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 101.92,
+     "estimate": 116.66,
+     "errorPct": 14.5,
+     "build": "b6194 (3007baf2)",
+     "date": "2025-08-18",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b145:pp",
+     "machine": "strixHalo",
+     "model": "gpt-oss-120b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 781.25,
+     "estimate": 1271.6,
+     "errorPct": 62.8,
+     "build": "b7123 (c97c6d965)",
+     "date": "2025-11-21",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b145:tg",
+     "machine": "strixHalo",
+     "model": "gpt-oss-120b",
+     "kind": "tg",
+     "tokens": 16,
+     "published": 51.81,
+     "estimate": 40.147,
+     "errorPct": -22.5,
+     "build": "b7123 (c97c6d965)",
+     "date": "2025-11-21",
+     "old": false,
+     "weight": 1
+    }
+   ]
+  },
+  "amd-rocm-instinct": {
+   "label": "AMD ROCm (Instinct)",
+   "basis": "tflopsSpec",
+   "bwEff": 0.5592,
+   "computeEff": 0.1662,
+   "layerMs": 0.1073,
+   "rows": 4,
+   "machines": [
+    "mi300x",
+    "mi100"
+   ],
+   "thin": true,
+   "rmsLogError": 0.14,
+   "medianAbsErrorPct": {
+    "pp": 20,
+    "tg": 2.06
+   },
+   "used": [
+    {
+     "id": "b121:pp",
+     "machine": "mi300x",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 11945.97,
+     "estimate": 14676,
+     "errorPct": 22.9,
+     "build": "commit ee3a9fc",
+     "date": "2025-08-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b121:tg",
+     "machine": "mi300x",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 218.53,
+     "estimate": 212.34,
+     "errorPct": -2.83,
+     "build": "commit ee3a9fc",
+     "date": "2025-08-05",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b126:pp",
+     "machine": "mi100",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 2732.83,
+     "estimate": 2263.6,
+     "errorPct": -17.2,
+     "build": "commit 9c35706",
+     "date": "2025-08-01",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b126:tg",
+     "machine": "mi100",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 110.48,
+     "estimate": 111.9,
+     "errorPct": 1.28,
+     "build": "commit 9c35706",
+     "date": "2025-08-01",
+     "old": false,
+     "weight": 1
+    }
+   ]
+  },
+  "amd-vulkan": {
+   "label": "AMD Vulkan",
+   "basis": "tflopsSpec",
+   "bwEff": 0.8072,
+   "computeEff": 0.2666,
+   "layerMs": 0.01145,
+   "moeLayerMs": 0.01406,
+   "moeComputeEff": 0.4772,
+   "rows": 18,
+   "machines": [
+    "rx7900xtx",
+    "rx9070xt",
+    "r9700",
+    "strixHalo"
+   ],
+   "thin": false,
+   "rmsLogError": 0.393,
+   "medianAbsErrorPct": {
+    "pp": 30.4,
+    "tg": 3.06
+   },
+   "used": [
+    {
+     "id": "b106:pp",
+     "machine": "rx7900xtx",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 3889.54,
+     "estimate": 2452.3,
+     "errorPct": -37,
+     "build": "commit 304665f",
+     "date": "2026-09-09",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b106:tg",
+     "machine": "rx7900xtx",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 190.92,
+     "estimate": 190.61,
+     "errorPct": -0.161,
+     "build": "commit 304665f",
+     "date": "2026-09-09",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b108:pp",
+     "machine": "rx9070xt",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 5048.07,
+     "estimate": 3883.8,
+     "errorPct": -23.1,
+     "build": "commit e9fd8dc",
+     "date": "2026-01-24",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b108:tg",
+     "machine": "rx9070xt",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 131.54,
+     "estimate": 130.1,
+     "errorPct": -1.09,
+     "build": "commit e9fd8dc",
+     "date": "2026-01-24",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b109:pp",
+     "machine": "r9700",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 5609.82,
+     "estimate": 3804.4,
+     "errorPct": -32.2,
+     "build": "commit dd1ea5243",
+     "date": "2026-08-10",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b109:tg",
+     "machine": "r9700",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 145.67,
+     "estimate": 130.1,
+     "errorPct": -10.7,
+     "build": "commit dd1ea5243",
+     "date": "2026-08-10",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b111:pp",
+     "machine": "strixHalo",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1704.3,
+     "estimate": 1185.4,
+     "errorPct": -30.4,
+     "build": "commit fb4b273",
+     "date": "2026-10-02",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b111:tg",
+     "machine": "strixHalo",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 54.38,
+     "estimate": 53.574,
+     "errorPct": -1.48,
+     "build": "commit fb4b273",
+     "date": "2026-10-02",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b133:pp",
+     "machine": "r9700",
+     "model": "qwen3-32b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 196.9,
+     "estimate": 788.53,
+     "errorPct": 300,
+     "build": "b6177 (e2c1bfff)",
+     "date": "2025-08-15",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b133:tg",
+     "machine": "r9700",
+     "model": "qwen3-32b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 28.2,
+     "estimate": 26.246,
+     "errorPct": -6.93,
+     "build": "b6177 (e2c1bfff)",
+     "date": "2025-08-15",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b135:pp",
+     "machine": "rx7900xtx",
+     "model": "gemma3-27b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 500.3,
+     "estimate": 603.66,
+     "errorPct": 20.7,
+     "build": "b5431 (c9c64dee)",
+     "date": "2025-05-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b135:tg",
+     "machine": "rx7900xtx",
+     "model": "gemma3-27b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 35.25,
+     "estimate": 43.522,
+     "errorPct": 23.5,
+     "build": "b5431 (c9c64dee)",
+     "date": "2025-05-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b136:pp",
+     "machine": "rx9070xt",
+     "model": "qwen2.5-14b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 2039.45,
+     "estimate": 1837.7,
+     "errorPct": -9.89,
+     "build": "b5083 (7538246e)",
+     "date": "2025-04-08",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b136:tg",
+     "machine": "rx9070xt",
+     "model": "qwen2.5-14b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 58.78,
+     "estimate": 61.628,
+     "errorPct": 4.85,
+     "build": "b5083 (7538246e)",
+     "date": "2025-04-08",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b143:pp",
+     "machine": "strixHalo",
+     "model": "gpt-oss-20b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1385.64,
+     "estimate": 1031.8,
+     "errorPct": -25.5,
+     "build": "not stated (Nov 2025)",
+     "date": "2025-11-19",
+     "old": false,
+     "weight": 1,
+     "mapNote": "hardware inferred from the thread"
+    },
+    {
+     "id": "b143:tg",
+     "machine": "strixHalo",
+     "model": "gpt-oss-20b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 77.31,
+     "estimate": 75.985,
+     "errorPct": -1.71,
+     "build": "not stated (Nov 2025)",
+     "date": "2025-11-19",
+     "old": false,
+     "weight": 1,
+     "mapNote": "hardware inferred from the thread"
+    },
+    {
+     "id": "b144:pp",
+     "machine": "strixHalo",
+     "model": "gpt-oss-120b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 539.08,
+     "estimate": 724.77,
+     "errorPct": 34.4,
+     "build": "not stated (Nov 2025)",
+     "date": "2025-11-19",
+     "old": false,
+     "weight": 1,
+     "mapNote": "hardware inferred from the thread"
+    },
+    {
+     "id": "b144:tg",
+     "machine": "strixHalo",
+     "model": "gpt-oss-120b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 54.84,
+     "estimate": 53.164,
+     "errorPct": -3.06,
+     "build": "not stated (Nov 2025)",
+     "date": "2025-11-19",
+     "old": false,
+     "weight": 1,
+     "mapNote": "hardware inferred from the thread"
+    }
+   ]
+  },
+  "intel": {
+   "label": "Intel SYCL / Vulkan",
+   "basis": "tflopsSpec",
+   "bwEff": 0.9293,
+   "computeEff": 0.1238,
+   "layerMs": 0.2339,
+   "rows": 9,
+   "machines": [
+    "arcB580",
+    "arcA770",
+    "lunarLake"
+   ],
+   "thin": false,
+   "rmsLogError": 0.458,
+   "medianAbsErrorPct": {
+    "pp": 45.2,
+    "tg": 15.4
+   },
+   "used": [
+    {
+     "id": "b115:pp",
+     "machine": "arcB580",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 419.49,
+     "estimate": 1063.7,
+     "errorPct": 154,
+     "build": "commit 7f76692",
+     "date": "2025-09-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b115:tg",
+     "machine": "arcB580",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 72,
+     "estimate": 60.945,
+     "errorPct": -15.4,
+     "build": "commit 7f76692",
+     "date": "2025-09-20",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b116:pp",
+     "machine": "arcA770",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1073.85,
+     "estimate": 1425.8,
+     "errorPct": 32.8,
+     "build": "commit a69d54f",
+     "date": "2026-03-18",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b116:tg",
+     "machine": "arcA770",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 52.56,
+     "estimate": 67.791,
+     "errorPct": 29,
+     "build": "commit a69d54f",
+     "date": "2026-03-18",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b150:pp",
+     "machine": "arcB580",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 1954.15,
+     "estimate": 1063.7,
+     "errorPct": -45.6,
+     "build": "commit not stated",
+     "date": "2026-06-14",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b150:tg",
+     "machine": "arcB580",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 83.67,
+     "estimate": 60.945,
+     "errorPct": -27.2,
+     "build": "commit not stated",
+     "date": "2026-06-14",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b151:tg",
+     "machine": "arcA770",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 59.03,
+     "estimate": 67.791,
+     "errorPct": 14.8,
+     "build": "commit 053e01dff",
+     "date": "2026-05-19",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b152:pp",
+     "machine": "lunarLake",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 535.62,
+     "estimate": 295.5,
+     "errorPct": -44.8,
+     "build": "commit 6471e3c",
+     "date": "2026-06-12",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b152:tg",
+     "machine": "lunarLake",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 24.61,
+     "estimate": 26.813,
+     "errorPct": 8.95,
+     "build": "commit 6471e3c",
+     "date": "2026-06-12",
+     "old": false,
+     "weight": 1
+    }
+   ]
+  },
+  "cpu": {
+   "label": "CPU only",
+   "basis": "tflopsSpec",
+   "bwEff": 0.8907,
+   "computeEff": 0.6117,
+   "layerMs": 0.6263,
+   "rows": 6,
+   "machines": [
+    "strix395cpu",
+    "r3950x3600",
+    "r9900x3600"
+   ],
+   "thin": true,
+   "rmsLogError": 0.0701,
+   "medianAbsErrorPct": {
+    "pp": 8.16,
+    "tg": 4.42
+   },
+   "used": [
+    {
+     "id": "b162:pp",
+     "machine": "strix395cpu",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 300.27,
+     "estimate": 276.51,
+     "errorPct": -7.91,
+     "build": "b11349 (fb4b2737a)",
+     "date": "2026-10-02",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b162:tg",
+     "machine": "strix395cpu",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 27.68,
+     "estimate": 27.303,
+     "errorPct": -1.36,
+     "build": "b11349 (fb4b2737a)",
+     "date": "2026-10-02",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b165:pp",
+     "machine": "r3950x3600",
+     "model": "llama2-7b",
+     "kind": "pp",
+     "tokens": 512,
+     "published": 75.84,
+     "estimate": 82.221,
+     "errorPct": 8.41,
+     "build": "b9626 (4988f6e86)",
+     "date": "2026-06-13",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b165:tg",
+     "machine": "r3950x3600",
+     "model": "llama2-7b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 9.57,
+     "estimate": 10.667,
+     "errorPct": 11.5,
+     "build": "b9626 (4988f6e86)",
+     "date": "2026-06-13",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b168:tg",
+     "machine": "r9900x3600",
+     "model": "llama8b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 5.92,
+     "estimate": 5.6971,
+     "errorPct": -3.76,
+     "build": "b6401 (Phoronix Test Suite pts/llama-cpp)",
+     "date": "2025-10-27",
+     "old": false,
+     "weight": 1
+    },
+    {
+     "id": "b169:tg",
+     "machine": "r9900x3600",
+     "model": "qwen3-8b",
+     "kind": "tg",
+     "tokens": 128,
+     "published": 5.87,
+     "estimate": 5.5722,
+     "errorPct": -5.07,
+     "build": "b6401 (Phoronix Test Suite pts/llama-cpp)",
+     "date": "2025-10-27",
+     "old": false,
+     "weight": 1
+    }
+   ]
+  }
+ },
+ "presetsAssumed": [],
+ "excluded": [
+  {
+   "id": "b040:pp",
+   "reason": "model GLM-4.7-Flash (30B-A3B): no configuration to represent it"
+  },
+  {
+   "id": "b040:tg",
+   "reason": "model GLM-4.7-Flash (30B-A3B): no configuration to represent it"
+  },
+  {
+   "id": "b041:pp",
+   "reason": "batch 32: an aggregate over parallel streams"
+  },
+  {
+   "id": "b041:tg",
+   "reason": "batch 32: an aggregate over parallel streams"
+  },
+  {
+   "id": "b042:pp",
+   "reason": "llama-batched-bench: tg after a deep prompt, another protocol"
+  },
+  {
+   "id": "b042:tg",
+   "reason": "llama-batched-bench: tg after a deep prompt, another protocol"
+  },
+  {
+   "id": "b046:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b047:tg",
+   "reason": "engine Ollama"
+  },
+  {
+   "id": "b048:tg",
+   "reason": "engine mlx-lm"
+  },
+  {
+   "id": "b049:tg",
+   "reason": "engine rapid-mlx"
+  },
+  {
+   "id": "b050:tg",
+   "reason": "engine Ollama (MLX engine)"
+  },
+  {
+   "id": "b051:pp",
+   "reason": "engine mlx-lm"
+  },
+  {
+   "id": "b051:tg",
+   "reason": "engine mlx-lm"
+  },
+  {
+   "id": "b052:tg",
+   "reason": "engine mlx-lm"
+  },
+  {
+   "id": "b056:pp",
+   "reason": "SXM or PCIe not stated (3350 vs 2000 GB/s)"
+  },
+  {
+   "id": "b056:tg",
+   "reason": "SXM or PCIe not stated (3350 vs 2000 GB/s)"
+  },
+  {
+   "id": "b057:pp",
+   "reason": "SXM or PCIe not stated (3350 vs 2000 GB/s)"
+  },
+  {
+   "id": "b057:tg",
+   "reason": "SXM or PCIe not stated (3350 vs 2000 GB/s)"
+  },
+  {
+   "id": "b068:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b068:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b072:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b072:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b077:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b077:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b078:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b078:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b079:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b079:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b080:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b080:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b081:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b081:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b084:pp",
+   "reason": "power-limited Max-Q variant"
+  },
+  {
+   "id": "b084:tg",
+   "reason": "power-limited Max-Q variant"
+  },
+  {
+   "id": "b094:pp",
+   "reason": "model GLM-4.7-Flash (30B-A3B): no configuration to represent it"
+  },
+  {
+   "id": "b094:tg",
+   "reason": "model GLM-4.7-Flash (30B-A3B): no configuration to represent it"
+  },
+  {
+   "id": "b095:pp",
+   "reason": "llama-batched-bench: tg after a deep prompt, another protocol"
+  },
+  {
+   "id": "b095:tg",
+   "reason": "llama-batched-bench: tg after a deep prompt, another protocol"
+  },
+  {
+   "id": "b096:pp",
+   "reason": "batch 32: an aggregate over parallel streams"
+  },
+  {
+   "id": "b096:tg",
+   "reason": "batch 32: an aggregate over parallel streams"
+  },
+  {
+   "id": "b097:pp",
+   "reason": "llama-batched-bench: tg after a deep prompt, another protocol"
+  },
+  {
+   "id": "b097:tg",
+   "reason": "llama-batched-bench: tg after a deep prompt, another protocol"
+  },
+  {
+   "id": "b098:pp",
+   "reason": "batch 32: an aggregate over parallel streams"
+  },
+  {
+   "id": "b098:tg",
+   "reason": "batch 32: an aggregate over parallel streams"
+  },
+  {
+   "id": "b101:pp",
+   "reason": "backend Vulkan on NVIDIA: outside the fitted families"
+  },
+  {
+   "id": "b101:tg",
+   "reason": "backend Vulkan on NVIDIA: outside the fitted families"
+  },
+  {
+   "id": "b102:pp",
+   "reason": "backend Vulkan on NVIDIA: outside the fitted families"
+  },
+  {
+   "id": "b102:tg",
+   "reason": "backend Vulkan on NVIDIA: outside the fitted families"
+  },
+  {
+   "id": "b103:pp",
+   "reason": "backend Vulkan on NVIDIA: outside the fitted families"
+  },
+  {
+   "id": "b103:tg",
+   "reason": "backend Vulkan on NVIDIA: outside the fitted families"
+  },
+  {
+   "id": "b104:pp",
+   "reason": "backend Vulkan on NVIDIA: outside the fitted families"
+  },
+  {
+   "id": "b104:tg",
+   "reason": "backend Vulkan on NVIDIA: outside the fitted families"
+  },
+  {
+   "id": "b112:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b112:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b113:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b113:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b117:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b117:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b118:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b118:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b119:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b119:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b127:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b127:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b138:pp",
+   "reason": "two GPUs"
+  },
+  {
+   "id": "b138:tg",
+   "reason": "two GPUs"
+  },
+  {
+   "id": "b139:pp",
+   "reason": "a best-of-backends summary table, not raw llama-bench output"
+  },
+  {
+   "id": "b139:tg",
+   "reason": "a best-of-backends summary table, not raw llama-bench output"
+  },
+  {
+   "id": "b140:pp",
+   "reason": "a best-of-backends summary table, not raw llama-bench output"
+  },
+  {
+   "id": "b140:tg",
+   "reason": "a best-of-backends summary table, not raw llama-bench output"
+  },
+  {
+   "id": "b141:pp",
+   "reason": "a best-of-backends summary table, not raw llama-bench output"
+  },
+  {
+   "id": "b141:tg",
+   "reason": "a best-of-backends summary table, not raw llama-bench output"
+  },
+  {
+   "id": "b142:pp",
+   "reason": "a best-of-backends summary table, not raw llama-bench output"
+  },
+  {
+   "id": "b142:tg",
+   "reason": "a best-of-backends summary table, not raw llama-bench output"
+  },
+  {
+   "id": "b146:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b146:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b147:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b147:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b148:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b148:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b149:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b149:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b151:pp",
+   "reason": "SYCL fp32 build: about a third of the fp16 build's prompt speed, a build option"
+  },
+  {
+   "id": "b153:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b153:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b154:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b154:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b155:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b155:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b156:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b156:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b157:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b157:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b158:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b158:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b159:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b159:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b160:pp",
+   "reason": "the source flags its tg as suspect (host or driver)"
+  },
+  {
+   "id": "b160:tg",
+   "reason": "the source flags its tg as suspect (host or driver)"
+  },
+  {
+   "id": "b161:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b161:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b163:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b163:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b164:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b164:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b166:pp",
+   "reason": "runs in a virtual machine"
+  },
+  {
+   "id": "b166:tg",
+   "reason": "runs in a virtual machine"
+  },
+  {
+   "id": "b167:pp",
+   "reason": "runs in a virtual machine"
+  },
+  {
+   "id": "b167:tg",
+   "reason": "runs in a virtual machine"
+  },
+  {
+   "id": "b170:tg",
+   "reason": "model gpt-oss-20b (Q8_0 file): no configuration to represent it"
+  },
+  {
+   "id": "b171:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b172:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b173:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b173:tg",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b174:pp",
+   "reason": "hardware not in the catalogue"
+  },
+  {
+   "id": "b174:tg",
+   "reason": "hardware not in the catalogue"
+  }
+ ],
+ "superseded": [
+  {
+   "id": "b008:pp",
+   "by": "b027:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b008:tg",
+   "by": "b027:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b031:pp",
+   "by": "b036:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b032:pp",
+   "by": "b037:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b053:pp",
+   "by": "b054:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b053:tg",
+   "by": "b054:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b059:pp",
+   "by": "b060:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b059:tg",
+   "by": "b060:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b070:pp",
+   "by": "b071:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b070:tg",
+   "by": "b071:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b063:pp",
+   "by": "b073:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b063:tg",
+   "by": "b073:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b073:pp",
+   "by": "b074:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b073:tg",
+   "by": "b074:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b099:pp",
+   "by": "b090:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b099:tg",
+   "by": "b090:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b071:pp",
+   "by": "b100:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b071:tg",
+   "by": "b100:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b105:pp",
+   "by": "b106:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b105:tg",
+   "by": "b106:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b107:pp",
+   "by": "b108:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b107:tg",
+   "by": "b108:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b110:pp",
+   "by": "b111:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b110:tg",
+   "by": "b111:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b114:pp",
+   "by": "b115:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b114:tg",
+   "by": "b115:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b120:pp",
+   "by": "b121:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b120:tg",
+   "by": "b121:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b122:pp",
+   "by": "b123:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b122:tg",
+   "by": "b123:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b129:pp",
+   "by": "b128:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b129:tg",
+   "by": "b128:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b128:pp",
+   "by": "b130:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b128:tg",
+   "by": "b130:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b130:pp",
+   "by": "b131:pp",
+   "reason": "superseded by a newer build or flash attention on"
+  },
+  {
+   "id": "b130:tg",
+   "by": "b131:tg",
+   "reason": "superseded by a newer build or flash attention on"
+  }
+ ]
+}

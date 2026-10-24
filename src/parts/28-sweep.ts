@@ -14,7 +14,7 @@ function fitsRow(mk, mo, q) {
   // the same thresholds as the alerts: does not fit in RAM (critical), part on the CPU or spilling past VRAM (caution)
   const fit = uni ? (need + sys > mc.ramGB ? 'no' : mk !== 'thinkpadCpu' && need > mc.fastGB ? 'tight' : 'yes')
     : r.pl.fastShare < .999 ? (r.pl.ramFits ? 'tight' : 'no') : 'yes';
-  const over = (mc.layerMs * m.layers) / 1000 / r.mid.seconds, inten = (2 * m.readParams) / (r.mid.bytesGB * 1e9), bal = (mc.tflops * 1e12) / (mc.bw * 1e9) / mc.bwEff;
+  const over = (layerMsOf(mc, m) * m.layers) / 1000 / r.mid.seconds, inten = (2 * m.readParams) / (r.mid.bytesGB * 1e9), bal = (mc.tflops * 1e12) / (mc.bw * 1e9) / mc.bwEff;
   const bound = !uni && r.pl.fastShare < .999 ? 'spill' : over > .5 ? 'over' : inten < bal ? 'mem' : 'comp';
   return { mk, mo, q, mc, m, need, has, fit, ttft: r.ttft, tps: r.tps, bound, cal: mk === 'thinkpad' || !!CALIB[mk] };
 }
