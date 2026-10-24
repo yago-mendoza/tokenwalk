@@ -30,6 +30,62 @@ You pick a machine, a model and a prompt; tokenwalk plays the request pass by pa
 
 <p align="center"><a href="https://infraphysics.net/playgrounds/7148293/tokenwalk"><b>Open it in the browser</b></a>: nothing to install, it runs in the page.</p>
 
+## A tour
+
+One screen, four zones that never scroll: **Setup** on the left, the **Observatory** in the middle, **Monitor** on the right and **Playback** along the bottom. The numbers on the zone headers are the order to read them in the first time. The full walkthrough is on the [project page](https://infraphysics.net/lab/projects/llm-inference-console).
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/system-prefill.webp" width="900" alt="The whole console during prefill"><br><sub>During prefill. The setup is locked while a run plays; only sampling stays live.</sub></p>
+
+### Setup
+
+The machine, the model and its quantization, the request in tokens, the engine (`num_ctx`, KV type, `keep_alive`), sampling, and caches and speculation; above them, the context window and how it is shared. Scenarios set everything in one click (the default machine, a dense 27B, an RTX 5090, a model that does not fit, a 128k context, a cold start). A setup that cannot run says so before you press play, and offers fixes that do fit.
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/loadout-problem.webp" width="900" alt="A setup that does not fit, with fixes"><br><sub>A setup that cannot run says so before you press play, with one-click fixes.</sub></p>
+
+### Observatory: four views of the same instant
+
+- **System**: the board to scale: memory chips and their cells, the SSD, the CPU, NPU and the GPU's compute units, and the bytes moving over the bus.
+- **Model**: a grid with tokens across and layers up, where attention rows keep their keys and values and DeltaNet rows fold everything into one fixed state; or one layer's matrices to scale, with its operations in order and the experts this token woke.
+- **Memory**: the whole RAM with every part named, then the KV cache as a grid, then a magnifier on single tokens.
+- **Tokens**: the prompt as it is read, the answer as it is written, and for any word, how it was chosen.
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/model-grid.webp" width="900" alt="The Model view as a grid during decode"><br><sub>The grid during decode: the KV cache is the left side of every attention row.</sub></p>
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/model-matrices.webp" width="900" alt="The matrices of one layer to scale"><br><sub>One layer: what it reads, in what order, and which experts this token woke.</sub></p>
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/memory.webp" width="900" alt="The Memory view"><br><sub>From 64 GB down to one token, in three steps on one screen.</sub></p>
+
+### Monitor
+
+Time to the first token, writing speed, memory against what the machine has, and the bottleneck right now; alerts with a severity column, worst first; and trends over the whole run.
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/monitor.webp" width="900" alt="Monitor during decode"><br><sub>Monitor during decode.</sub></p>
+
+### Down to one number
+
+Every size on screen is a count times the size below it. Click a matrix and it opens to scale; click a row and it becomes a dot product; click a weight and you see its bits. Each close-up ends with the chain: one weight, one row, the matrix, the layer, the model.
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/zoom-bits.webp" width="900" alt="One weight and its bits"><br><sub>One weight, and the chain of multiplications that builds every size from it.</sub></p>
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/zoom-row.webp" width="900" alt="The dot product of one row"><br><sub>One row of one matrix: what every weight costs, and why decode waits on memory.</sub></p>
+
+### Everything opens an explainer
+
+Hover names a thing; a click explains it: what it is, why it matters, what changes it, its live values, where to see it in another view, where to change it, and the wiki notes behind it. A written token opens its sampling chain: softmax, temperature, top-k, top-p.
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/explainer.webp" width="900" alt="The KV cache explainer"><br><sub>The KV cache explainer: live values, the idea, and the links out.</sub></p>
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/tokens-chain.webp" width="900" alt="The sampling chain of one token"><br><sub>How one word was chosen, stage by stage.</sub></p>
+
+### A real run next to the estimate
+
+Switch to **Real machine** and the same request goes to your Ollama or llama.cpp; the views follow it as the tokens arrive, and the measured numbers sit beside the estimate, with a button that calibrates one to the other. Setup is below, in [Connecting a real server](#connecting-a-real-server).
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/live-connected.webp" width="900" alt="Connected to a local Ollama"><br><sub>Connected to a local Ollama.</sub></p>
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/live-measured.webp" width="900" alt="Estimate against measurement after a real run"><br><sub>After a real run: the estimate, the measurement, and the button that calibrates one to the other.</sub></p>
+
+
 ## Running it
 
 To just use it, open **[infraphysics.net/playgrounds/7148293/tokenwalk](https://infraphysics.net/playgrounds/7148293/tokenwalk)**. To work on it locally:
