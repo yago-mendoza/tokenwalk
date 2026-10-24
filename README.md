@@ -50,7 +50,7 @@ Where it earns its place:
 - **When a decision needs to travel.** A link opens the exact setup and moment, so a review starts from the same picture instead of a description of it.
 - **When the estimate meets reality.** Connect your own server and the measurement lands next to the prediction.
 
-It is deliberately focused: one request, one machine, end to end. Every number says whether it is measured, estimated or illustrative.
+It is deliberately focused: one request on one machine, followed from the disk to the last token. Every number says whether it is measured, estimated or illustrative.
 
 ## A tour
 

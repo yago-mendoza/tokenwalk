@@ -205,7 +205,7 @@ function loadLayout() { try { if (localStorage.getItem('llmc.noFoot') === '1') d
 function applyText() {
   document.querySelectorAll('[data-t]').forEach(el => { el.textContent = T(el.dataset.t); });
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ICON(el.dataset.ic, el.dataset.ic === 'chev' ? 's' : ''); });
-  document.title = `tokenwalk · ${T('title')}`; document.documentElement.lang = lang;
+  document.title = `TokenWalk — ${T('title')}`; document.documentElement.lang = lang;
   $('gear').innerHTML = ICON('settings'); $('gear').title = L('Settings', 'Ajustes'); $('helpBtn').innerHTML = ICON('help'); $('helpBtn').title = L('Wizard (?)', 'Wizard (?)');
   $('monBtn').innerHTML = `${ICON('eq', 's')}<span>${esc(L('Monitor', 'Monitor'))}</span>`; $('monClose').innerHTML = ICON('close', 's');
   $('stop').innerHTML = ICON('stop'); $('stop').title = L('Stop and back to the start', 'Parar y volver al principio');

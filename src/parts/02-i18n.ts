@@ -1,6 +1,6 @@
 // ===== Language =====
 const STR = {
-  title: ['One request, end to end', 'Una petición, de principio a fin'],
+  title: ['LLM inference workbench', 'banco de pruebas de inferencia LLM'],
   zCfg: ['Setup', 'Configuración'], zRun: ['Playback', 'Ejecución'], zWatch: ['Observatory', 'Observatorio'], zMon: ['Monitor', 'Monitor'],
   secAlerts: ['Alerts', 'Alertas'], secInst: ['Trends', 'Tendencias'], secInstSub: ['solid to now · faint ahead', 'sólido hasta ahora · tenue por delante'], logT: ['Event history', 'Historial de eventos'], lsBand: ['Explainer', 'Explicación'], chainT: ['Sampling chain', 'Cadena de muestreo'], fsT: ['Use full screen', 'Usa pantalla completa'], fsS: ['The console is built for the whole screen. In a smaller window some panels get cramped and parts may not display well. Press F11 (Fn+F11 on many laptops), or go full screen here.', 'La consola está hecha para la pantalla entera. En una ventana más pequeña algunos paneles quedan apretados y hay partes que pueden verse mal. Pulsa F11 (Fn+F11 en muchos portátiles), o ponla a pantalla completa aquí.'], tlScaleL: ['Timeline', 'Línea de tiempo'], scaleT: ['Size ladder', 'Escalera de tamaños'],
   scenarios: ['Scenarios', 'Escenarios'], fits: ['What fits', 'Qué cabe'], shareT: ['Share a measurement', 'Compartir una medida'], aMachine: ['Machine', 'Máquina'], aModel: ['Model and weights', 'Modelo y pesos'],
