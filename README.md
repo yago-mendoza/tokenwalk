@@ -1,7 +1,3 @@
-<p align="center">
-  <a href="https://infraphysics.net/lab/projects/llm-inference-console"><img src="docs/assets/infraphysics.svg" width="72" alt="InfraPhysics"></a>
-</p>
-
 <p align="center"><img src="docs/assets/tokenwalk-banner.svg" width="760" alt="tokenwalk"></p>
 
 <p align="center">
