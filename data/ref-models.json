@@ -1,57 +1,91 @@
 {
- "schema": "tokenwalk-ref-models/1",
+ "schema": "tokenwalk-ref-models/2",
  "compiled": "2026-10-24",
- "about": "Models the published benchmarks use, as their published configurations give them (Hugging Face config.json). modelFromConfig() (src/parts/01c-catalogue.ts) turns one into a model preset: total and read-per-token weights are computed from the dimensions, and checked against the published parameter count (publishedParams). Not shown in the app; tools/fit-families.mjs and tools/accuracy.mjs use them. 'llama8b' is the app's own Llama 3.1 8B preset.",
+ "about": "The model catalogue: models as their published configurations give them (Hugging Face config.json, text model only). modelFromConfig() (src/parts/01c-catalogue.ts) turns one into a model preset: total and read-per-token weights are computed from the dimensions, and checked against the published parameter count (publishedParams, of the text model: visionParams, the vision encoder and projector a multimodal checkpoint also carries, is left out, as a GGUF keeps it in a separate mmproj file). Baked into the page (tools/baked.mjs) as presets next to the app's own four (src/parts/01-data.ts, MODELS), shown in the Loadout and What fits; tools/fit-families.mjs and tools/accuracy.mjs use the ones the published benchmarks ran. 'llama8b' is the app's own Llama 3.1 8B preset. vendor and family group the Loadout's filter; tag is the Ollama name. expertBpw: the routed experts are stored at this width in every file, whatever the label (gpt-oss: MXFP4). Gated repositories (Meta, Google) do not serve config.json without a sign-in: their dimensions come from an ungated copy (configCopy) and are checked against the parameter count the official repository publishes, which they reproduce exactly. notes: what the model's own schema cannot express, or worth knowing; approx: the notes describe an approximation the estimate makes (sliding-window layers treated as full attention), which the card marks.",
  "models": {
   "llama2-7b": {
-   "name": "Llama 2 7B", "hidden": 4096, "layers": 32, "qHeads": 32, "kvHeads": 32, "headDim": 128, "ffn": 11008, "vocab": 32000, "tied": false, "ctxMax": 4096,
-   "publishedParams": 6.74e9, "source": "https://huggingface.co/meta-llama/Llama-2-7b-hf/blob/main/config.json"
+   "name": "Llama 2 7B", "vendor": "Meta", "family": "Llama 2", "tag": "llama2:7b", "hidden": 4096, "layers": 32, "qHeads": 32, "kvHeads": 32, "headDim": 128, "ffn": 11008, "vocab": 32000, "tied": false, "ctxMax": 4096,
+   "publishedParams": 6.74e9, "source": "https://huggingface.co/meta-llama/Llama-2-7b-hf/blob/main/config.json", "asOf": "2026-10-24"
   },
-  "qwen2.5-7b": {
-   "name": "Qwen2.5 7B (and Coder 7B)", "hidden": 3584, "layers": 28, "qHeads": 28, "kvHeads": 4, "headDim": 128, "ffn": 18944, "vocab": 152064, "tied": false, "ctxMax": 32768,
-   "publishedParams": 7.61e9, "source": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B/blob/main/config.json"
-  },
-  "qwen2.5-14b": {
-   "name": "Qwen2.5 14B", "hidden": 5120, "layers": 48, "qHeads": 40, "kvHeads": 8, "headDim": 128, "ffn": 13824, "vocab": 152064, "tied": false, "ctxMax": 32768,
-   "publishedParams": 14.7e9, "source": "https://huggingface.co/Qwen/Qwen2.5-14B/blob/main/config.json"
-  },
-  "qwen3-8b": {
-   "name": "Qwen3 8B", "hidden": 4096, "layers": 36, "qHeads": 32, "kvHeads": 8, "headDim": 128, "ffn": 12288, "vocab": 151936, "tied": false, "ctxMax": 40960,
-   "publishedParams": 8.19e9, "source": "https://huggingface.co/Qwen/Qwen3-8B/blob/main/config.json"
-  },
-  "qwen3-14b": {
-   "name": "Qwen3 14B", "hidden": 5120, "layers": 40, "qHeads": 40, "kvHeads": 8, "headDim": 128, "ffn": 17408, "vocab": 151936, "tied": false, "ctxMax": 40960,
-   "publishedParams": 14.8e9, "source": "https://huggingface.co/Qwen/Qwen3-14B/blob/main/config.json"
-  },
-  "qwen3-32b": {
-   "name": "Qwen3 32B", "hidden": 5120, "layers": 64, "qHeads": 64, "kvHeads": 8, "headDim": 128, "ffn": 25600, "vocab": 151936, "tied": false, "ctxMax": 40960,
-   "publishedParams": 32.8e9, "source": "https://huggingface.co/Qwen/Qwen3-32B/blob/main/config.json"
-  },
-  "qwen3-30b-a3b": {
-   "name": "Qwen3 30B-A3B (and Coder 30B-A3B)", "hidden": 2048, "layers": 48, "qHeads": 32, "kvHeads": 4, "headDim": 128, "vocab": 151936, "tied": false, "ctxMax": 40960,
-   "experts": 128, "expertsUsed": 8, "expertFfn": 768, "sharedExperts": 0,
-   "publishedParams": 30.5e9, "publishedActive": 3.3e9, "source": "https://huggingface.co/Qwen/Qwen3-30B-A3B/blob/main/config.json"
-  },
-  "gemma3-27b": {
-   "name": "Gemma 3 27B", "hidden": 5376, "layers": 62, "qHeads": 32, "kvHeads": 16, "headDim": 128, "ffn": 21504, "vocab": 262208, "tied": true, "ctxMax": 131072,
-   "publishedParams": 27.0e9, "source": "https://huggingface.co/google/gemma-3-27b-it/blob/main/config.json",
-   "notes": "Five of every six layers attend over a 1,024-token sliding window; the model treats all layers as full attention, which only matters at long context."
-  },
-  "gpt-oss-20b": {
-   "name": "gpt-oss-20b", "hidden": 2880, "layers": 24, "qHeads": 64, "kvHeads": 8, "headDim": 64, "vocab": 201088, "tied": false, "ctxMax": 131072,
-   "experts": 32, "expertsUsed": 4, "expertFfn": 2880, "sharedExperts": 0,
-   "publishedParams": 20.9e9, "publishedActive": 3.6e9, "source": "https://huggingface.co/openai/gpt-oss-20b/blob/main/config.json",
-   "notes": "Experts are MXFP4 (4.25 bits), attention and embeddings wider; one average bits-per-weight from the file size under-counts the bytes a token reads."
-  },
-  "gpt-oss-120b": {
-   "name": "gpt-oss-120b", "hidden": 2880, "layers": 36, "qHeads": 64, "kvHeads": 8, "headDim": 64, "vocab": 201088, "tied": false, "ctxMax": 131072,
-   "experts": 128, "expertsUsed": 4, "expertFfn": 2880, "sharedExperts": 0,
-   "publishedParams": 116.8e9, "publishedActive": 5.1e9, "source": "https://huggingface.co/openai/gpt-oss-120b/blob/main/config.json",
-   "notes": "As gpt-oss-20b: MXFP4 experts, wider attention and embeddings."
+  "llama3.2-3b": {
+   "name": "Llama 3.2 3B", "vendor": "Meta", "family": "Llama 3", "tag": "llama3.2:3b", "hidden": 3072, "layers": 28, "qHeads": 24, "kvHeads": 8, "headDim": 128, "ffn": 8192, "vocab": 128256, "tied": true, "ctxMax": 131072,
+   "publishedParams": 3212749824, "source": "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct/blob/main/config.json", "configCopy": "https://huggingface.co/unsloth/Llama-3.2-3B-Instruct/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "Tied embeddings: the output head is the embedding table."
   },
   "llama3.1-70b": {
-   "name": "Llama 3.1 70B", "hidden": 8192, "layers": 80, "qHeads": 64, "kvHeads": 8, "headDim": 128, "ffn": 28672, "vocab": 128256, "tied": false, "ctxMax": 131072,
-   "publishedParams": 70.6e9, "source": "https://huggingface.co/meta-llama/Llama-3.1-70B/blob/main/config.json"
+   "name": "Llama 3.1 70B", "vendor": "Meta", "family": "Llama 3", "tag": "llama3.1:70b", "hidden": 8192, "layers": 80, "qHeads": 64, "kvHeads": 8, "headDim": 128, "ffn": 28672, "vocab": 128256, "tied": false, "ctxMax": 131072,
+   "publishedParams": 70.6e9, "source": "https://huggingface.co/meta-llama/Llama-3.1-70B/blob/main/config.json", "asOf": "2026-10-24"
+  },
+  "llama3.3-70b": {
+   "name": "Llama 3.3 70B", "vendor": "Meta", "family": "Llama 3", "tag": "llama3.3:70b", "hidden": 8192, "layers": 80, "qHeads": 64, "kvHeads": 8, "headDim": 128, "ffn": 28672, "vocab": 128256, "tied": false, "ctxMax": 131072,
+   "publishedParams": 70553706496, "source": "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct/blob/main/config.json", "configCopy": "https://huggingface.co/unsloth/Llama-3.3-70B-Instruct/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "The same dimensions as Llama 3.1 70B."
+  },
+  "qwen2.5-7b": {
+   "name": "Qwen2.5 7B (and Coder 7B)", "vendor": "Qwen", "family": "Qwen2.5", "tag": "qwen2.5:7b", "hidden": 3584, "layers": 28, "qHeads": 28, "kvHeads": 4, "headDim": 128, "ffn": 18944, "vocab": 152064, "tied": false, "ctxMax": 32768,
+   "publishedParams": 7.61e9, "source": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B/blob/main/config.json", "asOf": "2026-10-24"
+  },
+  "qwen2.5-14b": {
+   "name": "Qwen2.5 14B", "vendor": "Qwen", "family": "Qwen2.5", "tag": "qwen2.5:14b", "hidden": 5120, "layers": 48, "qHeads": 40, "kvHeads": 8, "headDim": 128, "ffn": 13824, "vocab": 152064, "tied": false, "ctxMax": 32768,
+   "publishedParams": 14.7e9, "source": "https://huggingface.co/Qwen/Qwen2.5-14B/blob/main/config.json", "asOf": "2026-10-24"
+  },
+  "qwen2.5-32b": {
+   "name": "Qwen2.5 32B", "vendor": "Qwen", "family": "Qwen2.5", "tag": "qwen2.5:32b", "hidden": 5120, "layers": 64, "qHeads": 40, "kvHeads": 8, "headDim": 128, "ffn": 27648, "vocab": 152064, "tied": false, "ctxMax": 32768,
+   "publishedParams": 32763876352, "source": "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "DeepSeek-R1-Distill-Qwen-32B has the same dimensions (https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B/blob/main/config.json), with 131,072 positions; Qwen2.5 32B Instruct states 32,768 (131,072 with YaRN)."
+  },
+  "qwen3-8b": {
+   "name": "Qwen3 8B", "vendor": "Qwen", "family": "Qwen3", "tag": "qwen3:8b", "hidden": 4096, "layers": 36, "qHeads": 32, "kvHeads": 8, "headDim": 128, "ffn": 12288, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "publishedParams": 8.19e9, "source": "https://huggingface.co/Qwen/Qwen3-8B/blob/main/config.json", "asOf": "2026-10-24"
+  },
+  "qwen3-14b": {
+   "name": "Qwen3 14B", "vendor": "Qwen", "family": "Qwen3", "tag": "qwen3:14b", "hidden": 5120, "layers": 40, "qHeads": 40, "kvHeads": 8, "headDim": 128, "ffn": 17408, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "publishedParams": 14.8e9, "source": "https://huggingface.co/Qwen/Qwen3-14B/blob/main/config.json", "asOf": "2026-10-24"
+  },
+  "qwen3-32b": {
+   "name": "Qwen3 32B", "vendor": "Qwen", "family": "Qwen3", "tag": "qwen3:32b", "hidden": 5120, "layers": 64, "qHeads": 64, "kvHeads": 8, "headDim": 128, "ffn": 25600, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "publishedParams": 32.8e9, "source": "https://huggingface.co/Qwen/Qwen3-32B/blob/main/config.json", "asOf": "2026-10-24"
+  },
+  "qwen3-30b-a3b": {
+   "name": "Qwen3 30B-A3B (and Coder 30B-A3B)", "vendor": "Qwen", "family": "Qwen3", "tag": "qwen3:30b-a3b", "hidden": 2048, "layers": 48, "qHeads": 32, "kvHeads": 4, "headDim": 128, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "experts": 128, "expertsUsed": 8, "expertFfn": 768, "sharedExperts": 0,
+   "publishedParams": 30.5e9, "publishedActive": 3.3e9, "source": "https://huggingface.co/Qwen/Qwen3-30B-A3B/blob/main/config.json", "asOf": "2026-10-24"
+  },
+  "gemma3-4b": {
+   "name": "Gemma 3 4B", "approx": true, "vendor": "Google", "family": "Gemma 3", "tag": "gemma3:4b", "hidden": 2560, "layers": 34, "qHeads": 8, "kvHeads": 4, "headDim": 256, "ffn": 10240, "vocab": 262208, "tied": true, "ctxMax": 131072,
+   "publishedParams": 3880263168, "visionParams": 419816304, "source": "https://huggingface.co/google/gemma-3-4b-it/blob/main/config.json", "configCopy": "https://huggingface.co/unsloth/gemma-3-4b-it/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "Five of every six layers attend over a 1,024-token sliding window; the model treats every layer as full attention, so it over-counts the KV cache at long context (llama.cpp keeps only the window for those layers). The SigLIP vision encoder (0.42B) is left out."
+  },
+  "gemma3-12b": {
+   "name": "Gemma 3 12B", "approx": true, "vendor": "Google", "family": "Gemma 3", "tag": "gemma3:12b", "hidden": 3840, "layers": 48, "qHeads": 16, "kvHeads": 8, "headDim": 256, "ffn": 15360, "vocab": 262208, "tied": true, "ctxMax": 131072,
+   "publishedParams": 11766034176, "visionParams": 421290864, "source": "https://huggingface.co/google/gemma-3-12b-it/blob/main/config.json", "configCopy": "https://huggingface.co/unsloth/gemma-3-12b-it/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "Five of every six layers attend over a 1,024-token sliding window; the model treats every layer as full attention, so it over-counts the KV cache at long context (llama.cpp keeps only the window for those layers). The SigLIP vision encoder (0.42B) is left out."
+  },
+  "gemma3-27b": {
+   "name": "Gemma 3 27B", "approx": true, "vendor": "Google", "family": "Gemma 3", "tag": "gemma3:27b", "hidden": 5376, "layers": 62, "qHeads": 32, "kvHeads": 16, "headDim": 128, "ffn": 21504, "vocab": 262208, "tied": true, "ctxMax": 131072,
+   "publishedParams": 27.0e9, "source": "https://huggingface.co/google/gemma-3-27b-it/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "Five of every six layers attend over a 1,024-token sliding window; the model treats every layer as full attention, so it over-counts the KV cache at long context (llama.cpp keeps only the window for those layers). The SigLIP vision encoder (0.42B) is left out."
+  },
+  "mistral-small3.2-24b": {
+   "name": "Mistral Small 3.2 24B", "vendor": "Mistral AI", "family": "Mistral Small", "tag": "mistral-small3.2:24b", "hidden": 5120, "layers": 40, "qHeads": 32, "kvHeads": 8, "headDim": 128, "ffn": 32768, "vocab": 131072, "tied": false, "ctxMax": 131072,
+   "publishedParams": 23572403200, "visionParams": 438958080, "source": "https://huggingface.co/mistralai/Mistral-Small-3.2-24B-Instruct-2506/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "The text model (text_config); Mistral Small 3.1 (2503) has the same one. The Pixtral vision encoder and projector (0.44B) are left out. No sliding window."
+  },
+  "phi4-14b": {
+   "name": "Phi-4 14B", "vendor": "Microsoft", "family": "Phi-4", "tag": "phi4:14b", "hidden": 5120, "layers": 40, "qHeads": 40, "kvHeads": 10, "headDim": 128, "ffn": 17920, "vocab": 100352, "tied": false, "ctxMax": 16384,
+   "publishedParams": 14659507200, "source": "https://huggingface.co/microsoft/phi-4/blob/main/config.json", "asOf": "2026-10-24"
+  },
+  "gpt-oss-20b": {
+   "name": "gpt-oss-20b", "approx": true, "vendor": "OpenAI", "family": "gpt-oss", "tag": "gpt-oss:20b", "hidden": 2880, "layers": 24, "qHeads": 64, "kvHeads": 8, "headDim": 64, "vocab": 201088, "tied": false, "ctxMax": 131072,
+   "experts": 32, "expertsUsed": 4, "expertFfn": 2880, "sharedExperts": 0, "expertBpw": 4.25,
+   "publishedParams": 20.9e9, "publishedActive": 3.6e9, "source": "https://huggingface.co/openai/gpt-oss-20b/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "Experts are MXFP4 (4.25 bits) in every file, whatever its label; the label sets attention, router and embeddings. Every other layer attends over a 128-token sliding window, with learned attention sinks: the model treats every layer as full attention, so it over-counts the KV cache at long context."
+  },
+  "gpt-oss-120b": {
+   "name": "gpt-oss-120b", "approx": true, "vendor": "OpenAI", "family": "gpt-oss", "tag": "gpt-oss:120b", "hidden": 2880, "layers": 36, "qHeads": 64, "kvHeads": 8, "headDim": 64, "vocab": 201088, "tied": false, "ctxMax": 131072,
+   "experts": 128, "expertsUsed": 4, "expertFfn": 2880, "sharedExperts": 0, "expertBpw": 4.25,
+   "publishedParams": 116.8e9, "publishedActive": 5.1e9, "source": "https://huggingface.co/openai/gpt-oss-120b/blob/main/config.json", "asOf": "2026-10-24",
+   "notes": "As gpt-oss-20b: MXFP4 experts in every file, the label sets the rest; every other layer a 128-token sliding window, treated as full attention."
   }
  }
 }

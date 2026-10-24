@@ -9,7 +9,8 @@ import { bakedData } from './tools/baked.mjs';
 // with the stylesheet, into index.html, so every build is one self-contained page with no runtime dependencies.
 // Baked into the page: the build (package version and git commit, which a shared measurement carries) and the
 // accepted measurements (data/measurements.json, written by tools/ingest-measurements.mjs), which What fits shows,
-// and the machine catalogue with its per-family calibration (tools/baked.mjs: data/machines.json, data/calibration.json).
+// and the machine and model catalogues with the per-family calibration (tools/baked.mjs: data/machines.json, data/calibration.json,
+// data/ref-models.json).
 function baked() {
   let commit = ''; try { commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch (e) {}
   const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
@@ -30,7 +31,7 @@ function oneScript(): Plugin {
       return html.replace('<!-- tokenwalk:style -->', () => `<style>\n${css}</style>`).replace('<!-- tokenwalk:script -->', () => `<script>\n${code}</script>`);
     },
     handleHotUpdate({ file, server }) {
-      if (/(src[\/](parts[\/].*\.ts|styles\.css)|data[\/](measurements|machines|calibration)\.json)$/.test(file)) { server.ws.send({ type: 'full-reload' }); return []; }
+      if (/(src[\/](parts[\/].*\.ts|styles\.css)|data[\/](measurements|machines|calibration|ref-models)\.json)$/.test(file)) { server.ws.send({ type: 'full-reload' }); return []; }
     },
   };
 }

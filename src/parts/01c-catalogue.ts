@@ -70,9 +70,14 @@ function modelFromConfig(key: string, c: any): { model: ModelSpec; shapes: Layer
     name: c.name, tag: key, moe, total, readParams, layers: c.layers, kvLayers: c.layers, qHeads: c.qHeads, kvHeads: c.kvHeads, headDim: c.headDim,
     hidden: h, vocab: c.vocab, experts: c.experts || 0, expertsUsed: c.expertsUsed || 0, sharedExperts: c.sharedExperts || 0, expertParams: one,
     ctxMax: c.ctxMax, stateMB: 0, measured: false, mtp: 0, source: c.source,
+    ...(c.tag ? { tag: c.tag } : {}), ...(c.vendor ? { vendor: c.vendor, family: c.family } : {}), ...(c.asOf ? { asOf: c.asOf } : {}),
+    ...(c.configCopy ? { configCopy: c.configCopy } : {}), ...(c.expertBpw ? { expertBpw: c.expertBpw } : {}), ...(c.notes ? { notes: c.notes } : {}), ...(c.approx ? { approx: true } : {}),
   };
   const shapes: LayerShapes = { attn: [['attn_q', h, q], ['attn_k', h, kvw], ['attn_v', h, kvw], ['attn_output', q, h]] };
   if (moe) { shapes.router = ['ffn_gate_inp', h, c.experts]; shapes.expert = [['ffn_gate', h, c.expertFfn], ['ffn_up', h, c.expertFfn], ['ffn_down', c.expertFfn, h]]; }
   else shapes.mlp = [['ffn_gate', h, c.ffn], ['ffn_up', h, c.ffn], ['ffn_down', c.ffn, h]];
   return { model, shapes };
 }
+// The catalogue (data/ref-models.json, baked in as TW_MODELS) as presets after the app's own four, which keep their keys.
+const MODEL_CATALOGUE: Record<string, any> = typeof TW_MODELS !== 'undefined' && TW_MODELS && TW_MODELS.models ? TW_MODELS.models : {};
+for (const [k, c] of Object.entries(MODEL_CATALOGUE)) if (!MODELS[k]) { const r = modelFromConfig(k, c); MODELS[k] = r.model; SHAPES[k] = r.shapes; }

@@ -120,8 +120,58 @@ export interface ModelSpec {
   /** Multi-token-prediction blocks the file carries (0 or absent: none). */
   mtp?: number;
   live?: boolean;
-  /** Where the numbers come from (reference models). */
+  /** Where the numbers come from: the published configuration's URL (catalogue models), or what was read. */
   source?: string;
+  /** An ungated copy of a gated repository's config.json the dimensions were read from (checked against the official parameter count). */
+  configCopy?: string;
+  /** Date the configuration was read, YYYY-MM-DD. */
+  asOf?: string;
+  /** Who publishes it, and the series it belongs to: the Loadout's filter groups by them. */
+  vendor?: string;
+  family?: string;
+  /** Bits per weight the routed experts are stored at in every file, whatever the label (gpt-oss: MXFP4, 4.25). */
+  expertBpw?: number;
+  /** What the schema cannot express and how the model approximates it (sliding-window layers, a vision encoder left out). */
+  notes?: string;
+  /** The notes describe an approximation the estimate makes (the Loadout card marks it). */
+  approx?: boolean;
+}
+
+/** One model in data/ref-models.json: its published configuration (the text model), from which modelFromConfig builds a preset. */
+export interface ModelConfig {
+  name: string;
+  vendor: string;
+  family: string;
+  /** The Ollama name. */
+  tag: string;
+  hidden: number;
+  layers: number;
+  qHeads: number;
+  kvHeads: number;
+  headDim: number;
+  /** Width of the gated MLP (dense models). */
+  ffn?: number;
+  vocab: number;
+  /** The output head is the embedding table. */
+  tied: boolean;
+  ctxMax: number;
+  experts?: number;
+  expertsUsed?: number;
+  /** Width of one expert's MLP. */
+  expertFfn?: number;
+  sharedExperts?: number;
+  sharedFfn?: number;
+  expertBpw?: number;
+  /** Published parameter count of the text model, and of the weights one token reads (MoE). */
+  publishedParams: number;
+  publishedActive?: number;
+  /** Vision encoder and projector of a multimodal checkpoint, not counted (a GGUF keeps them in a separate mmproj file). */
+  visionParams?: number;
+  source: string;
+  configCopy?: string;
+  asOf: string;
+  notes?: string;
+  approx?: boolean;
 }
 
 /** One matrix: [name, inputs, outputs]. */

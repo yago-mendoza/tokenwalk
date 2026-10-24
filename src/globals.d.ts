@@ -20,4 +20,6 @@ declare const TW_BUILD: { version: string; commit: string };
 declare const TW_MEASUREMENTS: any[];
 /** Baked in by tools/baked.mjs: the machine catalogue (data/machines.json) and the per-family calibration (data/calibration.json, or null). */
 declare const TW_CATALOGUE: { compiled: string; machines: import('./core/types').CatalogueEntry[] };
+/** Baked in by tools/baked.mjs: the model catalogue (data/ref-models.json), each model's published configuration. */
+declare const TW_MODELS: { compiled: string; models: Record<string, import('./core/types').ModelConfig> };
 declare const TW_CALIBRATION: { fitted: string; families: Record<string, import('./core/types').FamilyFactors & { label: string; rows: number; machines: string[] }> } | null;

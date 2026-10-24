@@ -22,31 +22,37 @@ const KV_TYPES = {
 // readParams: weights read for every generated token (the embedding table is excluded, since a token only
 // reads its own row of it; the output head is included). total: everything that must sit in memory.
 // kvLayers: layers that keep keys and values. stateMB: fixed recurrent state of the linear-attention
-// layers, independent of the context.
-const MODELS = {
+// layers, independent of the context. vendor, family, source and asOf: who publishes it, its series, where the numbers
+// come from and when; the catalogue models (data/ref-models.json, 01c-catalogue.ts) join these four.
+const MODELS: Record<string, ModelSpec> = {
   qwen36: {
     name: 'Qwen3.6 35B-A3B', tag: 'qwen3.6:35b-a3b', moe: true,
     total: 35.51e9, readParams: 3.0e9, layers: 40, kvLayers: 10, qHeads: 16, kvHeads: 2, headDim: 256,
     hidden: 2048, vocab: 248320, experts: 256, expertsUsed: 8, sharedExperts: 1, expertParams: 3 * 2048 * 512,
     ctxMax: 262144, stateMB: 63, measured: true, mtp: 1,
+    vendor: 'Qwen', family: 'Qwen3.6', source: 'GGUF header of qwen3.6:35b-a3b on the reference laptop (ollama show)', asOf: '2026-10-23',
   },
   qwen38: {
     name: 'Qwen3.8 27B', tag: 'qwen3.8:27b', moe: false,
     total: 27.32e9, readParams: 26.05e9, layers: 64, kvLayers: 16, qHeads: 24, kvHeads: 4, headDim: 256,
     hidden: 5120, vocab: 248320, experts: 0, expertsUsed: 0, sharedExperts: 0, expertParams: 0,
     ctxMax: 262144, stateMB: 150, measured: true, mtp: 1,
+    vendor: 'Qwen', family: 'Qwen3.8', source: 'GGUF header of qwen3.8:27b on the reference laptop (ollama show)', asOf: '2026-10-23',
   },
   llama8b: {
     name: 'Llama 3.1 8B', tag: 'llama3.1:8b', moe: false,
     total: 8.03e9, readParams: 7.5e9, layers: 32, kvLayers: 32, qHeads: 32, kvHeads: 8, headDim: 128,
     hidden: 4096, vocab: 128256, experts: 0, expertsUsed: 0, sharedExperts: 0, expertParams: 0,
     ctxMax: 131072, stateMB: 0, measured: false,
+    vendor: 'Meta', family: 'Llama 3', source: 'https://huggingface.co/meta-llama/Llama-3.1-8B/blob/main/config.json', asOf: '2026-10-24',
   },
   gpt3: {
     name: 'GPT-3 175B', tag: 'gpt-3 (2020)', moe: false,
     total: 175e9, readParams: 174.4e9, layers: 96, kvLayers: 96, qHeads: 96, kvHeads: 96, headDim: 128,
     hidden: 12288, vocab: 50257, experts: 0, expertsUsed: 0, sharedExperts: 0, expertParams: 0,
     ctxMax: 2048, stateMB: 0, measured: false,
+    vendor: 'OpenAI', family: 'GPT-3', source: 'https://arxiv.org/abs/2005.14165', asOf: '2026-10-24',
+    approx: true, notes: 'Dimensions from the paper (Table 2.1): 96 layers of 12,288, 96 heads of 128, a 2,048-token context; dense attention throughout (the paper alternates dense and locally banded sparse layers).',
   },
 };
 
@@ -107,9 +113,12 @@ const SYSTEM_GB = 32; // Windows, Chrome, Cursor and the rest, measured before a
 const bpwOf = (q: any): number => (typeof q === 'number' ? q : typeof q === 'object' && q ? q.bpw : QUANTS[q].bpw);
 const expertBpwOf = (q: any): number => (typeof q === 'object' && q && q.expertBpw ? q.expertBpw : bpwOf(q));
 const split = (q: any) => typeof q === 'object' && q && q.expertBpw && q.expertBpw !== q.bpw; // only then the two widths differ
+// A model whose files keep the routed experts at one width whatever the label (expertBpw: gpt-oss, MXFP4 in every GGUF):
+// a preset name sets only the rest of the file (attention, router, embeddings). A number or { bpw, expertBpw } is taken as given.
+const quantOf = (m, q: any) => (m.expertBpw && typeof q === 'string' && QUANTS[q] ? { bpw: QUANTS[q].bpw, expertBpw: m.expertBpw } : q);
 const routedParams = (m, n) => (m.moe ? n * m.expertParams * m.layers : 0); // weights of n routed experts in every layer
-const fileGB = (m, q) => (split(q) ? ((m.total - routedParams(m, m.experts)) * bpwOf(q) + routedParams(m, m.experts) * expertBpwOf(q)) / 8 / GB : (m.total * bpwOf(q)) / 8 / GB);
-const readGB = (m, q) => (split(q) ? ((m.readParams - routedParams(m, m.expertsUsed)) * bpwOf(q) + routedParams(m, m.expertsUsed) * expertBpwOf(q)) / 8 / GB : (m.readParams * bpwOf(q)) / 8 / GB);
+const fileGB = (m, q0) => (q => split(q) ? ((m.total - routedParams(m, m.experts)) * bpwOf(q) + routedParams(m, m.experts) * expertBpwOf(q)) / 8 / GB : (m.total * bpwOf(q)) / 8 / GB)(quantOf(m, q0));
+const readGB = (m, q0) => (q => split(q) ? ((m.readParams - routedParams(m, m.expertsUsed)) * bpwOf(q) + routedParams(m, m.expertsUsed) * expertBpwOf(q)) / 8 / GB : (m.readParams * bpwOf(q)) / 8 / GB)(quantOf(m, q0));
 // Multi-token prediction (MTP). Both Qwen GGUFs carry one extra "next-n" block (nextn_predict_layers: 1) and
 // Ollama runs it as a built-in draft (draft_num_predict 2): the MTP block guesses the next tokens, and one pass of
 // the full model checks them all. A draft step reads one block plus the output head; how many guesses survive
@@ -128,7 +137,8 @@ const buffersGB = m => 0.1 + (m.vocab * 4 * 64) / GB; // compute scratch and log
 const expertsTouched = (m, n) => (m.moe ? m.experts * (1 - (1 - m.expertsUsed / m.experts) ** n) : 0);
 
 // Weights read in one pass that carries n tokens at once (prefill chunk, speculative verification).
-function passReadGB(m, q, n) {
+function passReadGB(m, q0, n) {
+  const q = quantOf(m, q0);
   if (!m.moe) return readGB(m, q);
   const perExpert = (m.expertParams * expertBpwOf(q)) / 8 / GB;
   const routedOne = m.expertsUsed * perExpert * m.layers;
