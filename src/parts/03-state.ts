@@ -24,7 +24,7 @@ const SCALES = ['request', 'token', 'layer', 'op'];
 // Ranges a value from the address must fall in; anything else is ignored.
 const RANGE: Record<string, [number, number]> = {
   ctx: [256, 1048576], sys: [0, 4000], docs: [0, 130000], q: [0, 1000], ans: [1, 2000], temp: [0, 2], topp: [0.01, 1], topk: [1, 6],
-  gamma: [1, 8], alpha: [0.3, 0.95], keepalive: [0, 60], seed: [1, 99999], ram: [4, 1024], tflops: [0.05, 2000], mts: [1000, 20000], bus: [64, 512], vram: [4, 256], vbw: [50, 10000],
+  gamma: [1, 8], alpha: [0.3, 0.95], keepalive: [0, 60], seed: [1, 99999], ram: [4, 1024], tflops: [0.05, 2000], mts: [1000, 20000], bus: [64, 1024], vram: [4, 256], vbw: [50, 10000],
 };
 const qpGet = (qp: URLSearchParams, names: string[]) => { for (const n of names) if (qp.has(n)) return qp.get(n); return null; };
 // True when the address sets any part of the setup: such a link opens in the simulation, exactly as written.

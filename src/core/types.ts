@@ -291,3 +291,51 @@ export interface Calibration {
   fl: number;
   at?: string;
 }
+
+/** One machine in data/machines.json: spec values only, each with a source. A preset is built from it (01c-catalogue.ts). */
+export interface CatalogueEntry {
+  /** Preset key. */
+  id: string;
+  /** The research row an existing preset was mapped onto, when its id differs. */
+  researchId?: string;
+  name: string;
+  short: string;
+  kind: MachineKind;
+  vendor: 'Apple' | 'NVIDIA' | 'AMD' | 'Intel' | 'CPU';
+  /** The family whose fitted factors apply (its usual llama.cpp backend). */
+  family: FamilyId;
+  ramGB: number;
+  fastGB: number;
+  bwSpec: number;
+  tflopsSpec: number | null;
+  hostBw: number;
+  linkBw: number;
+  cores: number;
+  units: number;
+  unitName: string;
+  bus?: [number, number];
+  priceUSD: PriceUSD;
+  sources: Record<string, string>;
+  asOf: string;
+  notes?: string;
+  uncertain?: string[];
+}
+
+/** Effective factors of one hardware family, fitted to published benchmarks (data/calibration.json). */
+export interface FamilyFactors {
+  /** Share of spec bandwidth a decode step reaches. */
+  bwEff: number;
+  /** Effective TFLOPS = computeEff × tflopsSpec (basis 'tflopsSpec'), or computeEff × units (basis 'units': TFLOPS per compute unit). */
+  computeEff: number;
+  basis: 'tflopsSpec' | 'units';
+  /** Fixed cost per layer per pass, ms. */
+  layerMs: number;
+}
+
+/** data/calibration.json, written by tools/fit-families.mjs. */
+export interface CalibrationFile {
+  schema: 'tokenwalk-calibration/1';
+  fitted: string;
+  families: Partial<Record<FamilyId, FamilyFactors & { label: string; rows: number; machines: string[]; rmsLogError: number; medianAbsErrorPct: { pp: number | null; tg: number | null } }>>;
+  [key: string]: any;
+}

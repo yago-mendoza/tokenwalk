@@ -342,7 +342,7 @@ await check('What fits: opens, sorts, filters, and a row loads the setup (undoab
   await p.ev(`document.getElementById('fitsOpen').click()`); await sleep(300);
   assert(await p.ev(`!document.getElementById('fitsWin').hidden`), 'the popup did not open');
   const n = await p.ev(`document.querySelectorAll('#fitsIn tbody tr').length`);
-  assert(n === 140, 'rows: ' + n);
+  assert(n === (await p.ev(`Object.keys(MACHINES).length * 20`)), 'rows: ' + n);
   const order = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].map(t => { const [m, mo, q] = t.dataset.fr.split('|'), r = FITS.rows.find(x => x.mk === m && x.mo === mo && x.q === q); return [r.fit, r.tps]; })`);
   const rank = { yes: 0, tight: 1, no: 2 };
   for (let i = 1; i < order.length; i++) { const a = order[i - 1], b = order[i]; assert(rank[a[0]] < rank[b[0]] || (rank[a[0]] === rank[b[0]] && a[1] >= b[1]), 'default order broken at ' + i + ': ' + JSON.stringify([a, b])); }

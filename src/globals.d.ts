@@ -18,3 +18,6 @@ interface Window { __TRUNC?: Set<string> }
 /** Baked in by vite.config.ts: the build, and the accepted measurements from data/measurements.json. */
 declare const TW_BUILD: { version: string; commit: string };
 declare const TW_MEASUREMENTS: any[];
+/** Baked in by tools/baked.mjs: the machine catalogue (data/machines.json) and the per-family calibration (data/calibration.json, or null). */
+declare const TW_CATALOGUE: { compiled: string; machines: import('./core/types').CatalogueEntry[] };
+declare const TW_CALIBRATION: { fitted: string; families: Record<string, import('./core/types').FamilyFactors & { label: string; rows: number; machines: string[] }> } | null;

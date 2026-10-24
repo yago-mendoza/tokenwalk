@@ -1,0 +1,2768 @@
+{
+ "schema": "tokenwalk-machines/1",
+ "compiled": "2026-10-24",
+ "about": "Spec values of every machine preset, each field with its source. The cost model reads effective values (bwEff, tflops, layerMs) derived from these: measured for the reference ThinkPad presets, fitted per hardware family to published llama.cpp benchmarks for the rest (data/calibration.json, tools/fit-families.mjs).",
+ "conventions": [
+  "bwSpec: theoretical GB/s of the memory the weights sit in (VRAM on a card, the shared memory on unified machines).",
+  "tflopsSpec: dense (no sparsity) FP16 matrix/tensor peak. On GeForce it is the FP32-accumulate rate (half the FP16-accumulate rate); on Intel INT8 TOPS / 2; on Apple M1-M4 the FP32 rate; on CPUs a BF16 AVX-512 ceiling. null when nothing usable is published (Apple M5 and later: the per-core matrix units make the FP32 rule invalid).",
+  "Cards: ramGB, hostBw and cores describe an assumed host (desktop: Ryzen 9 9950X, 64 GB DDR5-5600, 89.6 GB/s; datacenter: one EPYC 9654 socket, 768 GB, 460.8 GB/s). The presets that existed before the catalogue (rtx4090, rtx5090, h100) keep their own host assumptions.",
+  "linkBw: 32 GB/s for PCIe 4.0 x16, 64 for 5.0 x16 (x8 links halve that).",
+  "Apple fastGB is the macOS default GPU wired limit (about 2/3 of RAM up to 36 GB, 3/4 above); iGPU fastGB depends on BIOS and driver settings.",
+  "bus: [MT/s, bits] of unified memory, so bwSpec = MT/s x bits / 8 / 1000.",
+  "priceUSD: msrp and a dated street price; 2026 street prices swing weekly during a DRAM shortage. Data only."
+ ],
+ "doubtful": [
+  "DGX Spark tflopsSpec 62.5 assumes the GeForce Blackwell ratio (FP16 with FP32 accumulate = FP4 sparse / 16); 125 if GB10 accumulates FP16 at full rate. fastGB 120 is an estimate.",
+  "RTX PRO 6000 tflopsSpec 500 assumes full-rate FP32 accumulate like Ada pro cards; 250 if it behaves like GeForce.",
+  "B200 per-GPU values are 8-GPU system totals / 8; SM count from secondary sources only.",
+  "Apple M2 Pro/Max/Ultra and M3/M4 tflopsSpec are derived (cores x 256 x clock); Apple publishes none after M2.",
+  "Intel tflopsSpec = INT8 / 2 (the XMX design ratio); the A770 value depends on the clock the 315 TOPS assumed.",
+  "APU tflopsSpec (890M, 860M, 8060S, 780M) = CU x 512 x max clock; laptops rarely sustain it.",
+  "CPU tflopsSpec are derived BF16 ceilings at base or all-core clocks; llama.cpp does not reach them.",
+  "Bandwidths that depend on the build: HX 370 / 285H / 8840U (LPDDR5X vs SODIMM DDR5), EPYC 9755 (614 at DDR5-6400 vs 576 at 6000), desktops (DDR5-5600 JEDEC vs 6000+ EXPO; 4 DIMMs drop to 3600).",
+  "A100 40 GB bandwidth and A100/H200 SM counts come from the product brief / whitepaper, not fetched."
+ ],
+ "machines": [
+  {
+   "id": "rtx3060",
+   "name": "Desktop, RTX 3060 12 GB",
+   "short": "RTX 3060",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 12,
+   "bwSpec": 360,
+   "tflopsSpec": 25.5,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 28,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "bw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "tflops": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "linkBw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "units": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). bw = 192 bit x 15 Gbps / 8 = 360 GB/s (bus width from NVIDIA; 15 Gbps GDDR6 is the standard 3060 12 GB spec, not on the fetched page). tflops derived: 28 SM x 1024 FP16 flop/clk/SM x 1.777 GHz = 51.0 (FP16 acc) -> 25.5 FP32 acc; per-SM rate checked against whitepaper 3090 (82 SM, 1.695 GHz -> 142.3). units = 3584 CUDA / 128. PCIe 4.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "bw data rate not on fetched page",
+    "tflops derived",
+    "msrp ($329 commonly cited) not verified"
+   ]
+  },
+  {
+   "id": "rtx3080",
+   "name": "Desktop, RTX 3080 10 GB",
+   "short": "RTX 3080",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 10,
+   "bwSpec": 760,
+   "tflopsSpec": 59.5,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 68,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 699,
+    "street": 400,
+    "date": "2026-10-23",
+    "source": "https://videocardprices.com/gpu-price-index/"
+   },
+   "sources": {
+    "fastGB": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "bw": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "tflops": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "linkBw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "units": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). Whitepaper: 320 bit x 19 Gbps = 760 GB/s; FP16 tensor 119/238 (FP16 acc), 59.5/119 (FP32 acc). A 12 GB variant (384 bit, 912 GB/s) also exists. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "street $400 is the cheapest listing on the index, likely used/refurb"
+   ]
+  },
+  {
+   "id": "rtx3090",
+   "name": "Desktop, RTX 3090 24 GB",
+   "short": "RTX 3090",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 24,
+   "bwSpec": 936,
+   "tflopsSpec": 71.2,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 82,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 1499,
+    "street": 1343,
+    "date": "2026-09",
+    "source": "https://www.driverscloud.com/en/news/2168/when-nvidia-raises-the-price-of-its-geforce-rtx-4090-a-little ; street (used avg) https://pcserverandparts.com/news/used-graphics-card-buying-guide-2026/"
+   },
+   "sources": {
+    "fastGB": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "bw": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "tflops": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "linkBw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "units": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). Whitepaper: 384 bit x 19.5 Gbps = 936 GB/s; FP16 tensor 142.3 (FP16 acc) / 71.2 (FP32 acc) dense. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "street is a used-market average (secondary source)"
+   ]
+  },
+  {
+   "id": "rtx4060ti16",
+   "name": "Desktop, RTX 4060 Ti 16 GB",
+   "short": "RTX 4060 Ti 16G",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 16,
+   "bwSpec": 288,
+   "tflopsSpec": 44.1,
+   "hostBw": 89.6,
+   "linkBw": 16,
+   "cores": 16,
+   "units": 34,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 499,
+    "street": null,
+    "date": "2023-07",
+    "source": "https://www.pcgamesn.com/nvidia/geforce-rtx-5060-ti-guide"
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "bw": "https://www.club386.com/nvidia-geforce-rtx-5060-ti-16gb-vs-rtx-4060-ti-8gb/",
+    "tflops": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "linkBw": "https://www.club386.com/nvidia-geforce-rtx-5060-ti-16gb-vs-rtx-4060-ti-8gb/",
+    "units": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). bw = 128 bit x 18 Gbps / 8 = 288 GB/s. tflops derived: 34 SM x 1024 x 2.535 GHz = 88.3 (FP16 acc) -> 44.1 FP32 acc. PCIe 4.0 x8 only (linkBw 16 GB/s), which matters for spill. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "tflops derived from SM x clock",
+    "msrp source is secondary"
+   ]
+  },
+  {
+   "id": "rtx4070tis",
+   "name": "Desktop, RTX 4070 Ti SUPER 16 GB",
+   "short": "RTX 4070 Ti S",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 16,
+   "bwSpec": 672,
+   "tflopsSpec": 88.2,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 66,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 799,
+    "street": null,
+    "date": "2024-01",
+    "source": "https://gamersnexus.net/gpus-news/nvidia-rtx-4080-super-4070-ti-super-4070-super-official-specs-price-release-dates"
+   },
+   "sources": {
+    "fastGB": "https://gamersnexus.net/gpus-news/nvidia-rtx-4080-super-4070-ti-super-4070-super-official-specs-price-release-dates",
+    "bw": "https://gamersnexus.net/gpus-news/nvidia-rtx-4080-super-4070-ti-super-4070-super-official-specs-price-release-dates",
+    "tflops": "https://gamersnexus.net/gpus-news/nvidia-rtx-4080-super-4070-ti-super-4070-super-official-specs-price-release-dates",
+    "linkBw": "https://gamersnexus.net/gpus-news/nvidia-rtx-4080-super-4070-ti-super-4070-super-official-specs-price-release-dates",
+    "units": "https://gamersnexus.net/gpus-news/nvidia-rtx-4080-super-4070-ti-super-4070-super-official-specs-price-release-dates",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). bw = 256 bit x 21 Gbps / 8 = 672 GB/s. tflops derived: 66 SM x 1024 x 2.61 GHz = 176.4 (FP16 acc) -> 88.2. units = 8448 CUDA / 128. PCIe 4.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "21 Gbps and 2.61 GHz boost not confirmed by a fetched page",
+    "tflops derived"
+   ]
+  },
+  {
+   "id": "rtx4080s",
+   "name": "Desktop, RTX 4080 SUPER 16 GB",
+   "short": "RTX 4080 S",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 16,
+   "bwSpec": 736,
+   "tflopsSpec": 104.4,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 80,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 999,
+    "street": null,
+    "date": "2024-01",
+    "source": "https://gamersnexus.net/gpus-news/nvidia-rtx-4080-super-4070-ti-super-4070-super-official-specs-price-release-dates"
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "bw": "https://gamersnexus.net/gpus-news/nvidia-rtx-4080-super-4070-ti-super-4070-super-official-specs-price-release-dates",
+    "tflops": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "linkBw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "units": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). bw = 256 bit x 23 Gbps / 8 = 736 GB/s. tflops derived: 80 SM x 1024 x 2.55 GHz = 208.9 (FP16 acc) -> 104.4. units = 10240 CUDA / 128. PCIe 4.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "tflops derived"
+   ]
+  },
+  {
+   "id": "rtx4090",
+   "researchId": "rtx4090",
+   "name": "Desktop, RTX 4090 24 GB",
+   "short": "RTX 4090",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 24,
+   "bwSpec": 1008,
+   "tflopsSpec": 165.2,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 128,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 1599,
+    "street": 2500,
+    "date": "2026-07-14",
+    "source": "https://www.driverscloud.com/en/news/2168/when-nvidia-raises-the-price-of-its-geforce-rtx-4090-a-little ; street (used avg) https://resaleprices.com/gpu/nvidia-rtx-4090"
+   },
+   "sources": {
+    "fastGB": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "bw": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "tflops": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "linkBw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "units": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). Whitepaper: 384 bit x 21 Gbps = 1008 GB/s; FP16 tensor 330.3 (FP16 acc) / 165.2 (FP32 acc) dense. Existing tokenwalk preset uses tflops 80 as an effective value. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "street is used-market; another tracker (gpupoet) shows $2,300-2,776 Jul-Sep 2026"
+   ]
+  },
+  {
+   "id": "rtx5060ti16",
+   "name": "Desktop, RTX 5060 Ti 16 GB",
+   "short": "RTX 5060 Ti 16G",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 16,
+   "bwSpec": 448,
+   "tflopsSpec": 47.4,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 36,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 429,
+    "street": 805,
+    "date": "2026-08",
+    "source": "https://www.pcgamesn.com/nvidia/geforce-rtx-5060-ti-guide ; street (median) https://www.digitalcitizen.life/nvidia-rtx-5060-ti-16gb-median-price-reaches-805-as-rtx-50-series-costs-keep-rising/"
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "bw": "https://www.club386.com/nvidia-geforce-rtx-5060-ti-16gb-vs-rtx-4060-ti-8gb/",
+    "tflops": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "linkBw": "https://www.club386.com/nvidia-geforce-rtx-5060-ti-16gb-vs-rtx-4060-ti-8gb/",
+    "units": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). bw = 128 bit x 28 Gbps / 8 = 448 GB/s. tflops derived: 36 SM x 1024 x 2.572 GHz = 94.8 (FP16 acc) -> 47.4 (consistent with NVIDIA 759 FP4 AI TOPS = 94.8 x 8). units = 4608 CUDA / 128. PCIe 5.0 x8 (linkBw 32; 16 on a PCIe 4.0 board). ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "tflops derived"
+   ]
+  },
+  {
+   "id": "rtx5070ti",
+   "name": "Desktop, RTX 5070 Ti 16 GB",
+   "short": "RTX 5070 Ti",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 16,
+   "bwSpec": 896,
+   "tflopsSpec": 87.9,
+   "hostBw": 89.6,
+   "linkBw": 64,
+   "cores": 16,
+   "units": 70,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 749,
+    "street": 1119,
+    "date": "2026-09-01",
+    "source": "https://capitalandcompute.net/gpu-prices/nvidia/"
+   },
+   "sources": {
+    "fastGB": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "bw": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "tflops": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "linkBw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "units": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). Whitepaper: 256 bit x 28 Gbps = 896 GB/s; FP16 tensor 175.8 (FP16 acc) / 87.9 (FP32 acc). PCIe 5.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "street figure is a Sept 2026 snapshot; Amazon listings were ~$1,190 on 2026-10-06"
+   ]
+  },
+  {
+   "id": "rtx5080",
+   "name": "Desktop, RTX 5080 16 GB",
+   "short": "RTX 5080",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 16,
+   "bwSpec": 960,
+   "tflopsSpec": 112.6,
+   "hostBw": 89.6,
+   "linkBw": 64,
+   "cores": 16,
+   "units": 84,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 999,
+    "street": 1799,
+    "date": "2026-10-23",
+    "source": "https://videocardprices.com/gpu-price-index/"
+   },
+   "sources": {
+    "fastGB": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "bw": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "tflops": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "linkBw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "units": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). Whitepaper: 256 bit x 30 Gbps = 960 GB/s; FP16 tensor 225.1 (FP16 acc) / 112.6 (FP32 acc). PCIe 5.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": []
+  },
+  {
+   "id": "rtx5090",
+   "researchId": "rtx5090",
+   "name": "Desktop, RTX 5090 32 GB",
+   "short": "RTX 5090",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 32,
+   "bwSpec": 1792,
+   "tflopsSpec": 209.5,
+   "hostBw": 89.6,
+   "linkBw": 64,
+   "cores": 16,
+   "units": 170,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 1999,
+    "street": 6556,
+    "date": "2026-10-23",
+    "source": "https://videocardprices.com/gpu-price-index/"
+   },
+   "sources": {
+    "fastGB": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "bw": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "tflops": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "linkBw": "https://www.nvidia.com/en-us/geforce/graphics-cards/compare/",
+    "units": "https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = dense FP16 tensor with FP32 accumulate (GeForce runs FP32-accumulate at half the FP16-accumulate rate). Whitepaper: 512 bit x 28 Gbps = 1792 GB/s; FP16 tensor 419 (FP16 acc) / 209.5 (FP32 acc) dense. Existing preset uses 100 effective. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "street extremely volatile in 2026 ($4,999-7,444 across trackers in Sep-Oct)"
+   ]
+  },
+  {
+   "id": "rtxa6000",
+   "name": "Workstation, RTX A6000 48 GB",
+   "short": "RTX A6000",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 768,
+   "tflopsSpec": 154.8,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 84,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.macnica.co.jp/en/business/semiconductor/manufacturers/nvidia/products/143234/",
+    "bw": "https://www.macnica.co.jp/en/business/semiconductor/manufacturers/nvidia/products/143234/",
+    "tflops": "https://www.macnica.co.jp/en/business/semiconductor/manufacturers/nvidia/products/143234/",
+    "linkBw": "https://www.macnica.co.jp/en/business/semiconductor/manufacturers/nvidia/products/143234/",
+    "units": "https://www.macnica.co.jp/en/business/semiconductor/manufacturers/nvidia/products/143234/",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. bw = 384 bit x 16 Gbps / 8 = 768 GB/s. NVIDIA lists 309.7 TFLOPS tensor (FP16, with sparsity) -> 154.8 dense. units = 10752 CUDA / 128. PCIe 4.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "309.7 sparse tensor figure only seen on reseller pages, not an NVIDIA datasheet"
+   ]
+  },
+  {
+   "id": "rtx6000ada",
+   "name": "Workstation, RTX 6000 Ada 48 GB",
+   "short": "RTX 6000 Ada",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 960,
+   "tflopsSpec": 364.2,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 142,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://lenovopress.lenovo.com/lp1940-thinksystem-nvidia-rtx-6000-ada-48gb-pcie-active-gpu",
+    "bw": "https://lenovopress.lenovo.com/lp1940-thinksystem-nvidia-rtx-6000-ada-48gb-pcie-active-gpu",
+    "tflops": "https://lenovopress.lenovo.com/lp1940-thinksystem-nvidia-rtx-6000-ada-48gb-pcie-active-gpu",
+    "linkBw": "https://lenovopress.lenovo.com/lp1940-thinksystem-nvidia-rtx-6000-ada-48gb-pcie-active-gpu",
+    "units": "https://lenovopress.lenovo.com/lp1940-thinksystem-nvidia-rtx-6000-ada-48gb-pcie-active-gpu",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. Lenovo/NVIDIA: 1457 TFLOPS FP8 with sparsity -> /2 dense -> /2 FP16 = 364.2. 18176 CUDA / 128 = 142 SM. PCIe 4.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "tflops derived from FP8-sparse headline"
+   ]
+  },
+  {
+   "id": "rtxpro6000",
+   "name": "Workstation, RTX PRO 6000 Blackwell 96 GB",
+   "short": "RTX PRO 6000",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 64,
+   "fastGB": 96,
+   "bwSpec": 1792,
+   "tflopsSpec": 500,
+   "hostBw": 89.6,
+   "linkBw": 64,
+   "cores": 16,
+   "units": 188,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": 8565,
+    "street": 16000,
+    "date": "2026-08",
+    "source": "https://www.tomshardware.com/pc-components/gpus/nvidia-raises-rtx-pro-6000-blackwell-gpu-pricing-to-usd13-250-55-percent-increase-over-msrp-in-a-years-time ; https://letsdatascience.com/news/nvidia-raises-rtx-pro-6000-blackwell-price-again-6d1ae9ff"
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000/",
+    "bw": "https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000/",
+    "tflops": "https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000/",
+    "linkBw": "https://www.scan.co.uk/products/96gb-nvidia-rtx-pro-6000-blackwell-24064-cuda-5th-gen-tensor-4th-gen-rt-gddr7-ecc-pcie-50-x16-4x-dp",
+    "units": "https://www.scan.co.uk/products/96gb-nvidia-rtx-pro-6000-blackwell-24064-cuda-5th-gen-tensor-4th-gen-rt-gddr7-ecc-pcie-50-x16-4x-dp",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. bw = 512 bit x 28 Gbps / 8 = 1792. NVIDIA: 4000 AI TOPS = FP4 with sparsity -> 2000 dense FP4 -> 1000 FP8 -> 500 FP16 (assumes full-rate FP32 accumulate as on Ada pro cards; ~504 from 188 SM x 1024 x 2.617 GHz). 24064 CUDA / 128 = 188 SM. 125 TFLOPS FP32. PCIe 5.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "FP16 not published, derived from FP4 sparse",
+    "no retail MSRP; $8,565 launch list, NVIDIA marketplace $13,250 mid-2026 then $16,000 by Aug 2026"
+   ]
+  },
+  {
+   "id": "a100_40",
+   "name": "Cloud, A100 40 GB (PCIe)",
+   "short": "A100 40G",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 768,
+   "fastGB": 40,
+   "bwSpec": 1555,
+   "tflopsSpec": 312,
+   "hostBw": 460.8,
+   "linkBw": 32,
+   "cores": 96,
+   "units": 108,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/data-center/a100/",
+    "bw": "https://www.nvidia.com/en-us/data-center/a100/",
+    "tflops": "https://www.nvidia.com/en-us/data-center/a100/",
+    "linkBw": "https://www.nvidia.com/en-us/data-center/a100/",
+    "units": "https://www.nvidia.com/en-us/data-center/a100/",
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. NVIDIA page now lists only 80 GB models; 40 GB HBM2 at 1555 GB/s is from the 40 GB product brief (not fetched). FP16 tensor 312 dense / 624 sparse. PCIe 4.0 x16. 108 SM (GA100 whitepaper, not fetched). ramGB/hostBw/cores describe an assumed host (one EPYC 9654 socket, 12 ch DDR5-4800 = 460.8 GB/s, 12x64 GB), not the GPU; in an 8-GPU box each GPU gets a fraction of it.",
+   "uncertain": [
+    "40 GB bandwidth not on fetched page",
+    "SM count from memory of the whitepaper"
+   ]
+  },
+  {
+   "id": "a100_80",
+   "name": "Cloud, A100 80 GB SXM",
+   "short": "A100 80G",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 768,
+   "fastGB": 80,
+   "bwSpec": 2039,
+   "tflopsSpec": 312,
+   "hostBw": 460.8,
+   "linkBw": 32,
+   "cores": 96,
+   "units": 108,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/data-center/a100/",
+    "bw": "https://www.nvidia.com/en-us/data-center/a100/",
+    "tflops": "https://www.nvidia.com/en-us/data-center/a100/",
+    "linkBw": "https://www.nvidia.com/en-us/data-center/a100/",
+    "units": "https://www.nvidia.com/en-us/data-center/a100/",
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. NVIDIA: 80 GB HBM2e, 2039 GB/s (SXM; PCIe 80 GB is 1935 GB/s), FP16 312 dense / 624 sparse, PCIe Gen4 64 GB/s bidirectional = 32 per direction. ramGB/hostBw/cores describe an assumed host (one EPYC 9654 socket, 12 ch DDR5-4800 = 460.8 GB/s, 12x64 GB), not the GPU; in an 8-GPU box each GPU gets a fraction of it.",
+   "uncertain": [
+    "SM count not on fetched page"
+   ]
+  },
+  {
+   "id": "h100pcie",
+   "name": "Cloud, H100 PCIe 80 GB",
+   "short": "H100 PCIe",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 768,
+   "fastGB": 80,
+   "bwSpec": 2000,
+   "tflopsSpec": 756,
+   "hostBw": 460.8,
+   "linkBw": 64,
+   "cores": 96,
+   "units": 114,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.pny.com/file%20library/company/support/product%20brochures/nvidia%20data%20center%20gpus/nvidia-h100-datasheet.pdf",
+    "bw": "https://www.pny.com/file%20library/company/support/product%20brochures/nvidia%20data%20center%20gpus/nvidia-h100-datasheet.pdf",
+    "tflops": "https://www.pny.com/file%20library/company/support/product%20brochures/nvidia%20data%20center%20gpus/nvidia-h100-datasheet.pdf",
+    "linkBw": "https://www.pny.com/file%20library/company/support/product%20brochures/nvidia%20data%20center%20gpus/nvidia-h100-datasheet.pdf",
+    "units": "https://www.pny.com/file%20library/company/support/product%20brochures/nvidia%20data%20center%20gpus/nvidia-h100-datasheet.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. Datasheet: 80 GB HBM2e, 2 TB/s, FP16 tensor 1513 TFLOPS with sparsity -> 756 dense. 114 SM. NVIDIA now sells H100 NVL instead (94 GB, 3.9 TB/s, 1671 sparse -> 835.5 dense). ramGB/hostBw/cores describe an assumed host (one EPYC 9654 socket, 12 ch DDR5-4800 = 460.8 GB/s, 12x64 GB), not the GPU; in an 8-GPU box each GPU gets a fraction of it.",
+   "uncertain": [
+    "114 SM from secondary sources"
+   ]
+  },
+  {
+   "id": "h100",
+   "researchId": "h100",
+   "name": "Cloud, H100 SXM 80 GB",
+   "short": "H100",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 768,
+   "fastGB": 80,
+   "bwSpec": 3350,
+   "tflopsSpec": 989.5,
+   "hostBw": 460.8,
+   "linkBw": 64,
+   "cores": 96,
+   "units": 132,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/data-center/h100/",
+    "bw": "https://www.nvidia.com/en-us/data-center/h100/",
+    "tflops": "https://www.nvidia.com/en-us/data-center/h100/",
+    "linkBw": "https://www.nvidia.com/en-us/data-center/h100/",
+    "units": "https://www.pny.com/file%20library/company/support/product%20brochures/nvidia%20data%20center%20gpus/nvidia-h100-datasheet.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. NVIDIA: 80 GB, 3.35 TB/s, FP16 tensor 1979 TFLOPS with sparsity -> 989.5 dense; PCIe Gen5 128 GB/s bidirectional = 64 per direction. Existing preset uses 400 effective. ramGB/hostBw/cores describe an assumed host (one EPYC 9654 socket, 12 ch DDR5-4800 = 460.8 GB/s, 12x64 GB), not the GPU; in an 8-GPU box each GPU gets a fraction of it.",
+   "uncertain": []
+  },
+  {
+   "id": "h200",
+   "name": "Cloud, H200 SXM 141 GB",
+   "short": "H200",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 768,
+   "fastGB": 141,
+   "bwSpec": 4800,
+   "tflopsSpec": 989.5,
+   "hostBw": 460.8,
+   "linkBw": 64,
+   "cores": 96,
+   "units": 132,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/data-center/h200/",
+    "bw": "https://www.nvidia.com/en-us/data-center/h200/",
+    "tflops": "https://www.nvidia.com/en-us/data-center/h200/",
+    "linkBw": "https://www.nvidia.com/en-us/data-center/h200/",
+    "units": "https://www.nvidia.com/en-us/data-center/h200/",
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. NVIDIA: 141 GB HBM3e, 4.8 TB/s, FP16 1979 sparse -> 989.5 dense (same GH100 die, 132 SM). ramGB/hostBw/cores describe an assumed host (one EPYC 9654 socket, 12 ch DDR5-4800 = 460.8 GB/s, 12x64 GB), not the GPU; in an 8-GPU box each GPU gets a fraction of it.",
+   "uncertain": [
+    "SM count not on fetched page"
+   ]
+  },
+  {
+   "id": "b200",
+   "name": "Cloud, B200 180 GB",
+   "short": "B200",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 768,
+   "fastGB": 180,
+   "bwSpec": 8000,
+   "tflopsSpec": 2250,
+   "hostBw": 460.8,
+   "linkBw": 64,
+   "cores": 96,
+   "units": 148,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/data-center/dgx-b200/",
+    "bw": "https://www.nvidia.com/en-us/data-center/dgx-b200/",
+    "tflops": "https://www.nvidia.com/en-us/data-center/hgx/",
+    "linkBw": "https://www.nvidia.com/en-us/data-center/hgx/",
+    "units": "https://www.morphllm.com/nvidia-b200",
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. Per-GPU values are NVIDIA system totals / 8: DGX B200 1440 GB and 64 TB/s HBM3e -> 180 GB, 8 TB/s; HGX B200 36 PFLOPS FP16 sparse -> 4.5 sparse -> 2.25 PFLOPS dense per GPU. Some early spec pages say 192 GB. 148 SM is from secondary sources. Host link assumed PCIe 5.0 x16. ramGB/hostBw/cores describe an assumed host (one EPYC 9654 socket, 12 ch DDR5-4800 = 460.8 GB/s, 12x64 GB), not the GPU; in an 8-GPU box each GPU gets a fraction of it.",
+   "uncertain": [
+    "memory 180 vs 192 GB",
+    "SM count secondary",
+    "linkBw assumed"
+   ]
+  },
+  {
+   "id": "l40s",
+   "name": "Cloud, L40S 48 GB",
+   "short": "L40S",
+   "kind": "discrete",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 768,
+   "fastGB": 48,
+   "bwSpec": 864,
+   "tflopsSpec": 362,
+   "hostBw": 460.8,
+   "linkBw": 32,
+   "cores": 96,
+   "units": 142,
+   "unitName": "SM",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.nvidia.com/en-us/data-center/l40s/",
+    "bw": "https://www.nvidia.com/en-us/data-center/l40s/",
+    "tflops": "https://www.nvidia.com/en-us/data-center/l40s/",
+    "linkBw": "https://www.nvidia.com/en-us/data-center/l40s/",
+    "units": "https://www.nvidia.com/en-us/data-center/l40s/",
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Pro/datacenter parts run FP32 accumulate at full rate, so FP16-acc = FP32-acc. NVIDIA: 48 GB GDDR6, 864 GB/s, FP16 tensor 362.05 dense / 733 sparse, 18176 CUDA (142 SM), PCIe Gen4 x16. ramGB/hostBw/cores describe an assumed host (one EPYC 9654 socket, 12 ch DDR5-4800 = 460.8 GB/s, 12x64 GB), not the GPU; in an 8-GPU box each GPU gets a fraction of it.",
+   "uncertain": []
+  },
+  {
+   "id": "rx7900xtx",
+   "name": "Desktop, Radeon RX 7900 XTX 24 GB",
+   "short": "RX 7900 XTX",
+   "kind": "discrete",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 64,
+   "fastGB": 24,
+   "bwSpec": 960,
+   "tflopsSpec": 123,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 96,
+   "unitName": "CU",
+   "priceUSD": {
+    "msrp": 999,
+    "street": 1050,
+    "date": "2026-10-23",
+    "source": "https://videocardprices.com/gpu-price-index/"
+   },
+   "sources": {
+    "fastGB": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html",
+    "bw": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html",
+    "tflops": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html",
+    "linkBw": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html",
+    "units": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xtx.html",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = AMD \"Peak Half Precision (FP16 Matrix)\" (dense WMMA). bw = 384 bit x 20 Gbps / 8 = 960 GB/s. FP16 vector 61.4. PCIe 4.0 x16 (bus type not extracted from page). ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": []
+  },
+  {
+   "id": "rx7900xt",
+   "name": "Desktop, Radeon RX 7900 XT 20 GB",
+   "short": "RX 7900 XT",
+   "kind": "discrete",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 64,
+   "fastGB": 20,
+   "bwSpec": 800,
+   "tflopsSpec": 103,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 84,
+   "unitName": "CU",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xt.html",
+    "bw": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xt.html",
+    "tflops": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xt.html",
+    "linkBw": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xt.html",
+    "units": "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7900xt.html",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = AMD \"Peak Half Precision (FP16 Matrix)\" (dense WMMA). bw = 320 bit x 20 Gbps / 8 = 800 GB/s. PCIe 4.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "msrp ($899 commonly cited) not verified"
+   ]
+  },
+  {
+   "id": "rx9070xt",
+   "name": "Desktop, Radeon RX 9070 XT 16 GB",
+   "short": "RX 9070 XT",
+   "kind": "discrete",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 64,
+   "fastGB": 16,
+   "bwSpec": 640,
+   "tflopsSpec": 195,
+   "hostBw": 89.6,
+   "linkBw": 64,
+   "cores": 16,
+   "units": 64,
+   "unitName": "CU",
+   "priceUSD": {
+    "msrp": 599,
+    "street": 800,
+    "date": "2026-10-23",
+    "source": "https://videocardprices.com/gpu-price-index/"
+   },
+   "sources": {
+    "fastGB": "https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070xt.html",
+    "bw": "https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070xt.html",
+    "tflops": "https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070xt.html",
+    "linkBw": "https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070xt.html",
+    "units": "https://www.amd.com/en/products/graphics/desktops/radeon/9000-series/amd-radeon-rx-9070xt.html",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = AMD \"Peak Half Precision (FP16 Matrix)\" (dense WMMA). bw = 256 bit x 20 Gbps / 8 = 640 GB/s. FP16 matrix 195 dense / 389 sparse; vector 48.7. PCIe 5.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "AMD reportedly raised MSRP to $619 in 2026"
+   ]
+  },
+  {
+   "id": "w7900",
+   "name": "Workstation, Radeon PRO W7900 48 GB",
+   "short": "W7900",
+   "kind": "discrete",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 864,
+   "tflopsSpec": 123,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 96,
+   "unitName": "CU",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.amd.com/en/products/graphics/workstations/radeon-pro/w7900.html",
+    "bw": "https://www.amd.com/en/products/graphics/workstations/radeon-pro/w7900.html",
+    "tflops": "https://www.amd.com/en/products/graphics/workstations/radeon-pro/w7900.html",
+    "linkBw": "https://www.amd.com/en/products/graphics/workstations/radeon-pro/w7900.html",
+    "units": "https://www.amd.com/en/products/graphics/workstations/radeon-pro/w7900.html",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = AMD \"Peak Half Precision (FP16 Matrix)\" (dense WMMA). bw = 384 bit x 18 Gbps / 8 = 864 GB/s. PCIe 4.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "price not verified"
+   ]
+  },
+  {
+   "id": "r9700",
+   "name": "Workstation, Radeon AI PRO R9700 32 GB",
+   "short": "R9700",
+   "kind": "discrete",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 64,
+   "fastGB": 32,
+   "bwSpec": 640,
+   "tflopsSpec": 191,
+   "hostBw": 89.6,
+   "linkBw": 64,
+   "cores": 16,
+   "units": 64,
+   "unitName": "CU",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.amd.com/en/products/graphics/workstations/radeon-ai-pro/ai-9000-series/amd-radeon-ai-pro-r9700.html",
+    "bw": "https://www.amd.com/en/products/graphics/workstations/radeon-ai-pro/ai-9000-series/amd-radeon-ai-pro-r9700.html",
+    "tflops": "https://www.amd.com/en/products/graphics/workstations/radeon-ai-pro/ai-9000-series/amd-radeon-ai-pro-r9700.html",
+    "linkBw": "https://www.amd.com/en/products/graphics/workstations/radeon-ai-pro/ai-9000-series/amd-radeon-ai-pro-r9700.html",
+    "units": "https://www.amd.com/en/products/graphics/workstations/radeon-ai-pro/ai-9000-series/amd-radeon-ai-pro-r9700.html",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = AMD \"Peak Half Precision (FP16 Matrix)\" (dense WMMA). Added (not on the request list): 32 GB RDNA4 card popular for local LLMs. bw = 256 bit x 20 Gbps / 8 = 640. FP16 matrix 191 dense / 383 sparse. PCIe 5.0 x16. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "32 GB capacity not extracted from the page (known spec)",
+    "price not verified"
+   ]
+  },
+  {
+   "id": "mi300x",
+   "name": "Cloud, Instinct MI300X 192 GB",
+   "short": "MI300X",
+   "kind": "discrete",
+   "vendor": "AMD",
+   "family": "amd-rocm",
+   "ramGB": 768,
+   "fastGB": 192,
+   "bwSpec": 5300,
+   "tflopsSpec": 1307.4,
+   "hostBw": 460.8,
+   "linkBw": 64,
+   "cores": 96,
+   "units": 304,
+   "unitName": "CU",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.amd.com/en/products/accelerators/instinct/mi300/mi300x.html",
+    "bw": "https://www.amd.com/en/products/accelerators/instinct/mi300/mi300x.html",
+    "tflops": "https://www.amd.com/en/products/accelerators/instinct/mi300/mi300x.html",
+    "linkBw": "https://www.amd.com/en/products/accelerators/instinct/mi300/mi300x.html",
+    "units": "https://www.amd.com/en/products/accelerators/instinct/mi300/mi300x.html",
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "AMD: 192 GB HBM3, 8192-bit, 5.3 TB/s; FP16 1.3 PFLOPS dense (1307.4) / 2.61 sparse; 304 CU; PCIe 5.0 x16. ramGB/hostBw/cores describe an assumed host (one EPYC 9654 socket, 12 ch DDR5-4800 = 460.8 GB/s, 12x64 GB), not the GPU; in an 8-GPU box each GPU gets a fraction of it.",
+   "uncertain": []
+  },
+  {
+   "id": "arcA770",
+   "name": "Desktop, Arc A770 16 GB",
+   "short": "Arc A770",
+   "kind": "discrete",
+   "vendor": "Intel",
+   "family": "intel",
+   "ramGB": 64,
+   "fastGB": 16,
+   "bwSpec": 560,
+   "tflopsSpec": 157,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 32,
+   "unitName": "Xe-core",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.intel.com/content/www/us/en/products/sku/229151/intel-arc-a770-graphics-16gb/specifications.html",
+    "bw": "https://www.intel.com/content/www/us/en/products/sku/229151/intel-arc-a770-graphics-16gb/specifications.html",
+    "tflops": "https://tomshardware.com/pc-components/gpus/intel-arc-b580-review-the-new-usd249-gpu-champion-has-arrived",
+    "linkBw": "https://www.intel.com/content/www/us/en/products/sku/229151/intel-arc-a770-graphics-16gb/specifications.html",
+    "units": "https://www.intel.com/content/www/us/en/products/sku/229151/intel-arc-a770-graphics-16gb/specifications.html",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = Intel peak INT8 XMX TOPS / 2 (XMX FP16 runs at half the INT8 rate); Intel does not publish an FP16 figure. Intel: 256 bit x 17.5 Gbps = 560 GB/s, 32 Xe-cores, 512 XMX, PCIe 4.0 x16. Tom's Hardware: 315 INT8 TOPS (at ~2.4 GHz) -> 157; at the 2.1 GHz ARK graphics clock it would be ~138. ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "tflops derived; clock basis ambiguous",
+    "msrp ($349) not verified"
+   ]
+  },
+  {
+   "id": "arcB580",
+   "name": "Desktop, Arc B580 12 GB",
+   "short": "Arc B580",
+   "kind": "discrete",
+   "vendor": "Intel",
+   "family": "intel",
+   "ramGB": 64,
+   "fastGB": 12,
+   "bwSpec": 456,
+   "tflopsSpec": 116.5,
+   "hostBw": 89.6,
+   "linkBw": 16,
+   "cores": 16,
+   "units": 20,
+   "unitName": "Xe-core",
+   "priceUSD": {
+    "msrp": 249,
+    "street": 370,
+    "date": "2026-10-23",
+    "source": "https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/specifications.html ; street https://videocardprices.com/gpu-price-index/"
+   },
+   "sources": {
+    "fastGB": "https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/specifications.html",
+    "bw": "https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/specifications.html",
+    "tflops": "https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/specifications.html",
+    "linkBw": "https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/specifications.html",
+    "units": "https://www.intel.com/content/www/us/en/products/sku/241598/intel-arc-b580-graphics/specifications.html",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = Intel peak INT8 XMX TOPS / 2 (XMX FP16 runs at half the INT8 rate); Intel does not publish an FP16 figure. Intel: 192 bit x 19 Gbps = 456 GB/s, 20 Xe2-cores, 160 XMX, 233 INT8 TOPS -> 116.5. PCIe 4.0 x8 (linkBw 16). ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "tflops derived"
+   ]
+  },
+  {
+   "id": "arcProB60",
+   "name": "Workstation, Arc Pro B60 24 GB",
+   "short": "Arc Pro B60",
+   "kind": "discrete",
+   "vendor": "Intel",
+   "family": "intel",
+   "ramGB": 64,
+   "fastGB": 24,
+   "bwSpec": 456,
+   "tflopsSpec": 98.5,
+   "hostBw": 89.6,
+   "linkBw": 32,
+   "cores": 16,
+   "units": 20,
+   "unitName": "Xe-core",
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "fastGB": "https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b60-gpu.pdf",
+    "bw": "https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b60-gpu.pdf",
+    "tflops": "https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b60-gpu.pdf",
+    "linkBw": "https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b60-gpu.pdf",
+    "units": "https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b60-gpu.pdf",
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = Intel peak INT8 XMX TOPS / 2 (XMX FP16 runs at half the INT8 rate); Intel does not publish an FP16 figure. Added (not on the request list): 24 GB card used in multi-GPU local rigs. Intel datasheet: 192 bit, 456 GB/s, 20 Xe2-cores, 197 INT8 TOPS -> 98.5, PCIe 5.0 x8 electrical (linkBw 32). ramGB/hostBw/cores describe an assumed host (Ryzen 9 9950X, 2x32 GB DDR5-5600: 2 ch x 64 bit x 5600 MT/s / 8 = 89.6 GB/s), not the card.",
+   "uncertain": [
+    "tflops derived",
+    "no US MSRP found"
+   ]
+  },
+  {
+   "id": "dgxSpark",
+   "name": "DGX Spark (GB10), 128 GB",
+   "short": "DGX Spark",
+   "kind": "unified",
+   "vendor": "NVIDIA",
+   "family": "nvidia-cuda",
+   "ramGB": 128,
+   "fastGB": 120,
+   "bwSpec": 273,
+   "tflopsSpec": 62.5,
+   "hostBw": 273,
+   "linkBw": 0,
+   "cores": 20,
+   "units": 48,
+   "unitName": "SM",
+   "bus": [
+    8533,
+    256
+   ],
+   "priceUSD": {
+    "msrp": 3999,
+    "street": 6950,
+    "date": "2026-10-08",
+    "source": "https://www.notebookcheck.net/Nvidia-GB10-powered-DGX-Spark-with-128-GB-LPDDR5X-memory-gets-700-price-hike.1236870.0.html ; https://www.techno-edge.net/article/2026/10/08/5565.html"
+   },
+   "sources": {
+    "ramGB": "https://www.nvidia.com/en-us/products/workstations/dgx-spark/",
+    "fastGB": "https://www.nvidia.com/en-us/products/workstations/dgx-spark/",
+    "bw": "https://www.nvidia.com/en-us/products/workstations/dgx-spark/",
+    "tflops": "https://www.nvidia.com/en-us/products/workstations/dgx-spark/",
+    "hostBw": "https://www.nvidia.com/en-us/products/workstations/dgx-spark/",
+    "cores": "https://www.nvidia.com/en-us/products/workstations/dgx-spark/",
+    "units": "https://www.servethehome.com/?p=105640",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "NVIDIA: 128 GB LPDDR5x, 256-bit, 273 GB/s (256 bit x 8533 MT/s / 8 = 273), 20-core Arm (10 X925 + 10 A725), \"1 PFLOP FP4 with sparsity\". tflops derived: 1000 FP4 sparse / 16 = 62.5 FP16 dense with FP32 accumulate, using the GeForce Blackwell ratio (5090: 3352 / 209.5 = 16); 125 if FP16 accumulate. units = 6144 CUDA / 128 = 48 SM. fastGB 120 is an estimate (whole pool is GPU-addressable minus OS). A 64 GB OEM-only model ($4,999, Oct 2026) has the same 273 GB/s.",
+   "uncertain": [
+    "tflops not published by NVIDIA except FP4 sparse",
+    "fastGB estimate",
+    "price $3,999 at launch, $4,699 Feb 2026, $6,950 Oct 2026"
+   ]
+  },
+  {
+   "id": "strixHalo",
+   "researchId": "strixHalo128",
+   "name": "Ryzen AI Max+ 395, 128 GB",
+   "short": "Strix Halo 128",
+   "kind": "unified",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 128,
+   "fastGB": 96,
+   "bwSpec": 256,
+   "tflopsSpec": 59.4,
+   "hostBw": 256,
+   "linkBw": 0,
+   "cores": 16,
+   "units": 40,
+   "unitName": "CU",
+   "bus": [
+    8000,
+    256
+   ],
+   "priceUSD": {
+    "msrp": 1999,
+    "street": 3449,
+    "date": "2026-07",
+    "source": "https://www.pcworld.com/article/3031562/framework-raises-prices-yet-again-as-memory-costs-go-up.html ; https://digitaltrends.com/computing/framework-desktop-brings-ryzen-ai-max-192gb-ram-and-local-ai-to-a-mini-pc"
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "fastGB": "https://www.amd.com/en/blogs/2025/amd-ryzen-ai-max-upgraded-run-up-to-128-billion-parameter-llms-lm-studio.html",
+    "bw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "tflops": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "hostBw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "cores": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "units": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = CU x 512 FP16 flop/clk (RDNA3/3.5 WMMA, dual-issue) x max GPU clock; this per-CU rate reproduces AMD's 123 TFLOPS for the 96-CU 7900 XTX at 2.5 GHz. Spec peak; the tokenwalk 860M preset uses 0.75 as an effective value. AMD: 16 cores, Radeon 8060S 40 CU @ 2.9 GHz, 256-bit LPDDR5x-8000 -> 256 bit x 8000 / 8 = 256 GB/s. 40 x 512 x 2.9 = 59.4. fastGB: VGM up to 96 GB on Windows (AMD); on Linux AMD raises GPU-usable memory to ~120 GB via kernel parameter.",
+   "uncertain": [
+    "tflops derived",
+    "price is Framework Desktop (128 GB): $1,999 launch, $2,459 Jan 2026, $3,449 ~Jul 2026 (secondary source)"
+   ]
+  },
+  {
+   "id": "strixHalo64",
+   "name": "Ryzen AI Max+ 395, 64 GB",
+   "short": "Strix Halo 64",
+   "kind": "unified",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 256,
+   "tflopsSpec": 59.4,
+   "hostBw": 256,
+   "linkBw": 0,
+   "cores": 16,
+   "units": 40,
+   "unitName": "CU",
+   "bus": [
+    8000,
+    256
+   ],
+   "priceUSD": {
+    "msrp": 1599,
+    "street": 1639,
+    "date": "2026-01",
+    "source": "https://www.pcworld.com/article/3031562/framework-raises-prices-yet-again-as-memory-costs-go-up.html"
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "fastGB": "https://www.amd.com/en/blogs/2025/amd-ryzen-ai-max-upgraded-run-up-to-128-billion-parameter-llms-lm-studio.html",
+    "bw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "tflops": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "hostBw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "cores": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "units": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-max-plus-395.html",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = CU x 512 FP16 flop/clk (RDNA3/3.5 WMMA, dual-issue) x max GPU clock; this per-CU rate reproduces AMD's 123 TFLOPS for the 96-CU 7900 XTX at 2.5 GHz. Spec peak; the tokenwalk 860M preset uses 0.75 as an effective value. Same chip as the 128 GB row. fastGB 48 assumes the VGM maximum is 75% of RAM as on the 128 GB model (96/128); not confirmed for 64 GB systems.",
+   "uncertain": [
+    "fastGB for 64 GB not confirmed",
+    "tflops derived",
+    "launch $1,599 commonly cited for Framework 64 GB, the article gives the post-increase $1,639"
+   ]
+  },
+  {
+   "id": "hx370",
+   "name": "Ryzen AI 9 HX 370 · Radeon 890M, 32 GB",
+   "short": "890M iGPU",
+   "kind": "unified",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 32,
+   "fastGB": 24,
+   "bwSpec": 128,
+   "tflopsSpec": 23.8,
+   "hostBw": 128,
+   "linkBw": 0,
+   "cores": 12,
+   "units": 16,
+   "unitName": "CU",
+   "bus": [
+    8000,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-9-hx-370.html",
+    "fastGB": "https://www.amd.com/en/blogs/2025/amd-ryzen-ai-max-upgraded-run-up-to-128-billion-parameter-llms-lm-studio.html",
+    "bw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-9-hx-370.html",
+    "tflops": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-9-hx-370.html",
+    "hostBw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-9-hx-370.html",
+    "cores": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-9-hx-370.html",
+    "units": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-9-hx-370.html",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = CU x 512 FP16 flop/clk (RDNA3/3.5 WMMA, dual-issue) x max GPU clock; this per-CU rate reproduces AMD's 123 TFLOPS for the 96-CU 7900 XTX at 2.5 GHz. Spec peak; the tokenwalk 860M preset uses 0.75 as an effective value. AMD: 12 cores (4 Zen 5 + 8 Zen 5c), 890M 16 CU @ 2.9 GHz, 2 ch (128-bit) LPDDR5x-8000 -> 128 GB/s; laptops with LPDDR5x-7500 get 120, DDR5-5600 SODIMM 89.6. 16 x 512 x 2.9 = 23.8. fastGB assumes VGM at 75% of 32 GB.",
+   "uncertain": [
+    "bw depends on the laptop's memory",
+    "fastGB assumed 75%",
+    "ramGB is a typical config"
+   ]
+  },
+  {
+   "id": "thinkpad",
+   "researchId": "ai350",
+   "name": "Ryzen AI 7 350 · Radeon 860M, 64 GB",
+   "short": "860M iGPU",
+   "kind": "unified",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 128,
+   "tflopsSpec": 12.3,
+   "hostBw": 128,
+   "linkBw": 0,
+   "cores": 8,
+   "units": 8,
+   "unitName": "CU",
+   "bus": [
+    8000,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "fastGB": "https://www.amd.com/en/blogs/2025/amd-ryzen-ai-max-upgraded-run-up-to-128-billion-parameter-llms-lm-studio.html",
+    "bw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "tflops": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "hostBw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "cores": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "units": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = CU x 512 FP16 flop/clk (RDNA3/3.5 WMMA, dual-issue) x max GPU clock; this per-CU rate reproduces AMD's 123 TFLOPS for the 96-CU 7900 XTX at 2.5 GHz. Spec peak; the tokenwalk 860M preset uses 0.75 as an effective value. AMD: 8 cores (4 Zen 5 + 4 Zen 5c), 860M 8 CU @ 3.0 GHz, LPDDR5x-8000 (128 GB/s) or DDR5-5600 (89.6). 8 x 512 x 3.0 = 12.3. Matches the existing tokenwalk \"thinkpad\" preset (bw 128, fastGB 47.6 measured).",
+   "uncertain": [
+    "tflops is spec peak, far above measured effective"
+   ]
+  },
+  {
+   "id": "thinkpadCpu",
+   "researchId": "ai350",
+   "name": "ThinkPad · CPU only",
+   "short": "CPU only",
+   "kind": "unified",
+   "vendor": "AMD",
+   "family": "cpu",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 128,
+   "tflopsSpec": null,
+   "hostBw": 128,
+   "linkBw": 0,
+   "cores": 8,
+   "units": 8,
+   "unitName": "core",
+   "bus": [
+    8000,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "fastGB": "https://www.amd.com/en/blogs/2025/amd-ryzen-ai-max-upgraded-run-up-to-128-billion-parameter-llms-lm-studio.html",
+    "bw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "tflops": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "hostBw": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "cores": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "units": "https://www.amd.com/en/products/processors/laptop/ryzen/ai-300-series/amd-ryzen-ai-7-350.html",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "The same laptop as the thinkpad preset with the GPU unused: the 8 Zen 5 / Zen 5c cores read the same LPDDR5x-8000 at 128 GB/s. No spec TFLOPS was compiled for the CPU; the preset's effective numbers are measured.",
+   "uncertain": [
+    "no CPU tflopsSpec"
+   ]
+  },
+  {
+   "id": "r8840u",
+   "name": "Ryzen 7 8840U · Radeon 780M, 32 GB",
+   "short": "780M iGPU",
+   "kind": "unified",
+   "vendor": "AMD",
+   "family": "amd-vulkan",
+   "ramGB": 32,
+   "fastGB": 16,
+   "bwSpec": 120,
+   "tflopsSpec": 16.6,
+   "hostBw": 120,
+   "linkBw": 0,
+   "cores": 8,
+   "units": 12,
+   "unitName": "CU",
+   "bus": [
+    7500,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/laptop/ryzen/8000-series/amd-ryzen-7-8840u.html",
+    "fastGB": "https://www.amd.com/en/products/processors/laptop/ryzen/8000-series/amd-ryzen-7-8840u.html",
+    "bw": "https://www.amd.com/en/products/processors/laptop/ryzen/8000-series/amd-ryzen-7-8840u.html",
+    "tflops": "https://www.amd.com/en/products/processors/laptop/ryzen/8000-series/amd-ryzen-7-8840u.html",
+    "hostBw": "https://www.amd.com/en/products/processors/laptop/ryzen/8000-series/amd-ryzen-7-8840u.html",
+    "cores": "https://www.amd.com/en/products/processors/laptop/ryzen/8000-series/amd-ryzen-7-8840u.html",
+    "units": "https://www.amd.com/en/products/processors/laptop/ryzen/8000-series/amd-ryzen-7-8840u.html",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = CU x 512 FP16 flop/clk (RDNA3/3.5 WMMA, dual-issue) x max GPU clock; this per-CU rate reproduces AMD's 123 TFLOPS for the 96-CU 7900 XTX at 2.5 GHz. Spec peak; the tokenwalk 860M preset uses 0.75 as an effective value. AMD: 8 Zen 4 cores, 780M 12 CU @ 2.7 GHz, LPDDR5x-7500 (128 bit x 7500 / 8 = 120 GB/s) or DDR5-5600 (89.6). 12 x 512 x 2.7 = 16.6. fastGB 16 is a guess: Hawk Point lacks the Ryzen AI 300 VGM slider; BIOS UMA buffer plus Windows shared memory (half of RAM) typically gives ~16 GB.",
+   "uncertain": [
+    "fastGB is a guess",
+    "ramGB typical config"
+   ]
+  },
+  {
+   "id": "lunarLake",
+   "name": "Core Ultra 7 258V · Arc 140V, 32 GB",
+   "short": "Arc 140V iGPU",
+   "kind": "unified",
+   "vendor": "Intel",
+   "family": "intel",
+   "ramGB": 32,
+   "fastGB": 27.8,
+   "bwSpec": 136.5,
+   "tflopsSpec": 32,
+   "hostBw": 136.5,
+   "linkBw": 0,
+   "cores": 8,
+   "units": 8,
+   "unitName": "Xe-core",
+   "bus": [
+    8533,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.intel.com/content/www/us/en/products/sku/240957/intel-core-ultra-7-processor-258v-12m-cache-up-to-4-80-ghz/specifications.html",
+    "fastGB": "https://www.techradar.com/pro/intel-borrowed-a-feature-from-amd-that-could-finally-mean-more-allocated-ram-for-the-igpu-for-these-all-important-ai-tasks",
+    "bw": "https://www.intel.com/content/www/us/en/products/sku/240957/intel-core-ultra-7-processor-258v-12m-cache-up-to-4-80-ghz/specifications.html",
+    "tflops": "https://www.intel.com/content/www/us/en/products/sku/240957/intel-core-ultra-7-processor-258v-12m-cache-up-to-4-80-ghz/specifications.html",
+    "hostBw": "https://www.intel.com/content/www/us/en/products/sku/240957/intel-core-ultra-7-processor-258v-12m-cache-up-to-4-80-ghz/specifications.html",
+    "cores": "https://www.intel.com/content/www/us/en/products/sku/240957/intel-core-ultra-7-processor-258v-12m-cache-up-to-4-80-ghz/specifications.html",
+    "units": "https://www.intel.com/content/www/us/en/products/sku/240957/intel-core-ultra-7-processor-258v-12m-cache-up-to-4-80-ghz/specifications.html",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = Intel peak INT8 XMX TOPS / 2 (XMX FP16 runs at half the INT8 rate); Intel does not publish an FP16 figure. Intel: 8 cores (4P + 4LPE), 32 GB on-package LPDDR5X-8533, 2 ch; bw = 128 bit x 8533 / 8 = 136.5 GB/s (bus width inferred). GPU 64 INT8 TOPS -> 32. fastGB: Intel Shared GPU Memory Override up to 87% (27.8 GB); default ~57% (18 GB).",
+   "uncertain": [
+    "tflops derived",
+    "bus width inferred",
+    "fastGB depends on driver override availability"
+   ]
+  },
+  {
+   "id": "arrowLakeH",
+   "name": "Core Ultra 9 285H · Arc 140T, 32 GB",
+   "short": "Arc 140T iGPU",
+   "kind": "unified",
+   "vendor": "Intel",
+   "family": "intel",
+   "ramGB": 32,
+   "fastGB": 27.8,
+   "bwSpec": 134.4,
+   "tflopsSpec": 38.5,
+   "hostBw": 134.4,
+   "linkBw": 0,
+   "cores": 16,
+   "units": 8,
+   "unitName": "Xe-core",
+   "bus": [
+    8400,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.intel.com/content/www/us/en/products/sku/241747/intel-core-ultra-9-processor-285h-24m-cache-up-to-5-40-ghz/specifications.html",
+    "fastGB": "https://www.techradar.com/pro/intel-borrowed-a-feature-from-amd-that-could-finally-mean-more-allocated-ram-for-the-igpu-for-these-all-important-ai-tasks",
+    "bw": "https://www.intel.com/content/www/us/en/products/sku/241747/intel-core-ultra-9-processor-285h-24m-cache-up-to-5-40-ghz/specifications.html",
+    "tflops": "https://www.intel.com/content/www/us/en/products/sku/241747/intel-core-ultra-9-processor-285h-24m-cache-up-to-5-40-ghz/specifications.html",
+    "hostBw": "https://www.intel.com/content/www/us/en/products/sku/241747/intel-core-ultra-9-processor-285h-24m-cache-up-to-5-40-ghz/specifications.html",
+    "cores": "https://www.intel.com/content/www/us/en/products/sku/241747/intel-core-ultra-9-processor-285h-24m-cache-up-to-5-40-ghz/specifications.html",
+    "units": "https://www.intel.com/content/www/us/en/products/sku/241747/intel-core-ultra-9-processor-285h-24m-cache-up-to-5-40-ghz/specifications.html",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "tflops = Intel peak INT8 XMX TOPS / 2 (XMX FP16 runs at half the INT8 rate); Intel does not publish an FP16 figure. Intel: 16 cores (6P + 8E + 2LPE), up to 128 GB, LPDDR5x-8400 (128 bit x 8400 / 8 = 134.4) or DDR5-6400 (102.4). Arc 140T 8 Xe-cores @ 2.35 GHz, GPU 77 INT8 TOPS -> 38.5. fastGB: 87% override.",
+   "uncertain": [
+    "tflops derived",
+    "bw depends on memory fitted",
+    "fastGB depends on override"
+   ]
+  },
+  {
+   "id": "m1",
+   "name": "Mac, M1 16 GB",
+   "short": "M1",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 16,
+   "fastGB": 10.7,
+   "bwSpec": 68.3,
+   "tflopsSpec": 2.6,
+   "hostBw": 68.3,
+   "linkBw": 0,
+   "cores": 8,
+   "units": 8,
+   "unitName": "GPU core",
+   "bus": [
+    4266,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M1",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M1",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M1",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M1",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M1",
+    "units": "https://en.wikipedia.org/wiki/Apple_M1",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 128 bit LPDDR4X-4266 -> 68.3 GB/s. 2.6 TFLOPS (8-core GPU; 7-core in some models).",
+   "uncertain": [
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m1pro",
+   "name": "Mac, M1 Pro 32 GB",
+   "short": "M1 Pro",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 32,
+   "fastGB": 21.3,
+   "bwSpec": 204.8,
+   "tflopsSpec": 5.2,
+   "hostBw": 204.8,
+   "linkBw": 0,
+   "cores": 10,
+   "units": 16,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    256
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M1",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M1",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M1",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M1",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M1",
+    "units": "https://en.wikipedia.org/wiki/Apple_M1",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 256 bit LPDDR5-6400 -> 204.8 (Apple: 200). tflops = 16 x 128 x 2 x 1.278 GHz = 5.2 (Wikipedia does not state it for Pro; derived).",
+   "uncertain": [
+    "M1 Pro tflops derived",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m1max",
+   "name": "Mac, M1 Max 64 GB",
+   "short": "M1 Max",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 409.6,
+   "tflopsSpec": 10.4,
+   "hostBw": 409.6,
+   "linkBw": 0,
+   "cores": 10,
+   "units": 32,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    512
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M1",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M1",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M1",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M1",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M1",
+    "units": "https://en.wikipedia.org/wiki/Apple_M1",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 512 bit LPDDR5-6400 -> 409.6 (Apple: 400). 10.4 TFLOPS.",
+   "uncertain": [
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m1ultra",
+   "name": "Mac Studio, M1 Ultra 128 GB",
+   "short": "M1 Ultra",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 128,
+   "fastGB": 96,
+   "bwSpec": 819.2,
+   "tflopsSpec": 21,
+   "hostBw": 819.2,
+   "linkBw": 0,
+   "cores": 20,
+   "units": 64,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    1024
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M1",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M1",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M1",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M1",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M1",
+    "units": "https://en.wikipedia.org/wiki/Apple_M1",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 1024 bit LPDDR5-6400 -> 819.2 (Apple: 800). 21 TFLOPS.",
+   "uncertain": [
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m2",
+   "name": "Mac, M2 24 GB",
+   "short": "M2",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 24,
+   "fastGB": 16,
+   "bwSpec": 102.4,
+   "tflopsSpec": 3.6,
+   "hostBw": 102.4,
+   "linkBw": 0,
+   "cores": 8,
+   "units": 10,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M2",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M2",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M2",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M2",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M2",
+    "units": "https://en.wikipedia.org/wiki/Apple_M2",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 128 bit LPDDR5-6400 -> 102.4 (Apple: 100). ~3.6 TFLOPS (10-core GPU).",
+   "uncertain": [
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m2pro",
+   "name": "Mac, M2 Pro 32 GB",
+   "short": "M2 Pro",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 32,
+   "fastGB": 21.3,
+   "bwSpec": 204.8,
+   "tflopsSpec": 6.8,
+   "hostBw": 204.8,
+   "linkBw": 0,
+   "cores": 12,
+   "units": 19,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    256
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "bw": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M2",
+    "hostBw": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "cores": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "units": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 256 bit LPDDR5-6400 -> 204.8 (Apple: 200). tflops = 19 x 128 x 2 x 1.398 GHz = 6.8 (clock from M2 3.6 TF / 10 cores).",
+   "uncertain": [
+    "tflops derived from M2 clock",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m2max",
+   "name": "Mac, M2 Max 96 GB",
+   "short": "M2 Max",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 96,
+   "fastGB": 72,
+   "bwSpec": 409.6,
+   "tflopsSpec": 13.6,
+   "hostBw": 409.6,
+   "linkBw": 0,
+   "cores": 12,
+   "units": 38,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    512
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "bw": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M2",
+    "hostBw": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "cores": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "units": "https://www.apple.com/newsroom/2023/01/apple-unveils-m2-pro-and-m2-max-next-generation-chips-for-next-level-workflows/",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 512 bit -> 409.6 (Apple: 400), up to 96 GB. tflops = 38 x 256 x 1.398 = 13.6.",
+   "uncertain": [
+    "tflops derived",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m2ultra",
+   "name": "Mac Studio, M2 Ultra 192 GB",
+   "short": "M2 Ultra",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 192,
+   "fastGB": 144,
+   "bwSpec": 819.2,
+   "tflopsSpec": 27.2,
+   "hostBw": 819.2,
+   "linkBw": 0,
+   "cores": 24,
+   "units": 76,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    1024
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.apple.com/newsroom/2023/06/apple-introduces-m2-ultra/",
+    "bw": "https://www.apple.com/newsroom/2023/06/apple-introduces-m2-ultra/",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M2",
+    "hostBw": "https://www.apple.com/newsroom/2023/06/apple-introduces-m2-ultra/",
+    "cores": "https://www.apple.com/newsroom/2023/06/apple-introduces-m2-ultra/",
+    "units": "https://www.apple.com/newsroom/2023/06/apple-introduces-m2-ultra/",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 1024 bit -> 819.2 (Apple: 800), up to 192 GB. tflops = 76 x 256 x 1.398 = 27.2.",
+   "uncertain": [
+    "tflops derived",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m3",
+   "name": "Mac, M3 24 GB",
+   "short": "M3",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 24,
+   "fastGB": 16,
+   "bwSpec": 102.4,
+   "tflopsSpec": 3.6,
+   "hostBw": 102.4,
+   "linkBw": 0,
+   "cores": 8,
+   "units": 10,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M3",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "tflops": "https://www.cpu-monkey.com/en/igpu-apple_m3_max_40_core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M3",
+    "units": "https://en.wikipedia.org/wiki/Apple_M3",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 128 bit LPDDR5-6400 -> 102.4. tflops = 10 x 256 x 1.40 GHz = 3.6 (clock from cpu-monkey M3 Max entry).",
+   "uncertain": [
+    "tflops derived, clock from third party",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m3pro",
+   "name": "Mac, M3 Pro 36 GB",
+   "short": "M3 Pro",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 36,
+   "fastGB": 24,
+   "bwSpec": 153.6,
+   "tflopsSpec": 6.5,
+   "hostBw": 153.6,
+   "linkBw": 0,
+   "cores": 12,
+   "units": 18,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    192
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M3",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "tflops": "https://www.cpu-monkey.com/en/igpu-apple_m3_max_40_core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M3",
+    "units": "https://en.wikipedia.org/wiki/Apple_M3",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 192 bit LPDDR5-6400 -> 153.6 (Apple: 150). tflops = 18 x 256 x 1.40 = 6.5.",
+   "uncertain": [
+    "tflops derived",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m3max30",
+   "name": "Mac, M3 Max 30-core GPU 96 GB",
+   "short": "M3 Max 30c",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 96,
+   "fastGB": 72,
+   "bwSpec": 307.2,
+   "tflopsSpec": 10.8,
+   "hostBw": 307.2,
+   "linkBw": 0,
+   "cores": 14,
+   "units": 30,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    384
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M3",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "tflops": "https://www.cpu-monkey.com/en/igpu-apple_m3_max_40_core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M3",
+    "units": "https://en.wikipedia.org/wiki/Apple_M3",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 384 bit -> 307.2 (Apple: 300). 14-core CPU / 30-core GPU bin; tflops = 30 x 256 x 1.40 = 10.8.",
+   "uncertain": [
+    "tflops derived",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m3max40",
+   "name": "Mac, M3 Max 40-core GPU 128 GB",
+   "short": "M3 Max 40c",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 128,
+   "fastGB": 96,
+   "bwSpec": 409.6,
+   "tflopsSpec": 14.2,
+   "hostBw": 409.6,
+   "linkBw": 0,
+   "cores": 16,
+   "units": 40,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    512
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M3",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "tflops": "https://www.cpu-monkey.com/en/igpu-apple_m3_max_40_core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M3",
+    "units": "https://en.wikipedia.org/wiki/Apple_M3",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 512 bit -> 409.6 (Apple: 400). cpu-monkey: 1.40 GHz, 14.2 TFLOPS FP32.",
+   "uncertain": [
+    "tflops from third party",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m3ultra96",
+   "name": "Mac Studio, M3 Ultra 96 GB (60-core GPU)",
+   "short": "M3 Ultra 96",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 96,
+   "fastGB": 72,
+   "bwSpec": 819.2,
+   "tflopsSpec": 21.5,
+   "hostBw": 819.2,
+   "linkBw": 0,
+   "cores": 28,
+   "units": 60,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    1024
+   ],
+   "priceUSD": {
+    "msrp": 3999,
+    "street": null,
+    "date": "2025-03",
+    "source": "https://www.techspot.com/community/topics/apple-refreshes-mac-studio-m4-max-starts-at-1-999-m3-ultra-from-3-999.291016/"
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M3",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "tflops": "https://www.cpu-monkey.com/en/igpu-apple_m3_max_40_core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M3",
+    "units": "https://en.wikipedia.org/wiki/Apple_M3",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 1024 bit LPDDR5-6400 -> 819.2 (Apple: 819). tflops = 60 x 256 x 1.40 = 21.5.",
+   "uncertain": [
+    "tflops derived",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m3ultra512",
+   "name": "Mac Studio, M3 Ultra 512 GB (80-core GPU)",
+   "short": "M3 Ultra 512",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 512,
+   "fastGB": 384,
+   "bwSpec": 819.2,
+   "tflopsSpec": 28.7,
+   "hostBw": 819.2,
+   "linkBw": 0,
+   "cores": 32,
+   "units": 80,
+   "unitName": "GPU core",
+   "bus": [
+    6400,
+    1024
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": "2026-03",
+    "source": "https://macdailynews.com/2026/03/06/apple-drops-512gb-m3-ultra-mac-studio-option-ups-256gb-memory-upgrade-by-400/"
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M3",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "tflops": "https://www.cpu-monkey.com/en/igpu-apple_m3_max_40_core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M3",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M3",
+    "units": "https://en.wikipedia.org/wiki/Apple_M3",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 1024 bit -> 819.2. tflops = 80 x 256 x 1.40 = 28.7. Apple removed the 512 GB option on 2026-03-06 (max now 256 GB); used/stock only.",
+   "uncertain": [
+    "tflops derived",
+    "launch price ~$9,499 = $3,999 base + 80-core chip upgrade + $4,000 512 GB upgrade; chip-upgrade price not verified, so msrp left blank",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m4",
+   "name": "Mac, M4 32 GB",
+   "short": "M4",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 32,
+   "fastGB": 21.3,
+   "bwSpec": 120,
+   "tflopsSpec": 4,
+   "hostBw": 120,
+   "linkBw": 0,
+   "cores": 10,
+   "units": 10,
+   "unitName": "GPU core",
+   "bus": [
+    7500,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M4",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M4",
+    "tflops": "https://nanoreview.net/en/gpu-compare/apple-m4-max-gpu-40-core-vs-apple-m3-max-gpu-40-core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M4",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M4",
+    "units": "https://en.wikipedia.org/wiki/Apple_M4",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 128 bit LPDDR5X-7500 -> 120. tflops = 10 x 256 x 1.578 GHz = 4.0.",
+   "uncertain": [
+    "tflops derived, clock from third party",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m4pro",
+   "name": "Mac mini, M4 Pro 64 GB",
+   "short": "M4 Pro",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 273,
+   "tflopsSpec": 8.1,
+   "hostBw": 273,
+   "linkBw": 0,
+   "cores": 14,
+   "units": 20,
+   "unitName": "GPU core",
+   "bus": [
+    8533,
+    256
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M4",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M4",
+    "tflops": "https://nanoreview.net/en/gpu-compare/apple-m4-max-gpu-40-core-vs-apple-m3-max-gpu-40-core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M4",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M4",
+    "units": "https://en.wikipedia.org/wiki/Apple_M4",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 256 bit LPDDR5X-8533 -> 273. 14-core CPU / 20-core GPU bin; tflops = 20 x 256 x 1.578 = 8.1.",
+   "uncertain": [
+    "tflops derived",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m4max32",
+   "name": "MacBook Pro, M4 Max 32-core GPU 36 GB",
+   "short": "M4 Max 32c",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 36,
+   "fastGB": 24,
+   "bwSpec": 410,
+   "tflopsSpec": 12.9,
+   "hostBw": 410,
+   "linkBw": 0,
+   "cores": 14,
+   "units": 32,
+   "unitName": "GPU core",
+   "bus": [
+    8533,
+    384
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M4",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M4",
+    "tflops": "https://nanoreview.net/en/gpu-compare/apple-m4-max-gpu-40-core-vs-apple-m3-max-gpu-40-core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M4",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M4",
+    "units": "https://en.wikipedia.org/wiki/Apple_M4",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 384 bit LPDDR5X-8533 -> 409.6 (Apple: 410). tflops 12.9 (nanoreview).",
+   "uncertain": [
+    "tflops third party",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m4max",
+   "researchId": "m4max",
+   "name": "MacBook Pro, M4 Max 128 GB",
+   "short": "M4 Max",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal",
+   "ramGB": 128,
+   "fastGB": 96,
+   "bwSpec": 546,
+   "tflopsSpec": 16.2,
+   "hostBw": 546,
+   "linkBw": 0,
+   "cores": 16,
+   "units": 40,
+   "unitName": "GPU core",
+   "bus": [
+    8533,
+    512
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M4",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M4",
+    "tflops": "https://nanoreview.net/en/gpu-compare/apple-m4-max-gpu-40-core-vs-apple-m3-max-gpu-40-core",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M4",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M4",
+    "units": "https://en.wikipedia.org/wiki/Apple_M4",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 512 bit LPDDR5X-8533 -> 546. tflops 16.2 (nanoreview, 640 ALU x 2 x 1.578 GHz). Existing preset uses 12 effective.",
+   "uncertain": [
+    "tflops third party",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m5",
+   "name": "Mac, M5 32 GB",
+   "short": "M5",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal-na",
+   "ramGB": 32,
+   "fastGB": 21.3,
+   "bwSpec": 153.6,
+   "tflopsSpec": null,
+   "hostBw": 153.6,
+   "linkBw": 0,
+   "cores": 10,
+   "units": 10,
+   "unitName": "GPU core",
+   "bus": [
+    9600,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M5",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M5",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M5",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M5",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M5",
+    "units": "https://en.wikipedia.org/wiki/Apple_M5",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). LPDDR5X-9600, 128 bit -> 153.6. tflops blank: Apple publishes no TFLOPS; M5 adds a matrix \"Neural Accelerator\" per GPU core, so the FP32-rate rule no longer bounds FP16 matmul.",
+   "uncertain": [
+    "tflops unknown",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m5pro",
+   "name": "Mac mini / MacBook Pro, M5 Pro 64 GB",
+   "short": "M5 Pro",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal-na",
+   "ramGB": 64,
+   "fastGB": 48,
+   "bwSpec": 307,
+   "tflopsSpec": null,
+   "hostBw": 307,
+   "linkBw": 0,
+   "cores": 18,
+   "units": 20,
+   "unitName": "GPU core",
+   "bus": [
+    9600,
+    256
+   ],
+   "priceUSD": {
+    "msrp": 1699,
+    "street": null,
+    "date": "2026-08",
+    "source": "https://daringfireball.net/2026/08/configurations_and_pricing_for_new_mac_minis_and_mac_studios"
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M5",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M5",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M5",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M5",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M5",
+    "units": "https://en.wikipedia.org/wiki/Apple_M5",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). LPDDR5X-9600, 307 GB/s (256 bit x 9600 / 8 = 307.2). Mac mini M5 Pro from $1,699 (Aug 2026).",
+   "uncertain": [
+    "tflops unknown",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m5max32",
+   "name": "Mac, M5 Max 32-core GPU 36 GB",
+   "short": "M5 Max 32c",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal-na",
+   "ramGB": 36,
+   "fastGB": 24,
+   "bwSpec": 460,
+   "tflopsSpec": null,
+   "hostBw": 460,
+   "linkBw": 0,
+   "cores": 18,
+   "units": 32,
+   "unitName": "GPU core",
+   "bus": [
+    9600,
+    384
+   ],
+   "priceUSD": {
+    "msrp": 2499,
+    "street": null,
+    "date": "2026-08",
+    "source": "https://www.redsharknews.com/mac-studio-m5-max-m5-ultra-price-specs ; https://daringfireball.net/2026/08/configurations_and_pricing_for_new_mac_minis_and_mac_studios"
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M5",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M5",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M5",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M5",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M5",
+    "units": "https://en.wikipedia.org/wiki/Apple_M5",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 460 GB/s (384 bit x 9600 / 8 = 460.8). Mac Studio M5 Max 32c from $2,499.",
+   "uncertain": [
+    "tflops unknown",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m5max",
+   "name": "Mac, M5 Max 40-core GPU 128 GB",
+   "short": "M5 Max",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal-na",
+   "ramGB": 128,
+   "fastGB": 96,
+   "bwSpec": 614,
+   "tflopsSpec": null,
+   "hostBw": 614,
+   "linkBw": 0,
+   "cores": 18,
+   "units": 40,
+   "unitName": "GPU core",
+   "bus": [
+    9600,
+    512
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://en.wikipedia.org/wiki/Apple_M5",
+    "bw": "https://en.wikipedia.org/wiki/Apple_M5",
+    "tflops": "https://en.wikipedia.org/wiki/Apple_M5",
+    "hostBw": "https://en.wikipedia.org/wiki/Apple_M5",
+    "cores": "https://en.wikipedia.org/wiki/Apple_M5",
+    "units": "https://en.wikipedia.org/wiki/Apple_M5",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). 614 GB/s (512 bit x 9600 / 8 = 614.4). Mac Studio 40-core base $3,100 (48 GB), 128 GB +$2,000 (Daring Fireball; versions of the article disagree).",
+   "uncertain": [
+    "tflops unknown",
+    "price config uncertain",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m5ultra",
+   "name": "Mac Studio, M5 Ultra 256 GB",
+   "short": "M5 Ultra",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal-na",
+   "ramGB": 256,
+   "fastGB": 192,
+   "bwSpec": 1228.8,
+   "tflopsSpec": null,
+   "hostBw": 1228.8,
+   "linkBw": 0,
+   "cores": 36,
+   "units": 80,
+   "unitName": "GPU core",
+   "bus": [
+    9600,
+    1024
+   ],
+   "priceUSD": {
+    "msrp": 5499,
+    "street": null,
+    "date": "2026-08",
+    "source": "https://www.redsharknews.com/mac-studio-m5-max-m5-ultra-price-specs"
+   },
+   "sources": {
+    "ramGB": "https://daringfireball.net/2026/08/configurations_and_pricing_for_new_mac_minis_and_mac_studios",
+    "bw": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "tflops": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "hostBw": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "cores": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "units": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). Apple: up to 36-core CPU, 80-core GPU, up to 512 GB, \"up to 1.2 TB/s\" (Wikipedia: 1228.8 = 1024 bit x 9600 / 8). 512 GB \"coming late October\" 2026; 256 GB used here. From $5,499.",
+   "uncertain": [
+    "tflops unknown",
+    "512 GB availability",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "m6",
+   "name": "Mac mini, M6 32 GB",
+   "short": "M6",
+   "kind": "unified",
+   "vendor": "Apple",
+   "family": "apple-metal-na",
+   "ramGB": 32,
+   "fastGB": 21.3,
+   "bwSpec": 170,
+   "tflopsSpec": null,
+   "hostBw": 170,
+   "linkBw": 0,
+   "cores": 12,
+   "units": 12,
+   "unitName": "GPU core",
+   "bus": [
+    10667,
+    128
+   ],
+   "priceUSD": {
+    "msrp": 899,
+    "street": null,
+    "date": "2026-08",
+    "source": "https://daringfireball.net/2026/08/configurations_and_pricing_for_new_mac_minis_and_mac_studios"
+   },
+   "sources": {
+    "ramGB": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "bw": "https://www.starryhope.com/minipcs/models/mac-mini-2026-m6/",
+    "tflops": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "hostBw": "https://www.starryhope.com/minipcs/models/mac-mini-2026-m6/",
+    "cores": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "units": "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/",
+    "fastGB": "convention (see notes)",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "Apple GPUs run FP16 at the FP32 rate (M1-M4), so tflops = FP32 peak. fastGB uses the macOS default GPU wired limit convention: ~2/3 of RAM up to 36 GB, ~3/4 above (adjustable with sysctl iogpu.wired_limit_mb). units = GPU cores (128 FP32 ALUs each). Added (released Aug 2026). Apple: 12-core CPU, 12-core GPU, up to 32 GB, up to 170 GB/s (24/32 GB configs; 16 GB config 153 GB/s). From $899.",
+   "uncertain": [
+    "tflops unknown",
+    "per-config bandwidth from secondary source",
+    "fastGB is a convention, not a spec"
+   ]
+  },
+  {
+   "id": "cpuDesktop",
+   "name": "Desktop CPU only, Ryzen 9 9950X, 2x32 GB DDR5-5600",
+   "short": "DDR5 desktop",
+   "kind": "unified",
+   "vendor": "CPU",
+   "family": "cpu",
+   "ramGB": 64,
+   "fastGB": 60,
+   "bwSpec": 89.6,
+   "tflopsSpec": 8.8,
+   "hostBw": 89.6,
+   "linkBw": 0,
+   "cores": 16,
+   "units": 16,
+   "unitName": "core",
+   "bus": [
+    5600,
+    128
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "bw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "tflops": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "hostBw": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "cores": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "units": "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x.html",
+    "fastGB": "convention",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "CPU-only: bw = channels x 64 bit x MT/s / 8. tflops = BF16 peak via AVX-512 BF16 dot-product (2x FP32 FMA rate) = cores x flop/clk x clock; there is no CPU \"FP16 TFLOPS\" spec, so this is a derived ceiling. fastGB = RAM minus ~4 GB for the OS. 2 ch x 64 bit x 5600 / 8 = 89.6 GB/s (AMD max DDR5-5600 at 2 DIMMs; 4 DIMMs drop to DDR5-3600 = 57.6). Zen 5 desktop full 512-bit FPU: 128 BF16 flop/clk/core x 16 x 4.3 GHz base = 8.8.",
+   "uncertain": [
+    "tflops derived",
+    "EXPO kits at DDR5-6000+ are common (96 GB/s at 6000)"
+   ]
+  },
+  {
+   "id": "cpuThreadripper",
+   "name": "Workstation CPU only, Threadripper PRO 9995WX, 8x64 GB DDR5-6400",
+   "short": "Threadripper 8ch",
+   "kind": "unified",
+   "vendor": "CPU",
+   "family": "cpu",
+   "ramGB": 512,
+   "fastGB": 508,
+   "bwSpec": 409.6,
+   "tflopsSpec": 30.7,
+   "hostBw": 409.6,
+   "linkBw": 0,
+   "cores": 96,
+   "units": 96,
+   "unitName": "core",
+   "bus": [
+    6400,
+    512
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/workstations/ryzen-threadripper/9000-wx-series/amd-ryzen-threadripper-pro-9995wx.html",
+    "bw": "https://www.amd.com/en/products/processors/workstations/ryzen-threadripper/9000-wx-series/amd-ryzen-threadripper-pro-9995wx.html",
+    "tflops": "https://www.amd.com/en/products/processors/workstations/ryzen-threadripper/9000-wx-series/amd-ryzen-threadripper-pro-9995wx.html",
+    "hostBw": "https://www.amd.com/en/products/processors/workstations/ryzen-threadripper/9000-wx-series/amd-ryzen-threadripper-pro-9995wx.html",
+    "cores": "https://www.amd.com/en/products/processors/workstations/ryzen-threadripper/9000-wx-series/amd-ryzen-threadripper-pro-9995wx.html",
+    "units": "https://www.amd.com/en/products/processors/workstations/ryzen-threadripper/9000-wx-series/amd-ryzen-threadripper-pro-9995wx.html",
+    "fastGB": "convention",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "CPU-only: bw = channels x 64 bit x MT/s / 8. tflops = BF16 peak via AVX-512 BF16 dot-product (2x FP32 FMA rate) = cores x flop/clk x clock; there is no CPU \"FP16 TFLOPS\" spec, so this is a derived ceiling. fastGB = RAM minus ~4 GB for the OS. AMD: 96 cores, 8 channels, DDR5-6400 -> 8 x 64 x 6400 / 8 = 409.6 GB/s. 96 x 128 x 2.5 GHz base = 30.7. Non-PRO Threadripper 9980X has 4 channels (204.8).",
+   "uncertain": [
+    "tflops derived",
+    "DDR5-6400 RDIMM at 1 DIMM per channel assumed"
+   ]
+  },
+  {
+   "id": "cpuGenoa",
+   "name": "Server CPU only, EPYC 9654 (Genoa), 12x64 GB DDR5-4800",
+   "short": "EPYC Genoa 12ch",
+   "kind": "unified",
+   "vendor": "CPU",
+   "family": "cpu",
+   "ramGB": 768,
+   "fastGB": 764,
+   "bwSpec": 460.8,
+   "tflopsSpec": 21.8,
+   "hostBw": 460.8,
+   "linkBw": 0,
+   "cores": 96,
+   "units": 96,
+   "unitName": "core",
+   "bus": [
+    4800,
+    768
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "bw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "tflops": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "units": "https://www.amd.com/en/products/processors/server/epyc/4th-generation-9004-and-8004-series/amd-epyc-9654.html",
+    "fastGB": "convention",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "CPU-only: bw = channels x 64 bit x MT/s / 8. tflops = BF16 peak via AVX-512 BF16 dot-product (2x FP32 FMA rate) = cores x flop/clk x clock; there is no CPU \"FP16 TFLOPS\" spec, so this is a derived ceiling. fastGB = RAM minus ~4 GB for the OS. AMD: 96 cores, 12 ch DDR5-4800, 460.8 GB/s per socket. Zen 4 executes 512-bit ops on 256-bit pipes: 64 BF16 flop/clk/core x 96 x 3.55 GHz all-core = 21.8. Dual socket doubles bw only with NUMA-aware placement.",
+   "uncertain": [
+    "tflops derived"
+   ]
+  },
+  {
+   "id": "cpuTurin",
+   "name": "Server CPU only, EPYC 9755 (Turin), 12x64 GB DDR5-6400",
+   "short": "EPYC Turin 12ch",
+   "kind": "unified",
+   "vendor": "CPU",
+   "family": "cpu",
+   "ramGB": 768,
+   "fastGB": 764,
+   "bwSpec": 614,
+   "tflopsSpec": 67.2,
+   "hostBw": 614,
+   "linkBw": 0,
+   "cores": 128,
+   "units": 128,
+   "unitName": "core",
+   "bus": [
+    6400,
+    768
+   ],
+   "priceUSD": {
+    "msrp": null,
+    "street": null,
+    "date": null,
+    "source": null
+   },
+   "sources": {
+    "ramGB": "https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9755.html",
+    "bw": "https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9755.html",
+    "tflops": "https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9755.html",
+    "hostBw": "https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9755.html",
+    "cores": "https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9755.html",
+    "units": "https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9755.html",
+    "fastGB": "convention",
+    "linkBw": "n/a (unified)"
+   },
+   "asOf": "2026-10-24",
+   "notes": "CPU-only: bw = channels x 64 bit x MT/s / 8. tflops = BF16 peak via AVX-512 BF16 dot-product (2x FP32 FMA rate) = cores x flop/clk x clock; there is no CPU \"FP16 TFLOPS\" spec, so this is a derived ceiling. fastGB = RAM minus ~4 GB for the OS. AMD: 128 cores, 12 ch, 614 GB/s per socket at DDR5-6400 (\"for targeted customers and configurations\"); at the standard DDR5-6000 it is 576. 128 x 128 x 4.1 GHz all-core = 67.2.",
+   "uncertain": [
+    "bw 614 vs 576 depending on DIMM speed",
+    "tflops derived; AVX-512 all-core clocks likely lower than 4.1"
+   ]
+  }
+ ]
+}

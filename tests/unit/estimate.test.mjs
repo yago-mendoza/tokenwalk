@@ -1,12 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import { loadModel } from './load.mjs';
+import { loadModel, PURE_PARTS } from './load.mjs';
 
 // estimate(config, data) is the cost model with no state: these check it gives exactly what compute() gave before
-// the refactor (tests/unit/legacy, verbatim), and that it reads nothing but its arguments. 01c (the catalogue) joins
-// the parts once it exists.
-const parts = ['01-data.ts', '01c-catalogue.ts', '01e-estimate.ts'].filter(f => fs.existsSync(new URL('../../src/parts/' + f, import.meta.url)));
+// the refactor (tests/unit/legacy, verbatim), and that it reads nothing but its arguments.
+const parts = PURE_PARTS;
 const M = await loadModel(parts, { extra: ['tests/unit/legacy/compute-94424a6.ts'] });
 
 // The Setup's defaults (03-state.ts, defaults()) on a machine preset.
