@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/tokenwalk-banner.svg" width="760" alt="tokenwalk"></p>
+<p align="center"><a href="https://infraphysics.net/playgrounds/7148293/tokenwalk"><img src="docs/assets/tokenwalk-banner.svg" width="760" alt="tokenwalk"></a></p>
 
 <p align="center">
   Watch one LLM request walk through a local machine.<br>
@@ -12,6 +12,10 @@
 </p>
 
 <p align="center">
+  <a href="https://infraphysics.net/playgrounds/7148293/tokenwalk"><img src="https://img.shields.io/badge/%E2%96%B6%20Open%20tokenwalk-infraphysics.net-ffd43b?style=for-the-badge&labelColor=101016" alt="Open tokenwalk online" height="34"></a>
+</p>
+
+<p align="center">
   <b>A project of <a href="https://infraphysics.net">InfraPhysics</a>.</b>
   Try it live at <a href="https://infraphysics.net/playgrounds/7148293/tokenwalk"><b>infraphysics.net/playgrounds/7148293/tokenwalk</b></a><br>
   How it is built: <a href="https://infraphysics.net/lab/projects/llm-inference-console">the project page</a> ·
@@ -22,9 +26,13 @@
 
 You pick a machine, a model and a prompt; tokenwalk plays the request pass by pass. Connect it to your own Ollama or llama.cpp and it runs the same request for real, next to its estimate (see [Connecting a real server](#connecting-a-real-server)).
 
-![tokenwalk: the model as a grid of tokens across and layers up, mid-way through writing the answer](docs/screenshot.png)
+[![tokenwalk: the model as a grid of tokens across and layers up, mid-way through writing the answer](docs/screenshot.png)](https://infraphysics.net/playgrounds/7148293/tokenwalk)
+
+<p align="center"><a href="https://infraphysics.net/playgrounds/7148293/tokenwalk"><b>Open it in the browser</b></a>: nothing to install, it runs in the page.</p>
 
 ## Running it
+
+To just use it, open **[infraphysics.net/playgrounds/7148293/tokenwalk](https://infraphysics.net/playgrounds/7148293/tokenwalk)**. To work on it locally:
 
 ```bash
 npm i
@@ -131,6 +139,8 @@ curl http://localhost:8080/props               # llama-server answers with its s
 ```
 
 ### 3. Send a request
+
+Open [tokenwalk online](https://infraphysics.net/playgrounds/7148293/tokenwalk) (or your local `npm run dev`) and switch to **Real machine** at the top.
 
 The top bar has a switch, left of the setup line: **Simulated | Real machine**. The console is in one mode at a time.
 
