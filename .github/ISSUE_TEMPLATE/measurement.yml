@@ -1,0 +1,72 @@
+name: Share a measurement
+description: Timings of one real request on your hardware, from tokenwalk's Share this measurement window.
+title: "Measurement: "
+labels: [measurement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No fork, no pull request: this form is the whole path. tokenwalk's **Share this measurement** opens it filled in, with the server's timings, the model and settings of one real request, and the hardware you named; never the prompt, the answer or the server address.
+
+        Not using the web app? Run the command in the [README](https://github.com/yago-mendoza/tokenwalk#share-without-the-web-app) against your Ollama or llama-server and paste its JSON response into **Measurement**; fill in the hardware, the server version and the weight format below. Only the timings and counts are kept.
+
+        A check runs on submit and on every edit, and a maintainer reviews it before it shows in *What fits*.
+  - type: input
+    id: preset
+    attributes:
+      label: Machine preset
+      description: "The tokenwalk preset this hardware is: thinkpad, thinkpadCpu, strixHalo, m4max, rtx4090, rtx5090, h100, or other (then describe it below)."
+      placeholder: other
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device or laptop model
+  - type: input
+    id: cpu
+    attributes:
+      label: CPU
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU
+  - type: input
+    id: memory
+    attributes:
+      label: Memory
+      description: Size and type, for example 64 GB LPDDR5X.
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+  - type: input
+    id: server_version
+    attributes:
+      label: Server version
+      description: Only for a raw response (ollama --version, or llama-server --version).
+  - type: input
+    id: quant
+    attributes:
+      label: Weight format
+      description: Only for a raw response, when the model name does not say it (ollama show <model> lists it as quantization), for example Q4_K_M.
+  - type: textarea
+    id: measurement
+    attributes:
+      label: Measurement
+      description: The JSON from tokenwalk (schema tokenwalk-measurement/1), or the raw JSON response of the documented command.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Optional. Anything that affected the run (on battery, other load, a power profile, server flags).
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: This was a real run on the hardware named above, and the numbers are as tokenwalk reported them.
+          required: true

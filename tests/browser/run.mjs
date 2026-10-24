@@ -3,6 +3,7 @@
 import { spawn, execSync } from 'node:child_process';
 import fs from 'node:fs';
 import { launch, sleep } from './cdp.mjs';
+import { validateMeasurement } from '../../tools/measurement.mjs';
 
 const SHOT = process.argv.includes('--shot');
 let base = process.env.BASE_URL, server;
@@ -464,6 +465,118 @@ await check('History keeps the whole run: after 300 events the load and first pr
   const txt = await p.ev(`document.getElementById('log').textContent`);
   assert(!/Chunk 1 of/.test(txt) && /First token/.test(txt), 'the prefill group did not collapse, or hid the first token');
   await p.ev(`document.querySelector('#log [data-lph="prefill"]').click(); document.getElementById('logClose').click()`);
+});
+
+const SHOTS = process.env.SHOTS_DIR; // when set, screenshots of the share window and the measured rows are written there
+const shotTo = async name => { if (SHOTS) { await sleep(350); await p.shot(`${SHOTS}/${name}.png`); } };
+const overflowIn = sel => p.ev(`[...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => { if (!e.offsetParent || e.children.length) return false; const cs = getComputedStyle(e); return e.scrollWidth > e.clientWidth + 1 && (cs.textOverflow === 'ellipsis' || cs.overflow === 'hidden' || cs.overflowX === 'hidden'); }).map(e => (e.id || e.className || e.tagName) + ': ' + e.textContent.slice(0, 40))`);
+
+await check('Connect window: the agent brief is copied with the origin and the 204 check; the old switch sentence is gone', async () => {
+  await fresh('', 1280, 720); await p.ev(mockOllama(true));
+  await p.ev(`document.querySelector('#modeSw [data-mode=real]').click()`); await until(`LIVE.status === 'cors'`);
+  const txt = await p.ev(`document.getElementById('liveIn').textContent`);
+  assert(!/Connecting switches the console/.test(txt), 'the removed sentence is still there');
+  assert(/Copy instructions for an AI agent/.test(txt), 'no agent button');
+  await p.ev(`document.querySelector('.lv-setup').open = true`); await sleep(100);
+  for (const os of ['win', 'mac', 'linux']) {
+    await p.ev(`document.querySelector('.lv-os [data-os=${os}]').click()`); await sleep(100); await p.ev(`document.querySelector('.lv-setup').open = true`);
+    await p.ev(`document.getElementById('lvAgent').click()`); await sleep(300);
+    const b = await p.ev('window.__agentBrief || ""'), origin = await p.ev('location.origin');
+    assert(b.includes(`Page origin: ${origin}`) && /204/.test(b) && /-X OPTIONS http:\/\/localhost:11434\/api\/tags -H "Origin: /.test(b), `${os}: brief lacks the origin or the 204 check:\n` + b.slice(0, 400));
+    assert(/allows localhost and 127\.0\.0\.1 origins by default/.test(b) && /DO NOT/.test(b) && /0\.0\.0\.0/.test(b) && /OLLAMA_ORIGINS=\*/.test(b) && /REPORT BACK/.test(b), `${os}: brief sections`);
+  }
+  assert(/Copied|Copy failed/.test(await p.ev(`document.getElementById('toast').textContent`)) && await p.ev(`!document.getElementById('toast').hidden`), 'no toast');
+  await shotTo('agent-brief-button');
+  for (const lg of ['en', 'es']) { await p.ev(`setLang('${lg}'); renderLive(true); document.querySelector('.lv-setup').open = true`); await sleep(200); const o = await overflowIn('#liveWin *'); assert(!o.length, `${lg}: overflow in the connect window ${JSON.stringify(o)}`); }
+  await p.ev(`setLang('en'); liveOpen(false)`);
+});
+
+const measFixture = JSON.parse(fs.readFileSync('tests/fixtures/measurement-ollama.json', 'utf8'));
+await check('Share a measurement: the window shows the payload without the prompt, and the issue link is well formed and under the limit', async () => {
+  await fresh('', 1280, 720); await p.ev(mockOllama(false)); await toReal();
+  assert(!(await p.ev(`!!document.getElementById('lvShare')`)), 'Share is offered before a run');
+  await p.ev(`window.__lag = 2300; document.getElementById('play').click()`); await until('!LIVE.running && !!LIVE.run', 8000); await p.ev('window.__lag = 0'); await sleep(300);
+  assert(await p.ev(`!!document.getElementById('lvShare')`), 'no Share button after a finished run');
+  await p.ev(`localStorage.removeItem('tw.shareHw'); Object.assign(SHARE, { hw: '', device: '', cpu: '', gpu: '', memGB: '', memType: '', os: '', kv: 'f16' })`);
+  await p.ev(`document.getElementById('lvShare').click()`); await until(`!document.getElementById('shareWin').hidden && !!document.getElementById('shPrev')`);
+  await sleep(300);
+  const prompt = await p.ev('LIVE.run.prompt'), answer = await p.ev('LIVE.run.text'), ep = await p.ev('LIVE.ep');
+  const all = await p.ev(`document.getElementById('shareIn').textContent + document.getElementById('shJson').textContent`);
+  for (const [what, v] of [['prompt', prompt.slice(0, 40)], ['answer', answer.trim().slice(0, 30)], ['address', ep]]) assert(!all.includes(v), `the ${what} is in the share window`);
+  assert(/Never sent: the prompt, the answer, the server address/.test(all), 'no privacy line');
+  assert(await p.ev(`document.getElementById('shOpen').disabled`), 'Open is allowed before the hardware is named');
+  assert(/Name your hardware first/.test(all), 'no reason given');
+  await shotTo('share-01-unnamed');
+  await p.ev(`(() => { const s = document.getElementById('shHw'); s.value = 'thinkpad'; s.dispatchEvent(new Event('change')); })()`); await sleep(200);
+  const sh = await p.ev('JSON.stringify(window.__share)'), share = JSON.parse(sh);
+  assert(share.url && share.url.url, 'no URL after naming the hardware');
+  const u = new URL(share.url.url);
+  assert(u.origin + u.pathname === 'https://github.com/yago-mendoza/tokenwalk/issues/new' && u.searchParams.get('template') === 'measurement.yml', 'URL: ' + share.url.url.slice(0, 120));
+  assert(share.url.url.length <= 7500, 'URL is ' + share.url.url.length + ' characters');
+  assert(/^Measurement: ThinkPad · Radeon 860M · qwen3\.6:35b-a3b Q4_K_M$/.test(u.searchParams.get('title')), 'title: ' + u.searchParams.get('title'));
+  assert(u.searchParams.get('preset') === 'thinkpad', 'preset field');
+  const m = JSON.parse(u.searchParams.get('measurement'));
+  assert(JSON.stringify(m) === JSON.stringify(share.payload), 'the JSON in the link is not the one shown');
+  const v = validateMeasurement(m); assert(v.ok, 'the payload does not validate: ' + v.errors.join('; '));
+  assert(m.request.promptTokens === 36 && m.request.answerTokens === 80 && m.timings.ollama.eval_count === 80 && !('context' in m.timings.ollama), 'payload timings');
+  assert(m.model.digest && m.model.digest.startsWith('a7eb95c5') && m.server.version === '0.40.7' && m.estimate.machine === 'thinkpad' && m.estimate.decodeTps > 0, 'payload model / server / estimate');
+  assert(!JSON.stringify(m).includes(prompt.slice(0, 20)) && !JSON.stringify(m).includes('localhost'), 'prompt or address in the payload');
+  assert((await p.ev(`document.querySelectorAll('#shareIn table.sh-t tr').length`)) === 8, 'the readable table');
+  await p.ev(`document.querySelector('#shareIn .sh-raw').open = true`); await sleep(150);
+  await shotTo('share-02-preset');
+  // Other needs at least one field, and pre-fills nothing it does not know
+  await p.ev(`(() => { const s = document.getElementById('shHw'); s.value = 'other'; s.dispatchEvent(new Event('change')); })()`); await sleep(200);
+  assert(await p.ev(`!!document.getElementById('shDev') && !!document.getElementById('shMem')`), 'no free fields for Other');
+  if (!(await p.ev(`SHARE.gpu`))) assert(await p.ev(`document.getElementById('shOpen').disabled`), 'Other with nothing filled can be opened');
+  await p.ev(`(() => { const i = document.getElementById('shDev'); i.value = 'Framework 13'; i.dispatchEvent(new Event('input')); const g = document.getElementById('shMem'); g.value = '32'; g.dispatchEvent(new Event('input')); })()`); await sleep(200);
+  const s2 = JSON.parse(await p.ev('JSON.stringify(window.__share)'));
+  assert(s2.url.url && s2.payload.hardware.device === 'Framework 13' && s2.payload.hardware.memoryGB === 32 && validateMeasurement(s2.payload).ok, 'Other payload');
+  assert(new URL(s2.url.url).searchParams.get('device') === 'Framework 13', 'device field not prefilled');
+  await shotTo('share-03-other');
+  // a payload too long for a link: the optional fields go first, then the link itself
+  // (a growing payload walks through every level in order: pretty JSON with every field, compact, preset only, JSON only, none)
+  const lv = await p.ev(`(() => { const lev = []; for (let n = 0; n <= 1500; n += 1) { const u = shareUrl({ ...window.__share.payload, pad: Array(n).fill('y') }); lev.push(u.level); if (u.url && u.url.length > 7500) return 'over'; } return [lev, shareUrl({ ...window.__share.payload, pad: Array(90).fill('z'.repeat(100)) })]; })()`);
+  const order = l => (l === -1 ? 9 : l);
+  assert(lv !== 'over' && [0, 1, 2, 3, -1].every(l => lv[0].includes(l)) && lv[0].every((l, i) => i === 0 || order(l) >= order(lv[0][i - 1])), 'fallback levels: ' + JSON.stringify(lv && lv[0]));
+  assert(lv[1].url === null && /issues\/new\?template=measurement\.yml$/.test(lv[1].form), 'last resort: ' + JSON.stringify(lv[1]).slice(0, 200));
+  for (const lg of ['en', 'es']) {
+    await p.ev(`setLang('${lg}'); shareRender(); document.querySelector('#shareIn .sh-raw').open = true`); await sleep(250);
+    const g = await p.ev(`(() => { const c = document.querySelector('#shareWin .card').getBoundingClientRect(), b = document.querySelector('#shareWin .sh-body'); return [c.top, c.bottom, c.left, c.right, innerWidth, innerHeight, b.scrollWidth, b.clientWidth]; })()`);
+    assert(g[0] >= 0 && g[1] <= g[5] && g[2] >= 0 && g[3] <= g[4] && g[6] <= g[7] + 1, `${lg}: the share window leaves the screen or scrolls sideways ` + JSON.stringify(g));
+    const o = await overflowIn('#shareWin *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
+    if (lg === 'es') await shotTo('share-04-es');
+  }
+  await p.ev(`setLang('en'); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`); await sleep(150);
+  assert(await p.ev(`document.getElementById('shareWin').hidden`), 'Esc did not close the share window');
+  await shotTo('share-00-monitor-button');
+  const o = await overflowIn('#liveSec *'); assert(!o.length, 'overflow in Estimate vs measured: ' + JSON.stringify(o));
+  await p.ev(`localStorage.removeItem('tw.shareHw'); leaveReal(true)`);
+});
+
+await check('What fits: a row with accepted measurements shows them, with n, the spread and the source issues', async () => {
+  for (const lg of ['en', 'es']) {
+    await fresh(lg === 'es' ? '?lang=es' : '', 1280, 720);
+    const rec = (n, tps, prompt) => ({ issue: n, url: `https://github.com/yago-mendoza/tokenwalk/issues/${n}`, submitted: '2026-10-24', m: { ...measFixture, request: { ...measFixture.request, promptTokens: prompt }, timings: { ollama: { ...measFixture.timings.ollama, prompt_eval_count: prompt } }, derived: { ...measFixture.derived, decodeTps: tps, ttftS: prompt / 100 } } });
+    await p.ev(`setMeasurements(${JSON.stringify([rec(12, 9.04, 6400), rec(15, 11.5, 36), rec(19, 10.1, 7000), { ...rec(21, 40, 36), m: { ...rec(21, 40, 36).m, hardware: { preset: 'rtx4090' } } }])}); fitsOpen(true)`); await sleep(300);
+    const row = `#fitsIn tr[data-fr="thinkpad|qwen36|Q4_K_M"]`;
+    const r = await p.ev(`(() => { const t = document.querySelector('${row}'); return [!!t.querySelector('.mtag'), t.querySelector('.mtag').textContent, t.cells[4].textContent, t.cells[5].textContent, t.querySelector('.c-tps .ms').title, t.querySelector('.c-ttft .ms').title]; })()`);
+    assert(r[0] && /×3/.test(r[1]), `${lg}: tag ` + JSON.stringify(r));
+    assert(/10[.,]1$/.test(r[3]) && /median of 3, 9[.,]0 to 11[.,]5|mediana de 3, de 9[.,]0 a 11[.,]5/.test(r[4]), `${lg}: decode median of 3 with its spread: ` + JSON.stringify(r));
+    assert(/(median of|mediana de) 2/.test(r[5]) && /67 s/.test(r[2]), `${lg}: first token from the two runs near 6,500 tokens: ` + JSON.stringify(r));
+    assert((await p.ev(`document.querySelector('${row} .c-ttft .ms').textContent`)).length > 0 && !(await p.ev(`document.querySelector('${row} .c-ttft .ms').classList.contains('none')`)), 'no measured TTFT');
+    assert(await p.ev(`!!document.querySelector('#fitsIn tr[data-fr="rtx4090|qwen36|Q4_K_M"] .mtag') && !document.querySelector('#fitsIn tr[data-fr="rtx4090|qwen36|Q4_K_M"] .c-ttft .ms:not(.none)')`), 'the 4090 run (36-token prompt) should show — for first token');
+    assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].filter(t => !t.querySelector('.mtag')).every(t => /860M/.test(t.cells[0].textContent) ? /calibrated|calibrada/.test(t.cells[0].textContent) : /estimate|estimada/.test(t.cells[0].textContent))`), 'unmeasured rows lost their estimate tag');
+    await p.ev(`document.querySelector('${row} .mtag').click()`); await sleep(200);
+    assert(await p.ev(`!document.getElementById('fitsWin').hidden && S.machine === 'thinkpad'`), 'the tag click loaded the row or closed the window');
+    const links = await p.ev(`[...document.querySelectorAll('#fitsIn tr.mdet a')].map(a => a.href)`);
+    assert(links.join() === [12, 15, 19].map(n => `https://github.com/yago-mendoza/tokenwalk/issues/${n}`).join(), 'detail links: ' + links);
+    assert(/Ollama 0\.40\.7/.test(await p.ev(`document.querySelector('#fitsIn tr.mdet').textContent`)), 'no server version in the detail');
+    const g = await p.ev(`(() => { const t = document.querySelector('#fitsIn .fw-tbl'); return [t.scrollWidth, t.clientWidth]; })()`);
+    assert(g[0] <= g[1] + 1, `${lg}: horizontal scroll ${g}`);
+    const o = await overflowIn('#fitsWin *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
+    await p.ev(`document.querySelector('#fitsIn tr.mdet').scrollIntoView({ block: 'center' })`); await shotTo(`fits-measured-${lg}`);
+    await p.ev(`setMeasurements([]); fitsOpen(false)`);
+  }
 });
 
 if (SHOT) {

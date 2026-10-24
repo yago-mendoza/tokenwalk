@@ -43,7 +43,7 @@ async function liveDetect() {
     if (r && r.ok) {
       LIVE.kind = 'ollama'; LIVE.version = (await r.json()).version || '';
       const tags = await (await liveFetch('/api/tags')).json();
-      LIVE.models = (tags.models || []).map(m => ({ name: m.name, size: m.size, params: m.details && m.details.parameter_size, quant: m.details && m.details.quantization_level }));
+      LIVE.models = (tags.models || []).map(m => ({ name: m.name, size: m.size, digest: m.digest, params: m.details && m.details.parameter_size, quant: m.details && m.details.quantization_level }));
       LIVE.caps = Object.fromEntries((tags.models || []).map(m => [m.name, m.capabilities || []]));
     } else {
       let p = null; try { p = await liveFetch('/props'); } catch (e) { p = null; }
@@ -54,7 +54,7 @@ async function liveDetect() {
       }
       LIVE.kind = 'llama'; const props = await p.json(); LIVE.version = props.build_info || '';
       const models = await (await liveFetch('/v1/models')).json(); LIVE.llamaInfo = { props, models };
-      LIVE.models = (models.data || []).map(d => ({ name: d.id.split(/[\\/]/).pop(), id: d.id, params: d.meta && d.meta.n_params ? `${(d.meta.n_params / 1e9).toFixed(1)}B` : '' }));
+      LIVE.models = (models.data || []).map(d => ({ name: d.id.split(/[\\/]/).pop(), id: d.id, size: d.meta && d.meta.size, params: d.meta && d.meta.n_params ? `${(d.meta.n_params / 1e9).toFixed(1)}B` : '' }));
     }
     LIVE.status = 'ok'; if (!LIVE.models.some(m => m.name === LIVE.pick)) LIVE.pick = (LIVE.models.find(m => MODELS[S.model] && m.name === MODELS[S.model].tag) || LIVE.models[0] || {}).name || '';
   } catch (e) { LIVE.status = 'error'; LIVE.error = String(e && e.message || e); }
@@ -87,6 +87,11 @@ async function liveRun() {
     LIVE.run = (LIVE.kind === 'ollama' ? ollamaRun : llamaRun)(parsed.final, LIVE.pick, LIVE.text, first === null ? null : first / 1000, arrivals);
     if (LIVE.run.totalS === null || LIVE.kind === 'llama') LIVE.run.totalS = (performance.now() - LIVE.t0) / 1000;
     LIVE.run.prompt = prompt;
+    // What a shared measurement carries: the server's own timings (only these keys: Ollama's final object also holds
+    // the context, which encodes the prompt), the options sent, the server version and when it ran.
+    LIVE.run.raw = LIVE.kind === 'ollama' ? Object.fromEntries(['load_duration', 'prompt_eval_count', 'prompt_eval_duration', 'eval_count', 'eval_duration', 'total_duration'].map(k => [k, parsed.final[k]]))
+      : Object.fromEntries(Object.entries(parsed.final.timings || {}).filter(([, v]) => typeof v === 'number'));
+    LIVE.run.sent = LIVE.sent; LIVE.run.at = new Date().toISOString(); LIVE.run.version = LIVE.version;
     LIVE.est = liveEstimate(LIVE.run);
   } catch (e) { if (!(LIVE.ctl && LIVE.ctl.signal.aborted)) { LIVE.error = String(e && e.message || e); LIVE.running = false; realPoll(true); } }
   LIVE.running = false; LIVE.ctl = null; TCURVE = { r: null, d: {} }; renderLive(true);
@@ -191,13 +196,64 @@ function liveSetupHtml() {
   const step = (n, t, body) => `<li><b>${n}</b><div><p>${t}</p>${body}</div></li>`;
   const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(location.origin);
   return `<details class="lv-setup" ${LIVE.status === 'cors' ? 'open' : ''}><summary>${esc(L('How to connect your own Ollama', 'Cómo conectar tu propio Ollama'))}</summary>
-    <div class="lv-os">${[['win', 'Windows'], ['mac', 'macOS'], ['linux', 'Linux']].map(([k, l]) => `<button type="button" data-os="${k}" aria-pressed="${os === k}">${l}</button>`).join('')}</div>
+    <div class="lv-osrow"><div class="lv-os">${[['win', 'Windows'], ['mac', 'macOS'], ['linux', 'Linux']].map(([k, l]) => `<button type="button" data-os="${k}" aria-pressed="${os === k}">${l}</button>`).join('')}</div><button type="button" class="tbtn" id="lvAgent" title="${esc(L('A plain-text brief to paste into a coding agent on this computer (Claude Code and the like), for the system selected', 'Un texto para pegar en un agente de código en este ordenador (Claude Code y similares), para el sistema elegido'))}">${ICON('notes', 's')}<span>${esc(L('Copy instructions for an AI agent', 'Copiar instrucciones para un agente'))}</span></button></div>
     <ol>${step(1, L('Install Ollama from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> and pull the reference model:', 'Instala Ollama desde <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> y descarga el modelo de referencia:'), block('ollama pull qwen3.6:35b-a3b'))}
     ${local ? step(2, L('This page is on localhost, which Ollama already allows. Nothing to change.', 'Esta página está en localhost, que Ollama ya permite. No hay nada que cambiar.'), '') : step(2, L(`Allow this page (${esc(o)}) to talk to Ollama:`, `Permite que esta página (${esc(o)}) hable con Ollama:`), block(allow) + (restart ? `<p class="lv-note">${esc(restart)}</p>` : ''))}
     ${step(3, L('Check it: it prints 204 when allowed, 403 when not.', 'Compruébalo: imprime 204 si está permitido, 403 si no.'), block(check))}
     ${step(4, L('Press Connect above.', 'Pulsa Conectar arriba.'), '')}</ol></details>`;
 }
+// A self-contained brief for a coding agent running on the visitor's machine: the goal, the steps for the selected
+// system, what not to do, and what to report. Always in English (agents read it, and commands are in English anyway).
+function liveAgentBrief(os = LIVE_OS) {
+  const fileO = location.protocol === 'file:' || location.origin === 'null', origin = fileO ? 'null' : location.origin;
+  const ep = (LIVE.ep || 'http://localhost:11434').replace(/\/+$/, ''), local = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(origin);
+  const sys = { win: 'Windows (PowerShell)', mac: 'macOS', linux: 'Linux (systemd)' }[os];
+  const curl = `curl -s -o /dev/null -w "%{http_code}" -X OPTIONS ${ep}/api/tags -H "Origin: ${origin}" -H "Access-Control-Request-Method: GET"`;
+  const head = [`TASK: let a web page reach the local Ollama server on this computer (${sys}).`, '',
+    `Page origin: ${origin}`, `Ollama address: ${ep}`, 'The page is tokenwalk; it sends requests from the browser to Ollama, which only answers origins listed in OLLAMA_ORIGINS.', ''];
+  const check = [`1. Check that Ollama is installed and running: ollama --version, then curl ${ep}/api/version (expect {"version": ...}). If it is not installed, stop and tell the user (https://ollama.com/download).`,
+    '2. Check whether the reference model is pulled: ollama list, look for qwen3.6:35b-a3b (about 23 GB). If it is missing, ask the user before running ollama pull qwen3.6:35b-a3b; any model they already have also works.'];
+  const dont = ['DO NOT', '- Do not expose Ollama on 0.0.0.0 (leave OLLAMA_HOST alone) and do not open firewall ports.', '- Do not set OLLAMA_ORIGINS=* : it lets every website reach this Ollama.', '- Do not remove origins already listed in OLLAMA_ORIGINS.', ''];
+  if (local) return [...head,
+    `NOTE: this page is served from ${origin}. Ollama allows localhost and 127.0.0.1 origins by default, so OLLAMA_ORIGINS is not the cause; do not change it. The cause is elsewhere.`, '',
+    'STEPS', ...check,
+    `3. Run: ${curl}`, '   204 means the origin is allowed and the problem is not CORS.',
+    `4. Check the address: is something else listening on that port, is OLLAMA_HOST set to another address or port, does ${ep}/api/tags answer?`,
+    '5. Check the browser: a prompt or a block for local network access, or an extension blocking requests to localhost.', '',
+    ...dont,
+    'REPORT BACK', '- The Ollama version and whether it answered, the models listed, the curl status code, and what you found to be the cause.'].join('\n');
+  const set = {
+    win: ['3. Set OLLAMA_ORIGINS for the current user, keeping any existing value (append with a comma; skip if the origin is already there):',
+      "   $cur = [Environment]::GetEnvironmentVariable('OLLAMA_ORIGINS', 'User')",
+      `   if (-not $cur) { $new = '${origin}' } elseif (($cur -split ',') -contains '${origin}') { $new = $cur } else { $new = "$cur,${origin}" }`,
+      "   [Environment]::SetEnvironmentVariable('OLLAMA_ORIGINS', $new, 'User')",
+      '4. Restart Ollama completely, the tray app included (only a new process reads the variable):',
+      "   Get-Process 'ollama app', ollama -ErrorAction SilentlyContinue | Stop-Process -Force",
+      '   Start-Process "$env:LOCALAPPDATA\\Programs\\Ollama\\ollama app.exe"'],
+    mac: ['3. Set OLLAMA_ORIGINS for the user session, keeping any existing value (append with a comma; skip if the origin is already there):',
+      '   cur=$(launchctl getenv OLLAMA_ORIGINS)',
+      `   case ",$cur," in *",${origin},"*) new="$cur" ;; ",,") new="${origin}" ;; *) new="$cur,${origin}" ;; esac`,
+      '   launchctl setenv OLLAMA_ORIGINS "$new"',
+      '   launchctl setenv does not survive a reboot: tell the user, and offer a LaunchAgent in ~/Library/LaunchAgents that runs the same command at login.',
+      `4. Restart Ollama completely: osascript -e 'quit app "Ollama"', wait until no ollama process is left (pgrep -l ollama), then open -a Ollama.`],
+    linux: ['3. Set OLLAMA_ORIGINS on the ollama service, keeping any existing value (append with a comma; skip if the origin is already there):',
+      '   systemctl show ollama --property=Environment   # the current OLLAMA_ORIGINS, if any',
+      '   sudo systemctl edit ollama.service',
+      `   # under [Service]:  Environment="OLLAMA_ORIGINS=<existing>,${origin}"   (just ${origin} if there was none)`,
+      '   If Ollama does not run as a systemd service here, set the variable where it is started, and say so.',
+      '4. Restart it: sudo systemctl daemon-reload && sudo systemctl restart ollama'],
+  }[os];
+  return [...head, 'STEPS', ...check.slice(0, 1),
+    `   Before changing anything, run: ${curl}`, '   Note the status code: 403 means the origin is refused, which is expected before the fix.',
+    ...check.slice(1), ...set,
+    `5. Verify: run the same curl again. It must print 204 now (it was 403 before). Then curl ${ep}/api/version once more.`,
+    ...(fileO ? ['   The page was opened from a file (origin null). Serving it (npm run preview) is the better fix; ask the user before allowing "null".'] : []), '',
+    ...dont,
+    'REPORT BACK', '- The Ollama version, whether the reference model is present (or was pulled), the old and new OLLAMA_ORIGINS, the curl status before and after (403, then 204), and anything that did not go to plan.'].join('\n');
+}
+function liveToast(ok, msg) { const tt = $('toast'); tt.innerHTML = `${ICON(ok ? 'check' : 'warning', 's')}<b>${esc(msg)}</b>`; tt.hidden = false; tt.classList.toggle('bad', !ok); clearTimeout(toastT); toastT = setTimeout(hideToast, 2500); }
 document.addEventListener('click', e => {
+  if (e.target.closest('#lvAgent')) { const t = liveAgentBrief(); window.__agentBrief = t; copyText(t).then(ok => liveToast(ok, ok ? L('Copied', 'Copiado') : L('Copy failed', 'No se pudo copiar'))); return; }
   const c = e.target.closest('.lv-copy'); if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.copy).then(() => { c.classList.add('done'); c.querySelector('span').textContent = L('Copied', 'Copiado'); setTimeout(() => { c.classList.remove('done'); c.querySelector('span').textContent = L('Copy', 'Copiar'); }, 1400); }); return; }
   const b = e.target.closest('.lv-os [data-os]'); if (b) { LIVE_OS = b.dataset.os; const d = b.closest('details'); const open = d && d.open; renderLive(true); if (open) { const nd = document.querySelector('.lv-setup'); if (nd) nd.open = true; } }
 });
@@ -219,8 +275,7 @@ function renderLive(force) {
   const why = L('Wait for the real request to finish, or stop it', 'Espera a que termine la petición real, o párala'), dis = run ? `disabled title="${esc(why)}"` : '';
   const epRow = `<div class="lv-row"><input type="text" id="lvEp" value="${esc(LIVE.ep)}" spellcheck="false" aria-label="${esc(L('Server address', 'Dirección del servidor'))}" ${st === 'busy' ? 'disabled' : ''}><button type="button" class="btnp" id="lvDetect" ${st === 'busy' ? 'disabled' : ''}>${esc(st === 'busy' ? L('Connecting…', 'Conectando…') : ok ? L('Connect here', 'Conectar aquí') : L('Connect', 'Conectar'))}</button>${ok ? `<button type="button" class="tbtn quiet" id="lvEpCancel">${esc(L('Cancel', 'Cancelar'))}</button>` : ''}</div>`;
   let h = `<div class="lv-st"><span class="lv-chip ${head[1]}">${esc(head[0])}</span>${head[2] ? `<small>${esc(head[2])}</small>` : ''}</div>`;
-  if (!ok) h += epRow + (LIVE.fix && st === 'cors' ? `<div class="lv-fix">${esc(LIVE.fix)}</div>` : '') + (LIVE.error ? `<div class="lv-fix bad">${esc(LIVE.error)}</div>` : '') + liveSetupHtml()
-    + `<div class="hint">${esc(L('Connecting switches the console to Real machine. Your simulation is kept and comes back exactly when you switch back.', 'Conectar pasa la consola a Máquina real. Tu simulación se guarda y vuelve tal cual al volver.'))}</div>`;
+  if (!ok) h += epRow + (LIVE.fix && st === 'cors' ? `<div class="lv-fix">${esc(LIVE.fix)}</div>` : '') + (LIVE.error ? `<div class="lv-fix bad">${esc(LIVE.error)}</div>` : '') + liveSetupHtml();
   else {
     h += `<div class="fld"><label for="lvModel"><span>${esc(L('Model on the server', 'Modelo en el servidor'))}</span></label><select id="lvModel" ${dis}>${LIVE.models.map(m => `<option value="${esc(m.name)}" ${m.name === LIVE.pick ? 'selected' : ''}>${esc(m.name)}${m.params ? ` · ${esc(m.params)}` : ''}${m.quant ? ` · ${esc(m.quant)}` : ''}</option>`).join('')}</select></div>`;
     if (MODE.editEp) h += epRow;
@@ -264,8 +319,9 @@ function renderLiveCompare() {
     rows.map(([l, e, m, k]) => { const ratio = e && m ? (k === 's' ? m / e : m / e) : null; const bad = ratio && (ratio > 1.5 || ratio < 0.67); return `<div class="lv-r"><span>${esc(l)}</span><b class="num">${f(e, k)}</b><b class="num m">${f(m, k)}</b><i class="num ${bad ? 'off' : ''}">${ratio ? `${dec(ratio.toFixed(2))}` : '—'}</i></div>`; }).join('') +
     `<div class="lv-act"><button type="button" class="tbtn" id="lvCal" ${locked() ? 'disabled' : ''}>${ICON('tune', 's')}<span>${esc(L('Calibrate the estimate to this machine', 'Calibrar la estimación a esta máquina'))}</span></button>${cal ? `<button type="button" class="tbtn quiet" id="lvUncal">${esc(L('Reset', 'Restablecer'))}</button>` : ''}</div>` +
     (cal ? `<div class="lv-note">${esc(L(`${R.mc.name}: bandwidth ×${dec(cal.bw.toFixed(2))}, compute ×${dec(cal.fl.toFixed(2))}`, `${R.mc.name}: ancho de banda ×${dec(cal.bw.toFixed(2))}, cómputo ×${dec(cal.fl.toFixed(2))}`))}${LIVE.calNotes && LIVE.calNotes.length ? ` · ${esc(LIVE.calNotes.join('; '))}` : ''}</div>` : '') +
-    `<div class="lv-note">${esc(L(`${run.kind === 'ollama' ? 'Ollama' : 'llama-server'} timings for ${run.model}; first token measured by this page.`, `Tiempos de ${run.kind === 'ollama' ? 'Ollama' : 'llama-server'} para ${run.model}; el primer token lo mide esta página.`))}</div>`;
-  if (h !== liveCmpKey) { liveCmpKey = h; $('liveCmp').innerHTML = h; const c = $('lvCal'), u = $('lvUncal'); if (c) c.addEventListener('click', liveCalibrate); if (u) u.addEventListener('click', liveResetCal); }
+    `<div class="lv-note">${esc(L(`${run.kind === 'ollama' ? 'Ollama' : 'llama-server'} timings for ${run.model}; first token measured by this page.`, `Tiempos de ${run.kind === 'ollama' ? 'Ollama' : 'llama-server'} para ${run.model}; el primer token lo mide esta página.`))}</div>`
+    + `<div class="lv-act lv-share"><button type="button" class="tbtn quiet" id="lvShare" title="${esc(L('Send these numbers to the tokenwalk repository as a GitHub issue, so What fits can show measured rows', 'Enviar estos números al repositorio de tokenwalk como issue de GitHub, para que Qué cabe muestre filas medidas'))}">${ICON('share', 's')}<span>${esc(L('Share this measurement', 'Compartir esta medida'))}</span></button></div>`;
+  if (h !== liveCmpKey) { liveCmpKey = h; $('liveCmp').innerHTML = h; const c = $('lvCal'), u = $('lvUncal'); if (c) c.addEventListener('click', liveCalibrate); if (u) u.addEventListener('click', liveResetCal); const sh = $('lvShare'); if (sh) sh.addEventListener('click', () => shareOpen(true)); }
 }
 
 // Output box: the live answer while it streams (and after), marked as live; the simulated answer otherwise.

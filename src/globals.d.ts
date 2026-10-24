@@ -14,3 +14,7 @@ interface ParentNode {
 }
 
 interface Window { __TRUNC?: Set<string> }
+
+/** Baked in by vite.config.ts: the build, and the accepted measurements from data/measurements.json. */
+declare const TW_BUILD: { version: string; commit: string };
+declare const TW_MEASUREMENTS: any[];

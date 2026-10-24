@@ -1,0 +1,12 @@
+{
+  "schema": "tokenwalk-measurement/1",
+  "tokenwalk": { "version": "0.1.0", "commit": "862290c" },
+  "date": "2026-10-23",
+  "server": { "kind": "ollama", "version": "0.40.7" },
+  "model": { "name": "qwen3.6:35b-a3b", "quant": "Q4_K_M", "digest": "a7eb95c53bcf96b4bdd008d0fab4a5dac88047d9c1a7a9ab88ed453423fbd87c", "params": 35510000000, "fileBytes": 22621314381 },
+  "request": { "numCtx": 16384, "kvType": "f16", "mtp": { "on": true, "draft": 2 }, "temperature": 0.7, "topK": null, "topP": 0.95, "promptTokens": 36, "answerTokens": 80, "start": "warm" },
+  "timings": { "ollama": { "load_duration": 16471100, "prompt_eval_count": 36, "prompt_eval_duration": 2091203000, "eval_count": 80, "eval_duration": 8851039000, "total_duration": 11016588800 } },
+  "derived": { "ttftS": 2.31, "prefillTps": 17.21, "decodeTps": 9.04, "loadS": 0.016, "totalS": 11.02 },
+  "estimate": { "machine": "thinkpad", "calibrated": false, "ttftS": 2.6, "prefillTps": 14.9, "decodeTps": 10.2, "totalS": 10.4 },
+  "hardware": { "preset": "thinkpad", "device": "", "cpu": "", "gpu": "", "memoryGB": null, "memoryType": "", "os": "Windows", "detected": { "threads": 16, "platform": "Windows", "gpu": "amd · rdna-3" } }
+}

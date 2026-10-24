@@ -1,0 +1,27 @@
+{
+ "content": "Watch the INR.",
+ "id_slot": 0,
+ "stop": true,
+ "model": "C:/models/Qwen3-8B-Q4_K_M.gguf",
+ "tokens_predicted": 3,
+ "tokens_evaluated": 36,
+ "generation_settings": {
+  "n_ctx": 8192,
+  "temperature": 0,
+  "top_k": 40,
+  "top_p": 0.95,
+  "seed": 1
+ },
+ "prompt": "Patient on warfarin...",
+ "timings": {
+  "cache_n": 0,
+  "prompt_n": 36,
+  "prompt_ms": 2091.2,
+  "prompt_per_token_ms": 58.09,
+  "prompt_per_second": 17.21,
+  "predicted_n": 3,
+  "predicted_ms": 331.9,
+  "predicted_per_token_ms": 110.6,
+  "predicted_per_second": 9.04
+ }
+}

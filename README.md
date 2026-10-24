@@ -155,9 +155,13 @@ src/parts/00-*.ts …   the script, in order: data and formulas, language, state
                       explainers, alerts, timeline, monitor, run, configure, loadout, glossary, wiring,
                       the real-server connection and the Simulated / Real machine mode
 src/globals.d.ts      types shared by the parts
-tests/unit/           the cost model in node, no browser
+tests/unit/           the cost model, live parsing and the measurement validator in node, no browser
 tests/browser/        a small CDP client and the regression checks (overflow, zoom, fit, sampling, links)
-tools/                split-legacy.mjs (the port from the original single file), single-file.mjs
+tools/                single-file.mjs, split-legacy.mjs (the port from the original single file), and the shared
+                      measurements: measurement.mjs (the schema check), check-measurement-issue.mjs (the Action),
+                      ingest-measurements.mjs (accepted issues to data/measurements.json)
+data/                 measurements.json, the accepted measurements, baked into the page at build
+.github/              the measurement issue form and the two workflows that check and ingest it
 ```
 
 The data, language, state, cost model, sampling, playback, history, drawing and entity parts are type-checked; the DOM-heavy UI parts still carry `@ts-nocheck` and are next to type.
@@ -229,14 +233,14 @@ The top bar has a switch, left of the setup line: **Simulated | Real machine**. 
 - **Simulated** (yellow): every number comes from the cost model, and the request plays at any speed, pauses, steps and jumps.
 - **Real machine** (cyan, a laptop icon with a soft glow; its tooltip names the server, the address and the model): the console is a window on the server. The setup line reads *this machine (real) / server model and quantization / prompt + max tokens / num_ctx*, which is exactly what is sent.
 
-Switching to Real machine with no server connected opens the connect window, with the address (`http://localhost:11434` for Ollama, `http://localhost:8080` for llama-server), **Connect**, and the setup steps with copy buttons. It names every state: not connected, connecting, blocked by CORS (with the fix), nothing answered. When the server answers the console enters Real; if it fails, or you close the window, the simulation stays as it was. Once connected the window says **Connected**, with the model picker, **Change server** and **Disconnect**; none of them can be used while a request runs, and they say why.
+Switching to Real machine with no server connected opens the connect window, with the address (`http://localhost:11434` for Ollama, `http://localhost:8080` for llama-server), **Connect**, and the setup steps with copy buttons; **Copy instructions for an AI agent** copies a plain-text brief for the selected system (allow this page's origin in `OLLAMA_ORIGINS` without dropping what is there, restart Ollama, check that the `OPTIONS` request goes from 403 to 204, and what not to touch) to paste into a coding agent on your machine. It names every state: not connected, connecting, blocked by CORS (with the fix), nothing answered. When the server answers the console enters Real; if it fails, or you close the window, the simulation stays as it was. Once connected the window says **Connected**, with the model picker, **Change server** and **Disconnect**; none of them can be used while a request runs, and they say why.
 
 In Real machine:
 
 - **Setup** shows only what applies to the server. *Request to the server*: the model (the server's list), the prompt (short question, a long history or your own text), max tokens, and MTP drafts when it is Ollama. *Engine*: num_ctx and keep_alive. *Sampling*: temperature, top-k, top-p, seed. *This machine* shows the server version and address, and **Estimate as**, the machine preset the estimate is drawn on. The simulation-only sections (request token sliders, KV type, KV to disk, cold start, a separate draft model, scenarios) are hidden.
 - **Request** (the Playback zone) has **Send** and **Stop**. Speed, jumps, steps, pause-after and the timeline scale are greyed: a real server cannot be slowed, paused or stepped. The timeline draws the run as it arrives (load, prefill, decode with a tick for each token) on a real-time axis and keeps it as the record of that run; the clock shows its wall time.
 - **Observatory:** Tokens shows the real answer with each token's arrival time; click one to see what the server chose it from (Ollama `logprobs`, llama-server `n_probs`), when the server sends that. System, Model and Memory draw the cost model's estimate for the server's model on the Estimate as machine, tagged **estimate**.
-- **Monitor:** *Estimate vs measured* comes first: load, time to first token, prefill and decode speed, total, with the ratio. **Calibrate the estimate to this machine** fits the preset's effective bandwidth (from decode, with MTP drafting taken out first) and compute (from prefill, if the prompt has 256 tokens or more); kept per machine in your browser, with Reset.
+- **Monitor:** *Estimate vs measured* comes first: load, time to first token, prefill and decode speed, total, with the ratio. **Calibrate the estimate to this machine** fits the preset's effective bandwidth (from decode, with MTP drafting taken out first) and compute (from prefill, if the prompt has 256 tokens or more); kept per machine in your browser, with Reset. **Share this measurement**, under it, sends the run to this repository (see [Sharing a measurement](#sharing-a-measurement)).
 
 Switching back to Simulated restores the simulation exactly; the two keep separate settings and both are saved. If a real request is running, it asks first (*Keep running* is the default). While in Real the page checks the server every 10 s; if it is gone a banner says **Lost the server at …** with **Retry** and **Back to simulation**. On the next visit the console resumes Real only when the server answers within about 1.5 s; otherwise it starts in the simulation, with no connected look.
 
@@ -265,7 +269,77 @@ A guess costs a read of one block plus the output head (0.35 GB, about a fifth o
 
 Everything inside a pass: which layer, which matrix, the KV cache filling, the sampling chain of a simulated token. A server reports totals and the tokens it sent, not what happens per layer; the real run gives the console real totals to hold the estimate against.
 
-Tests: `npm test` runs the cost-model, MTP and live-parsing unit tests (on responses recorded from Ollama, in `tests/fixtures/`) and the browser checks, which include live mode against a mocked server. `npm run test:live` runs one real request against a local Ollama and skips when none answers.
+Tests: `npm test` runs the cost-model, MTP, live-parsing and measurement-validator unit tests (on responses recorded from Ollama, in `tests/fixtures/`) and the browser checks, which include live mode against a mocked server. `npm run test:live` runs one real request against a local Ollama and skips when none answers.
+
+## Sharing a measurement
+
+Only the default machine is calibrated; every other row of *What fits* is an estimate. A real run on other hardware is what turns an estimate into a measurement. There is no backend and nothing to sign up for beyond GitHub: a measurement is a GitHub issue, and the accepted ones are a JSON file in this repository. No fork and no pull request: the issue form is the only way data comes in.
+
+### How to share your numbers
+
+1. Open [tokenwalk online](https://infraphysics.net/playgrounds/7148293/tokenwalk) and switch to **Real machine** (it connects to your Ollama or llama-server; see [Connecting a real server](#connecting-a-real-server)).
+2. Press **Send** and let the request finish.
+3. In Monitor, under *Estimate vs measured*, press **Share this measurement**, name your hardware, and **Open as a GitHub issue**. Check it on GitHub and press *Create*.
+
+**[Share a measurement →](https://github.com/yago-mendoza/tokenwalk/issues/new?template=measurement.yml)**
+
+### What is sent
+
+After a finished run in **Real machine**, *Estimate vs measured* has **Share this measurement**. The window shows exactly what will be sent, as a table and as the raw JSON (schema `tokenwalk-measurement/1`):
+
+- **tokenwalk**: the version and git commit of the build, and the date (no time).
+- **Server**: Ollama or llama-server, and its version.
+- **Model**: the name, the weight format, the digest and file size when the server reports them, the parameter count when known.
+- **Request**: prompt and answer tokens, cold or warm, `num_ctx`, KV type (which the page cannot see, so you confirm it), MTP drafting on or off and the draft count, temperature, top-k, top-p.
+- **The server's own timings**: Ollama's `load_duration`, `prompt_eval_count`, `prompt_eval_duration`, `eval_count`, `eval_duration`, `total_duration`; llama-server's `timings` object.
+- **Derived**: time to the first token (measured by the page), prefill and decode tokens a second.
+- **The estimate**: the console's numbers for the same request on the preset you pick, as shipped (your local calibration taken out), so the gap is on the record.
+- **Hardware**: a machine preset, or *Other* with the device, CPU, GPU, memory size and type; the operating system. What the browser can tell (thread count, platform, the WebGPU adapter's vendor and architecture) is shown and sent marked *detected by the browser*, since it is often generic.
+
+What is not sent: the prompt, the answer, the server address, or anything else not in that table. **Open as a GitHub issue** opens the [measurement form](https://github.com/yago-mendoza/tokenwalk/issues/new?template=measurement.yml) with all of it filled in; you read it there and press *Create*. If the address would pass about 7,500 characters the optional fields are dropped first; past that, copy the JSON and paste it into the empty form. **Download JSON** keeps a copy.
+
+### Share without the web app
+
+Run one request against your server and paste its JSON response into the form's **Measurement** field; fill in the hardware, the server version and the weight format. The check keeps only the timings and counts (not the answer or the context), and takes the time to the first token as the server's load plus prefill. Change the model to one you have; run it twice and share the second, warm run (or the first, which counts as cold if the model had to load).
+
+Ollama (bash, macOS, Linux, Git Bash):
+
+```bash
+curl -s http://localhost:11434/api/generate -d '{"model":"qwen3.6:35b-a3b","prompt":"A patient on warfarin is started on amiodarone. In three sentences, what interaction should the clinician watch for, and what should they check?","stream":false,"keep_alive":"5m","options":{"num_ctx":4096,"num_predict":128,"temperature":0,"seed":1,"draft_num_predict":0}}'
+ollama --version; ollama show qwen3.6:35b-a3b | grep -i quantization
+```
+
+Ollama (PowerShell):
+
+```powershell
+$body = '{"model":"qwen3.6:35b-a3b","prompt":"A patient on warfarin is started on amiodarone. In three sentences, what interaction should the clinician watch for, and what should they check?","stream":false,"keep_alive":"5m","options":{"num_ctx":4096,"num_predict":128,"temperature":0,"seed":1,"draft_num_predict":0}}'
+Invoke-RestMethod http://localhost:11434/api/generate -Method Post -Body $body | ConvertTo-Json -Compress -Depth 5
+ollama --version; ollama show qwen3.6:35b-a3b | Select-String quantization
+```
+
+llama-server:
+
+```bash
+curl -s http://localhost:8080/completion -d '{"prompt":"A patient on warfarin is started on amiodarone. In three sentences, what interaction should the clinician watch for, and what should they check?","n_predict":128,"temperature":0,"seed":1,"stream":false}'
+```
+
+The command turns MTP drafting off (`draft_num_predict 0`), so the run is filed as plain decoding.
+
+### How it is reviewed
+
+On every new or edited measurement issue, a workflow (`.github/workflows/measurement.yml`, running `tools/check-measurement-issue.mjs`) reads the JSON and checks it: the schema, the counts against the server's own counts, durations positive and adding up, decode between 0.1 and 5,000 tok/s (prefill up to 100,000), the derived speeds against the raw timings, no prompt or address fields, the hardware named. It comments a one-line summary or the list of problems, and labels the issue `valid` or `invalid`. Nothing is accepted automatically: a maintainer adds `accepted` by hand. If the submitter edits an accepted issue, the label comes off until it is reviewed again.
+
+### Where the data lives, and how it shows up
+
+Accepted measurements are in [`data/measurements.json`](data/measurements.json), one record per issue with the issue URL as its source, and the build bakes that file into the page. In *What fits*, a row whose machine preset, model and weight format have accepted measurements gets a **measured ×n** tag and, under its estimate in cyan, the median of the measured runs that answer the same question: decode speed from runs with the same MTP drafting, time to the first token from runs with a prompt within a factor of two of the current one and the same cold or warm start (a dash when none does). The tooltip gives n and the spread; the tag opens each run with its date, server version, request and source issue. Rows without measurements still say *estimate*, and the calibrated reference machine is unchanged. Measurements from *Other* hardware are kept in the file but match no row.
+
+### For the maintainer
+
+- Review an issue labelled `valid`: does the hardware look plausible, does the gap to the estimate have an explanation (other load, a power profile, a different server version)? Add `accepted`, or close it with a note.
+- Ingest: `node tools/ingest-measurements.mjs` (token from `GITHUB_TOKEN` or `gh auth token`; `--dry` prints instead of writing) and commit `data/measurements.json`, or run the *Ingest measurements* workflow from the Actions tab, which opens a pull request with it when it changed. Records whose issue lost `accepted` are dropped.
+- Rebuild (`npm run build`) and publish the page so the new rows reach it.
+- The labels the workflows use: `measurement`, `valid`, `invalid`, `accepted`.
+- Code contributions and the rest of the process are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

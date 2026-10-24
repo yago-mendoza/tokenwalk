@@ -362,18 +362,18 @@ body.noFoot #wfoot { display: none; }
 #fsTip[hidden] { display: none; } #fsTip > .ic-slot { grid-column: 1 / -1; justify-self: center; } #fsTip .ic { color: var(--amber); width: 24px; height: 24px; } #fsTip > div { grid-column: 1 / -1; margin-bottom: 6px; } #fsTip b { display: block; color: var(--ink); font: 650 13.5px/1.3 var(--sans); margin-bottom: 4px; } #fsTip small { display: block; color: var(--dim); font-size: 11.5px; line-height: 1.4; }
 #fsTip #fsGo { grid-column: 1 / -1; justify-content: center; } #fsTip .tbtn { justify-content: center; font-size: 11px; }
 #fsTip .btnp, #fsTip .tbtn { height: 28px; white-space: nowrap; }
-#chainWin, #scaleWin, #liveWin, #fitsWin { position: fixed; inset: 0; z-index: 58; } #chainWin[hidden], #scaleWin[hidden], #liveWin[hidden], #fitsWin[hidden] { display: none; }
-:is(#chainWin, #scaleWin, #liveWin, #fitsWin) .card { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); padding: 0; gap: 0; display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7); overflow: hidden; }
+#chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin { position: fixed; inset: 0; z-index: 58; } #chainWin[hidden], #scaleWin[hidden], #liveWin[hidden], #fitsWin[hidden], #shareWin[hidden] { display: none; }
+:is(#chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .card { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); padding: 0; gap: 0; display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7); overflow: hidden; }
 #chainWin canvas { display: block; margin: 16px 18px 14px; }
 #scaleWin .card { width: min(1080px, calc(100vw - 40px)); } #scaleWin .sw-body { padding: 16px 18px; } #scaleWin p { margin: 0 0 12px; max-width: 640px; font: 400 13px/1.5 var(--sans); color: var(--mid); }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin) .scrim { position: absolute; inset: 0; background: rgb(4 4 7 / .5); animation: fadeIn .15s var(--ease); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .scrim { position: absolute; inset: 0; background: rgb(4 4 7 / .5); animation: fadeIn .15s var(--ease); }
 #lesson .card { --lsf: 13px; padding: 0; gap: 0; position: absolute; width: min(680px, calc(100vw - 24px)); max-height: calc(100vh - 72px); display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7), 0 0 0 1px rgb(0 0 0 / .6); overflow: hidden; animation: popIn .16s var(--ease); }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin) .band { flex: none; display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 4px 0 12px; color: #17130a; background: repeating-linear-gradient(-45deg, var(--hot) 0 10px, #f0c52a 10px 20px); }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin) .band b { font: 800 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: #17130a; }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin) .band .ic { width: 14px; height: 14px; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band { flex: none; display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 4px 0 12px; color: #17130a; background: repeating-linear-gradient(-45deg, var(--hot) 0 10px, #f0c52a 10px 20px); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band b { font: 800 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: #17130a; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band .ic { width: 14px; height: 14px; }
 #lesson .band .st { font: 700 9.5px/1 var(--mono); padding: 3px 7px; border-radius: 9px; background: rgb(0 0 0 / .82); color: var(--hot); text-transform: uppercase; letter-spacing: .06em; }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin) .band button { margin-left: auto; display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 3px; background: rgb(0 0 0 / .12); color: #17130a; }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin) .band button:hover { background: rgb(0 0 0 / .28); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band button { margin-left: auto; display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 3px; background: rgb(0 0 0 / .12); color: #17130a; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band button:hover { background: rgb(0 0 0 / .28); }
 #lesson .lsb { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 250px) minmax(0, 1fr); gap: 0 22px; padding: 16px 18px 10px; }
 #lesson .lsl { min-width: 0; } #lesson .lsr { min-width: 0; }
 @media (max-width: 620px) { #lesson .lsb { grid-template-columns: 1fr; } }
@@ -665,7 +665,8 @@ label.sw.livehon > label span:first-child::after, label.sw.livehon > span::after
 .lv-setup { margin: 4px 0 8px; border: 1px solid var(--line2); border-radius: 6px; background: var(--inset); }
 .lv-setup summary { cursor: pointer; padding: 9px 12px; font: 600 12px/1 var(--sans); color: var(--ink); }
 .lv-setup[open] summary { border-bottom: 1px solid var(--line); }
-.lv-os { display: flex; gap: 0; margin: 10px 12px 2px; } .lv-os button { height: 24px; padding: 0 10px; border: 1px solid var(--line2); margin-left: -1px; background: var(--p1); color: var(--mid); font: 500 11px/1 var(--sans); }
+.lv-osrow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin: 10px 12px 2px; } .lv-osrow .tbtn { height: 24px; font-size: 11px; border-color: var(--line2); }
+.lv-os { display: flex; gap: 0; } .lv-os button { height: 24px; padding: 0 10px; border: 1px solid var(--line2); margin-left: -1px; background: var(--p1); color: var(--mid); font: 500 11px/1 var(--sans); }
 .lv-os button:first-child { border-radius: 3px 0 0 3px; margin-left: 0; } .lv-os button:last-child { border-radius: 0 3px 3px 0; } .lv-os button[aria-pressed=true] { background: var(--p3); color: var(--ink); border-color: var(--hl); }
 .lv-setup ol { list-style: none; margin: 0; padding: 8px 12px 12px; display: grid; gap: 10px; }
 .lv-setup li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; } .lv-setup li > b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--p3); color: var(--ink); font: 700 10.5px/1 var(--mono); }
@@ -764,3 +765,34 @@ table.fits .c-bound { color: var(--mid); }
 #log li.grp time { text-align: right; } #log li.grp time .lc .ic { margin: 0; }
 #log li.blk { color: var(--mid); font-size: 12px; } #log li.blk.cur { color: var(--ink); } #log li.blk .lc .ic { color: var(--hot); }
 #log li.inblk span { padding-left: 14px; }
+
+/* What fits: measured rows */
+table.fits .mtag { margin-left: 6px; height: 16px; padding: 0 5px; border: 1px solid rgb(127 227 255 / .45); border-radius: 3px; background: rgb(127 227 255 / .1); color: var(--cy); font: 700 8.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; vertical-align: 1px; cursor: pointer; }
+table.fits .mtag:hover, table.fits .mtag[aria-expanded=true] { background: rgb(127 227 255 / .22); }
+table.fits small.ms { display: block; margin-top: 2px; color: var(--cy); font: 500 10.5px/1 var(--mono); } table.fits small.ms.none { color: var(--faint); }
+table.fits tr.mdet td { white-space: normal; padding: 4px 8px 8px 20px; background: rgb(127 227 255 / .04); cursor: default; }
+table.fits tr.mdet ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; } table.fits tr.mdet li { color: var(--mid); font: 400 10.5px/1.4 var(--mono); }
+table.fits tr.mdet a { color: var(--cy); font-weight: 700; margin-right: 4px; }
+.fw-note.ms { color: var(--dim); } .fw-note.ms .ic { color: var(--cy); }
+
+/* Share a measurement */
+#shareWin .card { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); top: 50%; }
+#shareWin .band { background: repeating-linear-gradient(-45deg, var(--cy) 0 10px, #62cbe6 10px 20px) !important; } #shareWin .band b { color: #061318 !important; }
+#shareWin .sh-body { overflow: auto; padding: 14px 18px 14px; display: grid; gap: 12px; scrollbar-width: thin; }
+.sh-lead { margin: 0; color: var(--mid); font-size: 12px; line-height: 1.45; }
+.sh-h { margin: 0 0 6px; font: 600 9.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.sh-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; }
+.sh-grid .wide { grid-column: span 2; }
+.sh-body input[type=text], .sh-body input[type=number] { width: 100%; height: 28px; padding: 0 8px !important; border: 1px solid var(--line2); border-radius: 3px; background: var(--inset); color: var(--ink); font: 400 11.5px/1 var(--mono); }
+.sh-body input[type=text]:focus, .sh-body input[type=number]:focus, .sh-body select:focus { outline: 1px solid var(--cy); outline-offset: -1px; }
+.sh-det { margin: 6px 0 0; color: var(--dim); font-size: 11px; line-height: 1.4; } .sh-det b { color: var(--mid); font-weight: 600; }
+.sh-priv { display: flex; gap: 6px; align-items: flex-start; margin: 0; padding: 7px 10px; border: 1px solid rgb(80 200 120 / .3); border-radius: 3px; background: rgb(80 200 120 / .06); color: #bfe8cc; font-size: 11.5px; line-height: 1.4; } .sh-priv .ic { flex: none; width: 13px; height: 13px; color: var(--ok); margin-top: 1px; }
+table.sh-t { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+table.sh-t th { width: 120px; padding: 5px 8px; vertical-align: top; text-align: left; color: var(--dim); font: 600 11px/1.4 var(--sans); border-bottom: 1px solid rgb(255 255 255 / .04); }
+table.sh-t td { padding: 5px 8px; color: var(--ink); font: 400 11px/1.4 var(--mono); border-bottom: 1px solid rgb(255 255 255 / .04); overflow-wrap: anywhere; } table.sh-t td i { font-style: normal; color: var(--dim); } table.sh-t td i.off { color: var(--amber); }
+.sh-raw summary { cursor: pointer; color: var(--mid); font: 600 11.5px/1 var(--sans); padding: 4px 0; }
+.sh-raw pre { margin: 6px 0 0; max-height: 220px; overflow: auto; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #08080b; color: var(--ink); font: 400 10.5px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; scrollbar-width: thin; }
+.sh-act { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; } .sh-act .btnp, .sh-act .tbtn, .sh-act a.tbtn { height: 28px; display: inline-flex; align-items: center; gap: 6px; } .sh-act .tbtn { border-color: var(--line2); }
+.sh-act a.tbtn { color: var(--cy); text-decoration: none; }
+.sh-note { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.4; } .sh-note.warn { color: var(--amber); }
+#lvShare { color: var(--dim); } #lvShare:hover { color: var(--cy); }

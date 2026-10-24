@@ -1,0 +1,5 @@
+{
+  "schema": "tokenwalk-measurements/1",
+  "note": "Accepted measurements, written by tools/ingest-measurements.mjs from GitHub issues labelled accepted. Do not edit by hand.",
+  "measurements": []
+}
