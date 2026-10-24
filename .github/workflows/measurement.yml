@@ -1,0 +1,28 @@
+# Checks a shared measurement when its issue is opened or edited: validates the JSON (tools/measurement.mjs),
+# comments a short summary, and labels the issue valid or invalid. Accepting it stays a maintainer's call.
+name: Check a measurement
+on:
+  issues:
+    types: [opened, edited, labeled]
+# Runs the default branch's copy of the script on the issue's text, which is only read as data (JSON.parse).
+permissions: {}
+concurrency:
+  group: measurement-${{ github.event.issue.number }}
+  cancel-in-progress: true
+jobs:
+  check:
+    if: contains(github.event.issue.labels.*.name, 'measurement') && (github.event.action != 'labeled' || github.event.label.name == 'measurement')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: tools
+          persist-credentials: false
+      # the issue body is read from the event file by the script, never interpolated into the shell
+      - run: node tools/check-measurement-issue.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,33 @@
+# Run by hand (Actions > Ingest measurements > Run workflow): pulls the issues labelled accepted, validates them
+# again and, when data/measurements.json changed, opens a pull request with it (main is protected, so nothing is
+# pushed there directly). The same as running tools/ingest-measurements.mjs locally.
+name: Ingest measurements
+on:
+  workflow_dispatch:
+permissions: {}
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: node tools/ingest-measurements.mjs --repo "$GITHUB_REPOSITORY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Open a pull request with the new data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- data/measurements.json; then echo "No change."; exit 0; fi
+          branch="measurements/ingest-$(date -u +%Y%m%d-%H%M%S)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add data/measurements.json
+          git commit -m "Measurements: ingest accepted issues"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "Measurements: ingest accepted issues" --body "Written by tools/ingest-measurements.mjs from the issues labelled accepted. Check the diff, then merge and rebuild the page."

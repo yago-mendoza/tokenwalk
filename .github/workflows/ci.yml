@@ -1,0 +1,33 @@
+# Typecheck, unit tests, build and the browser checks on every pull request and push to main.
+# Runs on pull_request (never pull_request_target): a fork's code gets a read-only token and no secrets.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions: {}
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:unit
+      - run: npm run build
+      # The browser checks need Chrome; GitHub's Ubuntu runners have it. Elsewhere they are skipped, and the log says so.
+      - name: Browser checks
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then npm run test:browser; else echo "::warning::Chrome not found: browser checks skipped"; fi
