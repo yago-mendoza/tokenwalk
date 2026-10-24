@@ -195,7 +195,7 @@ body[data-lens=tokens] #out { display: none; }
 #outLogit.on { color: var(--cy); }
 #nowFix { display: flex; gap: 6px; flex: none; }
 .fixb { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 1px solid rgb(255 212 59 / .6); border-radius: 3px; background: rgb(255 212 59 / .1); color: #fff3c4; font-size: 11px; white-space: nowrap; }
-#loadout { position: fixed; inset: 0; z-index: 45; display: none; flex-direction: column; background: rgb(8 8 11 / .97); }
+#loadout { position: fixed; inset: 0; z-index: 45; display: none; flex-direction: column; background: #08080b; }
 #loadout.on { display: flex; }
 #loadout .lh { flex: none; display: flex; align-items: center; gap: 14px; height: 48px; padding: 0 16px; border-bottom: 1px solid var(--line); }
 #loadout .lb { flex: 1; min-height: 0; overflow: auto; padding: 16px; }

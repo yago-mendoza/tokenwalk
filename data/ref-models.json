@@ -22,7 +22,7 @@
    "notes": "The same dimensions as Llama 3.1 70B."
   },
   "qwen2.5-7b": {
-   "name": "Qwen2.5 7B (and Coder 7B)", "vendor": "Qwen", "family": "Qwen2.5", "tag": "qwen2.5:7b", "hidden": 3584, "layers": 28, "qHeads": 28, "kvHeads": 4, "headDim": 128, "ffn": 18944, "vocab": 152064, "tied": false, "ctxMax": 32768,
+   "name": "Qwen2.5 7B", "vendor": "Qwen", "family": "Qwen2.5", "tag": "qwen2.5:7b", "hidden": 3584, "layers": 28, "qHeads": 28, "kvHeads": 4, "headDim": 128, "ffn": 18944, "vocab": 152064, "tied": false, "ctxMax": 32768,
    "publishedParams": 7.61e9, "source": "https://huggingface.co/Qwen/Qwen2.5-Coder-7B/blob/main/config.json", "asOf": "2026-10-24"
   },
   "qwen2.5-14b": {
@@ -47,7 +47,7 @@
    "publishedParams": 32.8e9, "source": "https://huggingface.co/Qwen/Qwen3-32B/blob/main/config.json", "asOf": "2026-10-24"
   },
   "qwen3-30b-a3b": {
-   "name": "Qwen3 30B-A3B (and Coder 30B-A3B)", "vendor": "Qwen", "family": "Qwen3", "tag": "qwen3:30b-a3b", "hidden": 2048, "layers": 48, "qHeads": 32, "kvHeads": 4, "headDim": 128, "vocab": 151936, "tied": false, "ctxMax": 40960,
+   "name": "Qwen3 30B-A3B", "vendor": "Qwen", "family": "Qwen3", "tag": "qwen3:30b-a3b", "hidden": 2048, "layers": 48, "qHeads": 32, "kvHeads": 4, "headDim": 128, "vocab": 151936, "tied": false, "ctxMax": 40960,
    "experts": 128, "expertsUsed": 8, "expertFfn": 768, "sharedExperts": 0,
    "publishedParams": 30.5e9, "publishedActive": 3.3e9, "source": "https://huggingface.co/Qwen/Qwen3-30B-A3B/blob/main/config.json", "asOf": "2026-10-24"
   },
