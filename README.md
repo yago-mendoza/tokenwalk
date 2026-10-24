@@ -20,11 +20,11 @@
 
 ---
 
-You pick a machine, a model and a prompt; tokenwalk plays the request pass by pass. Connect it to your own Ollama or llama.cpp and it runs the same request for real, next to its estimate (see [Real machine mode](#real-machine-mode)).
+You pick a machine, a model and a prompt; tokenwalk plays the request pass by pass. Connect it to your own Ollama or llama.cpp and it runs the same request for real, next to its estimate (see [Connecting a real server](#real-machine-mode)).
 
 ![tokenwalk: the model as a grid of tokens across and layers up, mid-way through writing the answer](docs/screenshot.png)
 
-## Run it
+## Running it
 
 ```bash
 npm i
@@ -35,16 +35,16 @@ npm test           # unit tests of the cost model, then browser checks (needs Ch
 
 There is no framework and nothing at runtime: one HTML page, a canvas, and about 3,200 lines of script. The source is split into ordered parts in `src/parts/` that share one scope, the way the original single file did; `vite.config.ts` joins them, strips the types and inlines everything into the page.
 
-## What is real and what is a model
+## Measured, estimated, made up
 
 Nothing here runs a neural network. tokenwalk is a cost model, and it is honest about which of its numbers are which:
 
-- **Calibrated.** The laptop preset (a ThinkPad with a Radeon 860M iGPU, 64 GB of shared LPDDR5X, Qwen3.6 35B-A3B at Q4_K_M under Ollama) is fitted to measured runs: about 76 s to the first token for a 6,500-token prompt, then about 12 tokens a second without MTP drafting (see [Real machine mode](#live-mode) for what drafting changes).
+- **Calibrated.** The default machine, *ThinkPad · Radeon 860M* (a ThinkPad with a Radeon 860M iGPU, 64 GB of shared LPDDR5X, Qwen3.6 35B-A3B at Q4_K_M under Ollama) is fitted to measured runs: about 76 s to the first token for a 6,500-token prompt, then about 12 tokens a second without MTP drafting (see [Connecting a real server](#connecting-a-real-server) for what drafting changes).
 - **Read from the files.** Layer counts, heads, experts and which layers keep KV come from the GGUF headers.
 - **Estimated.** Every other machine is the same formulas with that machine's bandwidth and compute; the console marks them as estimates.
 - **Illustrative.** The answer text, the logits and the values inside a row of weights are made up. Their sizes are not.
 
-## The cost model in four lines
+## The cost model
 
 ```
 KV per token      = 2 × attention layers × KV heads × head size × bytes per number          (20,480 B for Qwen3.6 at f16)
@@ -72,11 +72,11 @@ tools/                split-legacy.mjs (the port from the original single file),
 
 The data, language, state, cost model, sampling, playback, history, drawing and entity parts are type-checked; the DOM-heavy UI parts still carry `@ts-nocheck` and are next to type.
 
-## Real machine mode
+## Connecting a real server
 
 tokenwalk can send a request to a real server on your machine and put the measured numbers next to its estimate. It is optional: without a server everything is simulated.
 
-### 1. Start a server the browser is allowed to reach
+### 1. Start the server
 
 A browser page can only talk to a local server that allows the page's **origin** (the scheme, host and port it was loaded from). What you need depends on how you opened tokenwalk:
 
@@ -121,7 +121,7 @@ llama-server -m model.gguf --host 127.0.0.1 --port 8080
 # to restrict it: --cors-origins https://infraphysics.net   (or: --cors-origins localhost)
 ```
 
-### 2. Check it before opening the page
+### 2. Check the origin
 
 ```bash
 # 204 means the origin is allowed; 403 means it is not (set OLLAMA_ORIGINS and restart)
@@ -130,12 +130,12 @@ curl http://localhost:11434/api/version        # Ollama answers {"version": ...}
 curl http://localhost:8080/props               # llama-server answers with its settings
 ```
 
-### 3. Use it
+### 3. Send a request
 
 The top bar has a switch, left of the setup line: **Simulated | Real machine**. The console is in one mode at a time.
 
 - **Simulated** (yellow): every number comes from the cost model, and the request plays at any speed, pauses, steps and jumps.
-- **Real machine** (cyan, a laptop with a soft glow; its tooltip names the server, the address and the model): the console is a window on the server. The setup line reads *this machine (real) / server model and quantization / prompt + max tokens / num_ctx*, which is exactly what is sent.
+- **Real machine** (cyan, a laptop icon with a soft glow; its tooltip names the server, the address and the model): the console is a window on the server. The setup line reads *this machine (real) / server model and quantization / prompt + max tokens / num_ctx*, which is exactly what is sent.
 
 Switching to Real machine with no server connected opens the connect window, with the address (`http://localhost:11434` for Ollama, `http://localhost:8080` for llama-server), **Connect**, and the setup steps with copy buttons. It names every state: not connected, connecting, blocked by CORS (with the fix), nothing answered. When the server answers the console enters Real; if it fails, or you close the window, the simulation stays as it was. Once connected the window says **Connected**, with the model picker, **Change server** and **Disconnect**; none of them can be used while a request runs, and they say why.
 
@@ -150,9 +150,9 @@ Switching back to Simulated restores the simulation exactly; the two keep separa
 
 What is sent: num_ctx, temperature, top_p, top_k, seed, keep_alive and MTP drafting (`draft_num_predict`) for Ollama; the sampling settings and `cache_prompt` for llama-server. The connect window lists the exact options of each request, and the settings that are sent are marked *sent* in Setup.
 
-### MTP, and why the laptop is not simply "12 tokens a second"
+### MTP drafting
 
-Both Qwen models carry one extra *next-n* block (`nextn_predict_layers: 1` in the GGUF) trained to guess the tokens after the next one, and Ollama uses it by default as a built-in draft (`draft_num_predict 2`): the block guesses two tokens, one pass of the full model checks them, and the ones that match are kept. Measured on the laptop (qwen3.6:35b-a3b, Ollama 0.40.7, 96-token answers):
+Both Qwen models carry one extra *next-n* block (`nextn_predict_layers: 1` in the GGUF) trained to guess the tokens after the next one, and Ollama uses it by default as a built-in draft (`draft_num_predict 2`): the block guesses two tokens, one pass of the full model checks them, and the ones that match are kept. Measured on the default machine (qwen3.6:35b-a3b, Ollama 0.40.7, 96-token answers):
 
 | | tok/s | vs. no drafting |
 |---|---|---|
@@ -160,16 +160,16 @@ Both Qwen models carry one extra *next-n* block (`nextn_predict_layers: 1` in th
 | Drafting on, temperature 0, long prompt | 15.6 | ×1.18 |
 | Drafting on, temperature 0.7 | 11.5 and 10.6 | ×0.87, ×0.80 |
 
-A guess costs a read of one block plus the output head (0.35 GB, about a fifth of a full pass), so drafting pays only when most guesses survive: it helps greedy, predictable text and costs time when sampling freely. tokenwalk models it as speculative rounds with an acceptance rate fitted to these runs (0.55 at temperature 0, 0.25 at 0.7): for the article's request, 12.1 tok/s without drafting, 10.2 with it at temperature 0.7, 14.4 at 0. Switch it under *Caches and speculation*. A side effect worth knowing: with drafting on, Ollama 0.40.7 returns `logprobs` for only a few tokens (2 of 16 in a test, 16 of 16 with drafting off).
+A guess costs a read of one block plus the output head (0.35 GB, about a fifth of a full pass), so drafting pays only when most guesses survive: it helps greedy, predictable text and costs time when sampling freely. tokenwalk models it as speculative rounds with an acceptance rate fitted to these runs (0.55 at temperature 0, 0.25 at 0.7): for the default request, 12.1 tok/s without drafting, 10.2 with it at temperature 0.7, 14.4 at 0. Switch it under *Caches and speculation*. A side effect worth knowing: with drafting on, Ollama 0.40.7 returns `logprobs` for only a few tokens (2 of 16 in a test, 16 of 16 with drafting off).
 
-### When it does not connect
+### Troubleshooting
 
 - **"Blocked by CORS"**: the server is running but refuses this page's origin. Set `OLLAMA_ORIGINS` as above and restart Ollama completely (the tray app, not just a terminal).
 - **"Nothing answered"**: nothing answers at that address. Start Ollama (`ollama serve`) or llama-server, and check the port.
 - **The browser asks about local network access**: allow it; a public page reaching `localhost` needs that permission in recent Chrome.
 - **The first run is slow**: the server loads the model from disk first (Load in the table); the next run is warm until keep_alive runs out.
 
-### What stays simulated
+### Limits
 
 Everything inside a pass: which layer, which matrix, the KV cache filling, the sampling chain of a simulated token. A server reports totals and the tokens it sent, not what happens per layer; the real run gives the console real totals to hold the estimate against.
 
@@ -181,6 +181,6 @@ Tests: `npm test` runs the cost-model, MTP and live-parsing unit tests (on respo
 
 - **Code**: everything in this repository, including the single-file build in `dist/`.
 - **Logo and banner** (`docs/assets/`): under the same license; please do not use them to suggest that a fork or another product is the original tokenwalk.
-- **Measurements**: the timings, acceptance rates and recorded server responses in `tests/fixtures/` were measured on one laptop and are shared as they are; cite tokenwalk or the [InfraPhysics article](https://infraphysics.net/blog/bits2bricks/transformers-and-local-inference-from-zero) if you reuse them.
+- **Measurements**: the timings, acceptance rates and recorded server responses in `tests/fixtures/` were measured on the default machine and are shared as they are; cite tokenwalk or the [InfraPhysics article](https://infraphysics.net/blog/bits2bricks/transformers-and-local-inference-from-zero) if you reuse them.
 - **Third-party names**: Qwen, Ollama, llama.cpp, AMD Radeon, ThinkPad and the other product and model names belong to their owners and appear only to describe what the console models; tokenwalk is not affiliated with or endorsed by any of them. No model weights are included or downloaded by this repository.
 - **No runtime dependencies**: the build bundles no third-party code, so there are no other licenses to carry.
