@@ -30,6 +30,28 @@ You pick a machine, a model and a prompt; tokenwalk plays the request pass by pa
 
 <p align="center"><a href="https://infraphysics.net/playgrounds/7148293/tokenwalk"><b>Open it in the browser</b></a>: nothing to install, it runs in the page.</p>
 
+## Why it exists
+
+tokenwalk began as a personal workbench: one screen where the machine, the model, the memory and the tokens could be read together, so that a question about local inference could be answered by looking rather than by reconstructing.
+
+It is an **inference sizing workbench**. The questions are the ones every team running models locally keeps coming back to:
+
+- Will it fit?
+- How long until the first word?
+- How fast will it write?
+- Where is the bottleneck, and what would move it?
+
+Experienced engineers usually have a feel for the answers. tokenwalk gives that feel something to push against. Every number is derived in the open, a count times a size, so an instinct can be checked in seconds, refined, or handed to someone else with the reasoning attached.
+
+Where it earns its place:
+
+- **Before a purchase or a rollout.** Compare machines, models and quantizations on *your* request, not a generic benchmark.
+- **When a hunch needs a quick test.** "Quantize the KV cache and it fits?" "Memory-bound or compute-bound here?" Change one setting and the whole system answers.
+- **When a decision needs to travel.** A link opens the exact setup and moment, so a review starts from the same picture instead of a description of it.
+- **When the estimate meets reality.** Connect your own server and the measurement lands next to the prediction.
+
+It is deliberately focused: one request, one machine, end to end. Every number says whether it is measured, estimated or illustrative.
+
 ## A tour
 
 One screen, four zones that never scroll: **Setup** on the left, the **Observatory** in the middle, **Monitor** on the right and **Playback** along the bottom. The numbers on the zone headers are the order to read them in the first time. The full walkthrough is on the [project page](https://infraphysics.net/lab/projects/llm-inference-console).
