@@ -31,6 +31,8 @@ async function fresh(q = '', w = 1440, h = 900) {
   await p.size(w, h); await p.open(base + q);
   // a Real session left behind by an earlier check would resume on load: forget it and load again
   if (await p.ev(`(() => { const had = !!localStorage.getItem('tw.mode') && localStorage.getItem('tw.mode') !== 'sim'; ['tw.mode', 'tw.simS', 'tw.realS'].forEach(k => localStorage.removeItem(k)); return had; })()`)) await p.open(base + q);
+  // the Loadout's tab and filters last for the browser tab's session: each check starts from none
+  if (await p.ev(`(() => { const had = !!sessionStorage.getItem('tw.loadout'); sessionStorage.removeItem('tw.loadout'); return had; })()`)) await p.open(base + q);
   await p.ev(`showHelp(-1); document.getElementById('fsTip').hidden = true; window.__TRUNC = new Set()`);
 }
 const canvasHit = (cid, pred) => p.ev(`(() => { const c = document.getElementById('${cid}'), r = c.getBoundingClientRect(), h = (HITS['${cid}'] || []).find(q => Array.isArray(q.shape) && (${pred})(q.sel)); return h ? [r.x + h.shape[0] + Math.min(6, h.shape[2] / 2), r.y + h.shape[1] + Math.min(6, h.shape[3] / 2)] : null; })()`);
@@ -340,10 +342,11 @@ await check('mode: no text is cut or overflows in Real machine mode, at 1440x900
   }
 });
 
-await check('What fits: opens, sorts, filters, and a row loads the setup (undoable)', async () => {
+const fitsTab = `document.getElementById('loadout').classList.contains('on') && LOAD.tab === 'fits' && document.querySelector('#loadout [data-lt=fits]').getAttribute('aria-pressed') === 'true' && !!document.querySelector('#loadout #fitsIn .fw-tbl')`;
+await check('What fits: the Setup row opens the Loadout tab, sorts, filters, and a row loads the setup (undoable)', async () => {
   await fresh('', 1280, 720);
   await p.ev(`document.getElementById('fitsOpen').click()`); await sleep(300);
-  assert(await p.ev(`!document.getElementById('fitsWin').hidden`), 'the popup did not open');
+  assert(await p.ev(fitsTab), 'the What fits tab did not open');
   // every combination is a row, shown a page at a time: scrolling to the end appends the next page
   const n = await p.ev(`[FITS.view.length, document.querySelectorAll('#fitsIn tbody tr[data-fr]').length, !!document.querySelector('#fitsIn tr.more')]`);
   assert(n[0] === (await p.ev(`Object.keys(MACHINES).length * presetModels().length * 5`)) && n[1] === Math.min(n[0], 400) && n[2] === n[0] > 400, 'rows: ' + n);
@@ -373,22 +376,63 @@ await check('What fits: opens, sorts, filters, and a row loads the setup (undoab
   const id = await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr]:not(.cur)').dataset.fr`);
   await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr="${id}"]').click()`); await sleep(250);
   const [m, mo, q] = id.split('|');
-  assert(await p.ev(`document.getElementById('fitsWin').hidden`), 'the popup did not close');
+  assert(await p.ev(`!document.getElementById('loadout').classList.contains('on')`), 'the Loadout did not close');
   assert(await p.ev(`S.machine === '${m}' && S.model === '${mo}' && S.quant === '${q}' && S.vram === MACHINES['${m}'].fastGB`), 'the row was not loaded: ' + await p.ev('JSON.stringify([S.machine, S.model, S.quant])'));
   await p.ev(`document.getElementById('undoBtn').click()`); await sleep(150);
   assert((await p.ev('JSON.stringify(S)')) === s0, 'Undo did not restore the setup');
   await p.ev(`FITS.machine = 'all'; FITS.model = 'all'; FITS.only = false; FITS.sort = { k: 'fit', dir: 1 }`);
 });
 
-await check('What fits and the new controls: nothing cut, no inner horizontal scroll, at 1280x720 in both languages', async () => {
+await check('Loadout tabs: Machines, Models and What fits switch in place; a What fits row loads the pair as choosing it by hand does; the tab survives reopen', async () => {
   for (const lg of ['en', 'es']) {
     await fresh(lg === 'es' ? '?lang=es' : '', 1280, 720);
+    await p.ev(`openLoadout('machine')`); await sleep(300);
+    const labels = await p.ev(`[...document.querySelectorAll('#loadout [data-lt]')].map(b => b.textContent.trim()).join('|')`);
+    assert(labels === (lg === 'es' ? 'Máquinas|Modelos|Qué cabe' : 'Machines|Models|What fits'), `${lg}: tabs ${labels}`);
+    for (const t of ['model', 'fits', 'machine', 'fits']) {
+      await p.ev(`document.querySelector('#loadout [data-lt=${t}]').click()`); await sleep(250);
+      const st = await p.ev(`[LOAD.tab, [...document.querySelectorAll('#loadout [data-lt]')].filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.lt).join(), !!document.querySelector('#loadout #fitsIn .fw-tbl'), document.querySelectorAll('#loadout .cards .card').length, !!document.getElementById('cmpT')]`);
+      assert(st[0] === t && st[1] === t && st[2] === (t === 'fits') && (t === 'fits' ? st[3] === 0 && !st[4] : st[3] > 0 && st[4]), `${lg} ${t}: ` + JSON.stringify(st));
+      const o = await overflowIn('#loadout *'); assert(!o.length, `${lg} ${t}: overflow ${JSON.stringify(o)}`);
+    }
+    // by hand: Choose the machine, then the model at a weight format; and the same pair as one What fits row
+    const s0 = await p.ev('JSON.stringify(S)'), u0 = await p.ev('UNDO.length');
+    await p.ev(`openLoadout('machine'); document.querySelector('#loadout .choose[data-m=rtx4090]').click(); openLoadout('model'); document.querySelector('#loadout [data-qm="gpt-oss-20b"][data-q=Q4_K_M]').click()`); await sleep(250);
+    const byHand = await p.ev('JSON.stringify(S)');
+    await p.ev(`undo(); undo()`); await sleep(150);
+    assert((await p.ev('JSON.stringify(S)')) === s0 && (await p.ev('UNDO.length')) === u0, `${lg}: undo by hand`);
+    await p.ev(`openLoadout('fits'); (() => { const m = document.getElementById('fitsMach'); m.value = 'rtx4090'; m.dispatchEvent(new Event('change')); const s = document.getElementById('fitsModel'); s.value = 'm:gpt-oss-20b'; s.dispatchEvent(new Event('change')); })()`); await sleep(200);
+    await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr="rtx4090|gpt-oss-20b|Q4_K_M"]').click()`); await sleep(250);
+    assert((await p.ev('JSON.stringify(S)')) === byHand, `${lg}: the row loaded something else than choosing by hand`);
+    assert(await p.ev(`!document.getElementById('loadout').classList.contains('on') && UNDO.length === ${u0} + 1`), `${lg}: the row did not close the Loadout or was not one undo step`);
+    await p.ev(`document.getElementById('rstBtn').click()`); await sleep(150); await p.ev(`document.getElementById('rstGo').click()`); await sleep(200);
+    assert(await p.ev('isDefault()'), `${lg}: Restore defaults after a row`);
+    await p.ev(`undo()`); await sleep(150);
+    assert((await p.ev('JSON.stringify(S)')) === byHand, `${lg}: Undo after Restore defaults`);
+    await p.ev(`undo()`); await sleep(150);
+    assert((await p.ev('JSON.stringify(S)')) === s0, `${lg}: Undo of the row`);
+    // reopened, from the header chip or after a reload in the same browser tab: the tab and its filters are as left
+    await p.ev(`document.getElementById('chip').click()`); await sleep(250);
+    assert(await p.ev(`${fitsTab} && document.getElementById('fitsMach').value === 'rtx4090'`), `${lg}: the chip did not reopen What fits`);
+    await p.open(base + (lg === 'es' ? '?lang=es' : '')); await p.ev(`showHelp(-1); document.getElementById('fsTip').hidden = true`);
+    await p.ev(`document.getElementById('chip').click()`); await sleep(300);
+    assert(await p.ev(`${fitsTab} && FITS.machine === 'rtx4090' && FITS.model === 'm:gpt-oss-20b' && document.querySelectorAll('#fitsIn tbody tr[data-fr]').length === 5`), `${lg}: the tab or its filters did not survive a reload`);
+    await p.ev(`FITS.machine = 'all'; FITS.model = 'all'; for (const t of ['model', 'machine', 'fits']) { LOAD.tab = t; renderLoadout(); }`); await sleep(300);
+    await shotTo(`tab-fits-${lg}`);
+    for (const t of ['machine', 'model']) { await p.ev(`document.querySelector('#loadout [data-lt=${t}]').click()`); await sleep(300); await shotTo(`tab-${t}-${lg}`); }
+    await p.ev(`fitsOpen(false); sessionStorage.removeItem('tw.loadout')`);
+  }
+});
+
+await check('What fits and the new controls: nothing cut, no inner horizontal scroll, at 1280x720 and 1440x900 in both languages', async () => {
+  for (const [lg, w, h] of [['en', 1280, 720], ['es', 1280, 720], ['en', 1440, 900], ['es', 1440, 900]]) {
+    await fresh(lg === 'es' ? '?lang=es' : '', w, h);
     await p.ev(`document.getElementById('fitsOpen').click()`); await sleep(300);
-    const g = await p.ev(`(() => { const t = document.querySelector('#fitsIn .fw-tbl'), c = document.querySelector('#fitsWin .card').getBoundingClientRect(); return [t.scrollWidth, t.clientWidth, c.top, c.bottom, c.left, c.right, innerWidth, innerHeight]; })()`);
-    assert(g[0] <= g[1] + 1, `${lg}: horizontal scroll in the table ${g[0]} > ${g[1]}`);
-    assert(g[2] >= 0 && g[3] <= g[7] && g[4] >= 0 && g[5] <= g[6], `${lg}: the popup leaves the window ` + JSON.stringify(g));
-    const over = await p.ev(`[...document.querySelectorAll('#fitsWin *, #cfg .zh *, #top *, #cfgBody [data-acc=fits] *')].filter(e => { if (!e.offsetParent || e.children.length) return false; const cs = getComputedStyle(e); return e.scrollWidth > e.clientWidth + 1 && (cs.textOverflow === 'ellipsis' || cs.overflow === 'hidden' || cs.overflowX === 'hidden'); }).map(e => (e.id || e.className || e.tagName) + ': ' + e.textContent.slice(0, 40))`);
-    assert(!over.length, `${lg}: overflow ${JSON.stringify(over)}`);
+    const g = await p.ev(`(() => { const t = document.querySelector('#fitsIn .fw-tbl'), c = t.getBoundingClientRect(), d = document.documentElement; return [t.scrollWidth, t.clientWidth, c.top, c.bottom, c.left, c.right, innerWidth, innerHeight, d.scrollWidth, t.clientHeight]; })()`);
+    assert(g[0] <= g[1] + 1 && g[8] <= g[6], `${lg} ${w}: horizontal scroll ${JSON.stringify(g)}`);
+    assert(g[2] >= 0 && g[3] <= g[7] && g[4] >= 0 && g[5] <= g[6] && g[9] > 200, `${lg} ${w}: the table leaves the window or has no room ` + JSON.stringify(g));
+    const over = await p.ev(`[...document.querySelectorAll('#loadout *, #cfg .zh *, #top *, #cfgBody [data-acc=fits] *')].filter(e => { if (!e.offsetParent || e.children.length) return false; const cs = getComputedStyle(e); return e.scrollWidth > e.clientWidth + 1 && (cs.textOverflow === 'ellipsis' || cs.overflow === 'hidden' || cs.overflowX === 'hidden'); }).map(e => (e.id || e.className || e.tagName) + ': ' + e.textContent.slice(0, 40))`);
+    assert(!over.length, `${lg} ${w}: overflow ${JSON.stringify(over)}`);
     await p.ev(`fitsOpen(false); S.temp = .3; changed()`); await sleep(300); await p.ev(`document.getElementById('rstBtn').click()`); await sleep(200);
     await p.ev(`document.getElementById('linkBtn').click()`); await sleep(300);
     const box = await p.ev(`['rstAsk', 'toast'].map(id => { const e = document.getElementById(id), r = e.getBoundingClientRect(); return [id, !e.hidden && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight]; })`);
@@ -416,7 +460,7 @@ await check('What fits with the whole catalogue: vendor and family filters narro
     assert(await p.ev(`FITS.machine === 'all' && document.querySelectorAll('#fitsIn tbody tr[data-fr]').length > presetModels().length * 5`), 'the machine filter did not reset');
     await p.ev(`(() => { const c = document.getElementById('fitsOnly'); c.checked = true; c.dispatchEvent(new Event('change')); })()`); await sleep(150);
     assert(await p.ev(`[...document.querySelectorAll('#fitsIn .fp')].every(f => !f.classList.contains('no'))`), 'only what fits with a family');
-    const o = await overflowIn('#fitsWin *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
+    const o = await overflowIn('#loadout *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
     await p.ev(`(() => { const c = document.getElementById('fitsOnly'); c.checked = false; c.dispatchEvent(new Event('change')); const s = document.getElementById('fitsFam'); s.value = 'all'; s.dispatchEvent(new Event('change')); })()`); await sleep(200);
     await shotTo(`fits-catalogue-${lg}`);
     await p.ev(`(() => { const s = document.getElementById('fitsFam'); s.value = 'v:Apple'; s.dispatchEvent(new Event('change')); })()`); await sleep(200);
@@ -564,6 +608,7 @@ await check('Restore defaults in Real: only the request and sampling, never the 
   assert((await p.ev(`JSON.stringify([LIVE.maxTok, LIVE.promptMode, S.temp, S.seed])`)) === JSON.stringify([200, 'long', 1.4, 9]), 'Undo in Real');
   await p.ev(`FITS.machine = 'h100'; fitsOpen(true)`); await sleep(300);
   assert(/Estimate as/.test(await p.ev(`document.getElementById('fitsIn').textContent`)), 'no Real note');
+  assert((await p.ev(`[...document.querySelectorAll('#loadout [data-lt]')].filter(b => b.disabled).map(b => b.dataset.lt).join()`)) === 'machine,model', 'Real: Machines and Models should be disabled');
   const pick = await p.ev('LIVE.pick');
   await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr^="h100|qwen38|"]').click()`); await sleep(300);
   assert((await p.ev(`S.machine + '|' + S.model + '|' + LIVE.pick`)) === 'h100|live|' + pick, 'the row changed more than Estimate as');
@@ -684,13 +729,13 @@ await check('What fits: a row with accepted measurements shows them, with n, the
     assert(await p.ev(`!!document.querySelector('#fitsIn tr[data-fr="rtx4090|qwen36|Q4_K_M"] .mtag') && !document.querySelector('#fitsIn tr[data-fr="rtx4090|qwen36|Q4_K_M"] .c-ttft .ms:not(.none)')`), 'the 4090 run (36-token prompt) should show — for first token');
     assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].filter(t => !t.querySelector('.mtag')).every(t => MACHINES[t.dataset.fr.split('|')[0]].estimate === 'calibrated' ? /calibrated|calibrada/.test(t.cells[0].textContent) : /estimate|estimada/.test(t.cells[0].textContent))`), 'unmeasured rows lost their estimate tag');
     await p.ev(`document.querySelector('${row} .mtag').click()`); await sleep(200);
-    assert(await p.ev(`!document.getElementById('fitsWin').hidden && S.machine === 'thinkpad'`), 'the tag click loaded the row or closed the window');
+    assert(await p.ev(`${fitsTab} && S.machine === 'thinkpad'`), 'the tag click loaded the row or closed the tab');
     const links = await p.ev(`[...document.querySelectorAll('#fitsIn tr.mdet a')].map(a => a.href)`);
     assert(links.join() === [12, 15, 19].map(n => `https://github.com/yago-mendoza/tokenwalk/issues/${n}`).join(), 'detail links: ' + links);
     assert(/Ollama 0\.40\.7/.test(await p.ev(`document.querySelector('#fitsIn tr.mdet').textContent`)), 'no server version in the detail');
     const g = await p.ev(`(() => { const t = document.querySelector('#fitsIn .fw-tbl'); return [t.scrollWidth, t.clientWidth]; })()`);
     assert(g[0] <= g[1] + 1, `${lg}: horizontal scroll ${g}`);
-    const o = await overflowIn('#fitsWin *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
+    const o = await overflowIn('#loadout *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
     await p.ev(`document.querySelector('#fitsIn tr.mdet').scrollIntoView({ block: 'center' })`); await shotTo(`fits-measured-${lg}`);
     await p.ev(`setMeasurements([]); FITS.model = 'all'; fitsOpen(false)`);
   }
