@@ -9,6 +9,87 @@
 <!-- tokenwalk:style -->
 </head>
 <body data-zone="watch">
+<!-- The phone gate: four panels of console cannot be read on a phone, so a small screen gets one centred note instead,
+     with the link to copy or send to a laptop. «Open it anyway» lets it through for this tab. Self-contained on purpose:
+     it sits here in the page, apart from styles.css and the parts, and runs before the console draws. Its language is
+     the reader's choice on infraphysics.net (same origin), English otherwise. -->
+<style>
+#twGate { display: none; position: fixed; inset: 0; z-index: 2147483000; place-items: center; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); background: radial-gradient(120% 70% at 50% 0%, #17161f 0%, #0a0a0d 62%); color: #e6e6ea; font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Inter, Roboto, sans-serif; text-align: center; overflow: auto; }
+html.tw-gated #twGate { display: grid; }
+html.tw-gated, html.tw-gated body { overflow: hidden; }
+#twGate .tw-g-box { max-width: 21rem; display: grid; justify-items: center; gap: 14px; }
+#twGate svg { width: 56px; height: 56px; }
+#twGate .tw-g-nm { font: 700 13px/1 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; letter-spacing: .04em; color: #9a9aa6; }
+#twGate .tw-g-nm span { color: #ffd43b; }
+#twGate h1 { margin: 2px 0 0; font-size: 21px; line-height: 1.25; font-weight: 650; letter-spacing: -.01em; }
+#twGate p { margin: 0; color: #9a9aa6; font-size: 14px; }
+#twGate .tw-g-url { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; font: 12px/1.3 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; color: #c9c9d1; background: #07070a; border: 1px solid #24242c; border-radius: 10px; word-break: break-all; }
+#twGate .tw-g-row { display: flex; gap: 8px; width: 100%; }
+#twGate button, #twGate a.tw-g-btn { flex: 1; padding: 12px 14px; font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1; color: #0a0a0d; background: #ffd43b; border: 0; border-radius: 999px; cursor: pointer; text-decoration: none; }
+#twGate .tw-g-ghost { color: #e6e6ea !important; background: none !important; border: 1px solid #34343f !important; }
+#twGate .tw-g-more { display: grid; gap: 6px; margin-top: 6px; font-size: 13px; }
+#twGate .tw-g-more a, #twGate .tw-g-more button { flex: none; padding: 0; font: inherit; color: #9a9aa6; background: none; border: 0; text-decoration: underline; text-underline-offset: 3px; }
+</style>
+<div id="twGate" role="dialog" aria-modal="true" aria-labelledby="twGateT">
+  <div class="tw-g-box">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="7" fill="#15151c" stroke="#33333f"/><g fill="#9d8cf0"><rect x="6" y="21.5" width="20" height="3" rx="1.5"/><rect x="6" y="14.5" width="20" height="3" rx="1.5" opacity=".72"/><rect x="6" y="7.5" width="13" height="3" rx="1.5" opacity=".5"/></g><g fill="#7fe3ff"><circle cx="10" cy="19" r="1.4"/><circle cx="15" cy="12" r="1.4" opacity=".8"/></g><circle cx="23" cy="9" r="3.4" fill="#ffd43b"/></svg>
+    <b class="tw-g-nm">token<span>walk</span></b>
+    <h1 id="twGateT" data-twg="h"></h1>
+    <p data-twg="p"></p>
+    <div class="tw-g-url" id="twGateUrl"></div>
+    <div class="tw-g-row">
+      <button type="button" id="twGateCopy" data-twg="copy"></button>
+      <button type="button" id="twGateShare" class="tw-g-ghost" data-twg="share" hidden></button>
+    </div>
+    <div class="tw-g-more">
+      <a id="twGateRead" data-twg="read" href="https://infraphysics.net/blog/bits2bricks/transformers-and-local-inference-from-zero"></a>
+      <button type="button" id="twGateAnyway" data-twg="anyway"></button>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.documentElement;
+  let es = false;
+  try { es = localStorage.getItem('infraphysics:lang') === 'es'; } catch (e) {}
+  const T = es ? {
+    h: 'tokenwalk se ve en un portátil', p: 'Es una consola de cuatro paneles que no cabe en la pantalla de un móvil. Ábrela en un portátil o un ordenador: copia el enlace o envíatelo.',
+    copy: 'Copiar enlace', copied: 'Copiado', share: 'Enviar', read: 'Mientras, lee el artículo que la explica', anyway: 'Abrirla aquí de todas formas',
+  } : {
+    h: 'tokenwalk is made for a laptop', p: 'It is a console of four panels that does not fit on a phone screen. Open it on a laptop or a desktop: copy the link or send it to yourself.',
+    copy: 'Copy link', copied: 'Copied', share: 'Send', read: 'Meanwhile, read the article that explains it', anyway: 'Open it here anyway',
+  };
+  if (es) document.getElementById('twGateRead').href = 'https://infraphysics.net/es/blog/bits2bricks/transformers-and-local-inference-from-zero';
+  for (const el of document.querySelectorAll('#twGate [data-twg]')) el.textContent = T[el.dataset.twg];
+  const url = location.href;
+  document.getElementById('twGateUrl').textContent = url.replace(/^https?:\/\//, '');
+  // A phone: a narrow window, or a touch screen whose short side is a phone's (so a phone held sideways counts too).
+  const small = () => {
+    try { if (sessionStorage.getItem('tw-gate-off') === '1') return false; } catch (e) {}
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    return innerWidth < 760 || (coarse && Math.min(screen.width, screen.height) < 600);
+  };
+  const apply = () => root.classList.toggle('tw-gated', small());
+  apply();
+  addEventListener('resize', apply);
+  const copyBtn = document.getElementById('twGateCopy');
+  copyBtn.addEventListener('click', () => {
+    const done = () => { copyBtn.textContent = T.copied; setTimeout(() => { copyBtn.textContent = T.copy; }, 1800); };
+    const fallback = () => { const t = Object.assign(document.createElement('textarea'), { value: url }); t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch (e) {} t.remove(); };
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, fallback); else fallback();
+  });
+  const share = document.getElementById('twGateShare');
+  if (navigator.share) {
+    share.hidden = false;
+    share.addEventListener('click', () => { navigator.share({ title: 'tokenwalk', url }).catch(() => {}); });
+  }
+  document.getElementById('twGateAnyway').addEventListener('click', () => {
+    try { sessionStorage.setItem('tw-gate-off', '1'); } catch (e) {}
+    root.classList.remove('tw-gated');
+    dispatchEvent(new Event('resize'));
+  });
+})();
+</script>
 <div id="app">
   <header id="top">
     <div class="brand"><b class="nm">token<span>walk</span></b></div>
