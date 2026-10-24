@@ -102,7 +102,7 @@ await check('zoom goes matrix, row, one weight, and back out with Esc', async ()
 await check('Memory fits without scrolling for every model, at three window sizes', async () => {
   for (const [w, h] of [[1440, 900], [1280, 720], [1366, 640]]) {
     await fresh('?view=memory', w, h);
-    for (const mk of ['qwen36', 'qwen38', 'llama8b', 'gpt3']) {
+    for (const mk of await p.ev('presetModels()')) {
       await p.ev(`S.model = '${mk}'; S.quant = 'Q4_K_M'; changed(); ZOOM.memory = []; P.t = R.ttft + (R.total - R.ttft) * .5; setPlaying(false)`); await sleep(300);
       const [bottom, stage] = await p.ev(`[Math.max(...HITS.cMemory.filter(q => Array.isArray(q.shape)).map(q => q.shape[1] + q.shape[3])), stageSize()[1]]`);
       assert(bottom <= stage, `${w}x${h} ${mk}: drawn to ${bottom} in a stage of ${stage}`);
@@ -344,31 +344,40 @@ await check('What fits: opens, sorts, filters, and a row loads the setup (undoab
   await fresh('', 1280, 720);
   await p.ev(`document.getElementById('fitsOpen').click()`); await sleep(300);
   assert(await p.ev(`!document.getElementById('fitsWin').hidden`), 'the popup did not open');
-  const n = await p.ev(`document.querySelectorAll('#fitsIn tbody tr').length`);
-  assert(n === (await p.ev(`Object.keys(MACHINES).length * 20`)), 'rows: ' + n);
-  const order = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].map(t => { const [m, mo, q] = t.dataset.fr.split('|'), r = FITS.rows.find(x => x.mk === m && x.mo === mo && x.q === q); return [r.fit, r.tps]; })`);
+  // every combination is a row, shown a page at a time: scrolling to the end appends the next page
+  const n = await p.ev(`[FITS.view.length, document.querySelectorAll('#fitsIn tbody tr[data-fr]').length, !!document.querySelector('#fitsIn tr.more')]`);
+  assert(n[0] === (await p.ev(`Object.keys(MACHINES).length * presetModels().length * 5`)) && n[1] === Math.min(n[0], 400) && n[2] === n[0] > 400, 'rows: ' + n);
+  await p.ev(`(() => { const t = document.querySelector('#fitsIn .fw-tbl'); t.scrollTop = t.scrollHeight; t.dispatchEvent(new Event('scroll')); })()`); await sleep(200);
+  assert((await p.ev(`document.querySelectorAll('#fitsIn tbody tr[data-fr]').length`)) === Math.min(n[0], 800), 'the next page was not appended');
+  await p.ev(`document.querySelector('#fitsIn .fw-tbl').scrollTop = 0`);
+  const order = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].map(t => { const [m, mo, q] = t.dataset.fr.split('|'), r = FITS.rows.find(x => x.mk === m && x.mo === mo && x.q === q); return [r.fit, r.tps]; })`);
   const rank = { yes: 0, tight: 1, no: 2 };
   for (let i = 1; i < order.length; i++) { const a = order[i - 1], b = order[i]; assert(rank[a[0]] < rank[b[0]] || (rank[a[0]] === rank[b[0]] && a[1] >= b[1]), 'default order broken at ' + i + ': ' + JSON.stringify([a, b])); }
-  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].every(t => { const k = t.dataset.fr.split('|')[0]; return MACHINES[k].estimate === 'calibrated' ? /calibrated/.test(t.cells[0].textContent) : /estimate/.test(t.cells[0].textContent); })`), 'calibrated / estimate marks');
-  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].filter(t => /calibrated/.test(t.cells[0].textContent)).every(t => /^thinkpad(Cpu)?\|/.test(t.dataset.fr))`), 'only the ThinkPad presets are calibrated');
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].every(t => { const k = t.dataset.fr.split('|')[0]; return MACHINES[k].estimate === 'calibrated' ? /calibrated/.test(t.cells[0].textContent) : /estimate/.test(t.cells[0].textContent); })`), 'calibrated / estimate marks');
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].filter(t => /calibrated/.test(t.cells[0].textContent)).every(t => /^thinkpad(Cpu)?\|/.test(t.dataset.fr))`), 'only the ThinkPad presets are calibrated');
   await p.ev(`document.querySelector('#fitsIn th[data-fs=ttft]').click()`); await sleep(150);
-  const tt = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].map(t => t.dataset.fr).slice(0, 3).map(id => { const [m, mo, q] = id.split('|'); return FITS.rows.find(r => r.mk === m && r.mo === mo && r.q === q).ttft; })`);
+  const tt = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].map(t => t.dataset.fr).slice(0, 3).map(id => { const [m, mo, q] = id.split('|'); return FITS.rows.find(r => r.mk === m && r.mo === mo && r.q === q).ttft; })`);
   assert(tt[0] <= tt[1] && tt[1] <= tt[2], 'ttft sort ascending: ' + tt);
   await p.ev(`document.querySelector('#fitsIn th[data-fs=ttft]').click()`); await sleep(150);
   assert((await p.ev(`FITS.sort.dir`)) === -1 && /▼/.test(await p.ev(`document.querySelector('#fitsIn th[data-fs=ttft]').textContent`)), 'second click did not reverse the sort');
   await p.ev(`(() => { const s = document.getElementById('fitsMach'); s.value = 'rtx4090'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
-  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].every(t => t.dataset.fr.startsWith('rtx4090|')) && document.querySelectorAll('#fitsIn tbody tr').length === 20`), 'machine filter');
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].every(t => t.dataset.fr.startsWith('rtx4090|')) && document.querySelectorAll('#fitsIn tbody tr[data-fr]').length === presetModels().length * 5`), 'machine filter');
+  await p.ev(`(() => { const s = document.getElementById('fitsModel'); s.value = 'v:OpenAI'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].every(t => MODELS[t.dataset.fr.split('|')[1]].vendor === 'OpenAI') && document.querySelectorAll('#fitsIn tbody tr[data-fr]').length === presetModels().filter(k => MODELS[k].vendor === 'OpenAI').length * 5`), 'model vendor filter');
+  await p.ev(`(() => { const s = document.getElementById('fitsModel'); s.value = 'm:gpt-oss-20b'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].every(t => t.dataset.fr.startsWith('rtx4090|gpt-oss-20b|')) && document.querySelectorAll('#fitsIn tbody tr[data-fr]').length === 5`), 'one model');
+  await p.ev(`(() => { const s = document.getElementById('fitsModel'); s.value = 'all'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
   await p.ev(`(() => { const c = document.getElementById('fitsOnly'); c.checked = true; c.dispatchEvent(new Event('change')); })()`); await sleep(150);
-  assert(await p.ev(`[...document.querySelectorAll('#fitsIn .fp')].every(f => !f.classList.contains('no')) && document.querySelectorAll('#fitsIn tbody tr').length < 20`), 'only what fits');
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn .fp')].every(f => !f.classList.contains('no')) && document.querySelectorAll('#fitsIn tbody tr[data-fr]').length < presetModels().length * 5`), 'only what fits');
   const s0 = await p.ev('JSON.stringify(S)');
-  const id = await p.ev(`document.querySelector('#fitsIn tbody tr:not(.cur)').dataset.fr`);
+  const id = await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr]:not(.cur)').dataset.fr`);
   await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr="${id}"]').click()`); await sleep(250);
   const [m, mo, q] = id.split('|');
   assert(await p.ev(`document.getElementById('fitsWin').hidden`), 'the popup did not close');
   assert(await p.ev(`S.machine === '${m}' && S.model === '${mo}' && S.quant === '${q}' && S.vram === MACHINES['${m}'].fastGB`), 'the row was not loaded: ' + await p.ev('JSON.stringify([S.machine, S.model, S.quant])'));
   await p.ev(`document.getElementById('undoBtn').click()`); await sleep(150);
   assert((await p.ev('JSON.stringify(S)')) === s0, 'Undo did not restore the setup');
-  await p.ev(`FITS.machine = 'all'; FITS.only = false; FITS.sort = { k: 'fit', dir: 1 }`);
+  await p.ev(`FITS.machine = 'all'; FITS.model = 'all'; FITS.only = false; FITS.sort = { k: 'fit', dir: 1 }`);
 });
 
 await check('What fits and the new controls: nothing cut, no inner horizontal scroll, at 1280x720 in both languages', async () => {
@@ -395,16 +404,16 @@ await check('What fits with the whole catalogue: vendor and family filters narro
     assert(fams[0] === 'all' && fams.includes('v:Apple') && fams.includes('v:NVIDIA') && fams.includes('f:nvidia-cuda-pro') && fams.includes('v:CPU'), 'family options: ' + fams);
     for (const f of ['v:Apple', 'f:nvidia-cuda', 'f:amd-rocm-instinct', 'v:CPU']) {
       await p.ev(`(() => { const s = document.getElementById('fitsFam'); s.value = '${f}'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
-      const g = await p.ev(`(() => { const rows = [...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].map(t => t.dataset.fr.split('|')[0]); const opts = [...document.querySelectorAll('#fitsMach option')].map(o => o.value).filter(v => v !== 'all'); const t = document.querySelector('#fitsIn .fw-tbl'); return [rows.length, rows.every(k => machineMatches(MACHINES[k], '${f}')), opts.every(k => machineMatches(MACHINES[k], '${f}')), opts.length, new Set(rows).size, t.scrollWidth <= t.clientWidth + 1]; })()`);
+      const g = await p.ev(`(() => { const rows = FITS.view.map(r => r.mk); const opts = [...document.querySelectorAll('#fitsMach option')].map(o => o.value).filter(v => v !== 'all'); const t = document.querySelector('#fitsIn .fw-tbl'); return [rows.length, rows.every(k => machineMatches(MACHINES[k], '${f}')), opts.every(k => machineMatches(MACHINES[k], '${f}')), opts.length, new Set(rows).size, t.scrollWidth <= t.clientWidth + 1]; })()`);
       assert(g[0] > 0 && g[1], `${lg} ${f}: rows outside the filter ` + JSON.stringify(g));
       assert(g[2] && g[3] === g[4], `${lg} ${f}: the machine list does not follow the filter ` + JSON.stringify(g));
       assert(g[5], `${lg} ${f}: horizontal scroll`);
     }
     // a machine picked, then a family it is not in: the machine filter resets instead of showing nothing
     await p.ev(`(() => { const s = document.getElementById('fitsFam'); s.value = 'all'; s.dispatchEvent(new Event('change')); const m = document.getElementById('fitsMach'); m.value = 'm4max'; m.dispatchEvent(new Event('change')); })()`); await sleep(150);
-    assert((await p.ev(`document.querySelectorAll('#fitsIn tbody tr[data-fr^="m4max|"]').length`)) === 20, 'machine filter m4max');
+    assert((await p.ev(`document.querySelectorAll('#fitsIn tbody tr[data-fr^="m4max|"]').length`)) === (await p.ev('presetModels().length * 5')), 'machine filter m4max');
     await p.ev(`(() => { const s = document.getElementById('fitsFam'); s.value = 'v:NVIDIA'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
-    assert(await p.ev(`FITS.machine === 'all' && document.querySelectorAll('#fitsIn tbody tr').length > 20`), 'the machine filter did not reset');
+    assert(await p.ev(`FITS.machine === 'all' && document.querySelectorAll('#fitsIn tbody tr[data-fr]').length > presetModels().length * 5`), 'the machine filter did not reset');
     await p.ev(`(() => { const c = document.getElementById('fitsOnly'); c.checked = true; c.dispatchEvent(new Event('change')); })()`); await sleep(150);
     assert(await p.ev(`[...document.querySelectorAll('#fitsIn .fp')].every(f => !f.classList.contains('no'))`), 'only what fits with a family');
     const o = await overflowIn('#fitsWin *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
@@ -435,6 +444,62 @@ await check('Machine catalogue: every preset is a card with its provenance and f
     const o2 = await overflowIn('#loadout *'); assert(!o2.length, `${lg}: overflow ${JSON.stringify(o2)}`);
     await shotTo(`catalogue-all-${lg}`);
     await p.ev(`LOAD.fam = 'all'; document.getElementById('loadClose').click()`);
+  }
+});
+
+await check('Model catalogue: every model is a card with its family, source and date, the filter narrows it, both languages', async () => {
+  for (const lg of ['en', 'es']) {
+    await fresh(lg === 'es' ? '?lang=es' : '', 1280, 720);
+    await p.ev(`openLoadout('model')`); await sleep(400);
+    const cards = await p.ev(`[...document.querySelectorAll('#loadout .card.mcard')].map(c => [c.querySelector('header b').textContent, (c.querySelector('.desc.fam') || {}).textContent || '', !!c.querySelector('.desc.fam a[href^="https://"]'), !!c.querySelector('.desc.fam .apx')])`);
+    // a model connected in Real machine earlier (MODELS.live) keeps its card; every preset has one, with its provenance
+    const names = await p.ev('presetModels().map(k => MODELS[k].name)'), all = cards.length;
+    assert(all === (await p.ev('Object.keys(MODELS).length')) && names.every(nm => cards.some(c => c[0] === nm)), `${lg}: ${all} cards`);
+    cards.splice(0, all, ...cards.filter(c => names.includes(c[0])));
+    assert(cards.every(c => /\d{4}-\d{2}-\d{2}/.test(c[1])), `${lg}: a card without its date ${JSON.stringify(cards.filter(c => !/\d{4}/.test(c[1])))}`);
+    assert(cards.filter(c => !c[2]).every(c => /Qwen3\.[68]/.test(c[0])), `${lg}: only the GGUF-read Qwen models have no link ${JSON.stringify(cards.filter(c => !c[2]))}`);
+    assert(cards.filter(c => /Gemma 3|gpt-oss/.test(c[0])).every(c => c[3]), `${lg}: the sliding-window models do not say they are approximated`);
+    const groups = await p.ev(`[...document.querySelectorAll('#model optgroup')].map(g => g.label)`);
+    assert(['Qwen', 'Meta', 'OpenAI', 'Google', 'Mistral AI', 'Microsoft'].every(v => groups.includes(v)), 'Setup model groups: ' + groups);
+    for (const [f, re] of [['v:Google', /^Gemma 3/], ['f:Qwen3', /^Qwen3 /], ['f:Llama 3', /^Llama 3\./], ['v:OpenAI', /^(GPT-3|gpt-oss)/]]) {
+      await p.ev(`(() => { const s = document.getElementById('mfamSel'); s.value = ${JSON.stringify(f)}; s.dispatchEvent(new Event('change')); })()`); await sleep(200);
+      const names = await p.ev(`[...document.querySelectorAll('#loadout .card header b')].map(b => b.textContent)`);
+      assert(names.length >= 2 && names.every(nm => re.test(nm)), `${lg} ${f}: ${JSON.stringify(names)}`);
+    }
+    const o = await overflowIn('#loadout *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
+    await p.ev(`(() => { const s = document.getElementById('mfamSel'); s.value = 'all'; s.dispatchEvent(new Event('change')); })()`); await sleep(300);
+    const o2 = await overflowIn('#loadout *'); assert(!o2.length, `${lg}: overflow ${JSON.stringify(o2)}`);
+    await shotTo(`models-catalogue-${lg}`);
+    await p.ev(`LOAD.mfam = 'all'; document.getElementById('loadClose').click()`);
+  }
+});
+
+// Every model on the default machine: every view and phase, the matrix, row and number close-ups (an expert's too, for a
+// mixture of experts), a token's KV and the expert inspector; no page error and no canvas text cut.
+await check('every model on the default machine draws every view with no error and no text cut, both languages', async () => {
+  const shots = { 'qwen2.5-32b': 'dense', 'gpt-oss-120b': 'moe', 'llama3.3-70b': 'large' };
+  for (const [w, h, langs] of [[1280, 720, ['en', 'es']], [1440, 900, ['en']]]) for (const lg of langs) {
+    await fresh(lg === 'es' ? '?lang=es' : '', w, h);
+    const bad = [];
+    for (const k of await p.ev('presetModels()')) {
+      const e0 = p.errors.length;
+      await p.ev(`window.__TRUNC = new Set(); S.model = '${k}'; S.quant = 'Q4_K_M'; UI.layer = -1; changed()`); await sleep(120);
+      for (const st of ['P.t = 0', 'P.t = R.ttft * .5', 'P.t = R.ttft + (R.total - R.ttft) * .3', 'P.t = R.total'])
+        for (const l of ['system', 'model', 'memory', 'tokens']) { await p.ev(`${st}; setPlaying(false); select(null); setLens('${l}')`); await sleep(70); }
+      await p.ev(`P.t = R.ttft + (R.total - R.ttft) * .3; setPlaying(false); setLens('model'); UI.modelMode = 'stack'; renderMmode()`); await sleep(120);
+      const zs = [`ZOOM.model = [{ k: 'mat', layer: 3, name: R.sh.attn[0][0], shape: R.sh.attn[0] }]`, `ZOOM.model.push({ k: 'row', layer: 3, name: R.sh.attn[0][0], shape: R.sh.attn[0], r: 0 })`, `ZOOM.model.push({ k: 'num', layer: 3, name: R.sh.attn[0][0], shape: R.sh.attn[0], r: 0, i: 2 })`];
+      if (await p.ev('!!R.sh.expert')) zs.push(`ZOOM.model = [{ k: 'expert', layer: 3, e: chosenExperts(R.segs[R.firstDecode].tok || 0, 3)[0] }]`, `ZOOM.model.push({ k: 'mat', layer: 3, name: R.sh.expert[0][0], shape: R.sh.expert[0], e: 1 })`,
+        `ZOOM.model.push({ k: 'row', layer: 3, name: R.sh.expert[0][0], shape: R.sh.expert[0], r: 0, e: 1 })`, `ZOOM.model.push({ k: 'num', layer: 3, name: R.sh.expert[0][0], shape: R.sh.expert[0], r: 0, i: 2, e: 1 })`, `ZOOM.model = []; select({ k: 'expert', layer: 3, e: 0 })`);
+      for (const z of zs) { await p.ev(z); await sleep(90); }
+      await p.ev(`ZOOM.model = []; select(null); UI.modelMode = 'grid'; renderMmode(); setLens('memory'); ZOOM.memory = [{ k: 'tok', t: Math.min(R.prompt - 1, 100) }]`); await sleep(90);
+      await p.ev(`ZOOM.memory = []`);
+      if (SHOTS && shots[k] && w === 1280) for (const l of ['system', 'model', 'memory', 'tokens']) { await p.ev(`P.t = R.ttft + (R.total - R.ttft) * .3; setPlaying(false); setLens('${l}')`); await shotTo(`model-${shots[k]}-${k}-${l}-${lg}`); }
+      if (SHOTS && shots[k] && w === 1280) { await p.ev(`setLens('model'); UI.modelMode = 'stack'; renderMmode()`); await shotTo(`model-${shots[k]}-${k}-matrices-${lg}`); await p.ev(`UI.modelMode = 'grid'; renderMmode()`); }
+      const cut = await p.ev(`[...window.__TRUNC]`), errs = p.errors.slice(e0);
+      if (cut.length || errs.length) bad.push({ k, cut, errs: errs.map(e => e.slice(0, 200)) });
+      p.errors.length = e0; // reported once, here, with the model it belongs to
+    }
+    assert(!bad.length, `${w}x${h} ${lg}: ${JSON.stringify(bad)}`);
   }
 });
 
@@ -497,12 +562,12 @@ await check('Restore defaults in Real: only the request and sampling, never the 
   assert((await p.ev(`JSON.stringify([LIVE.ep, LIVE.pick, LIVE.status, S.machine, S.model])`)) === before && (await p.ev('MODE.m')) === 'real', 'the connection changed');
   await p.ev(`document.getElementById('undoBtn').click()`); await sleep(200);
   assert((await p.ev(`JSON.stringify([LIVE.maxTok, LIVE.promptMode, S.temp, S.seed])`)) === JSON.stringify([200, 'long', 1.4, 9]), 'Undo in Real');
-  await p.ev(`fitsOpen(true)`); await sleep(300);
+  await p.ev(`FITS.machine = 'h100'; fitsOpen(true)`); await sleep(300);
   assert(/Estimate as/.test(await p.ev(`document.getElementById('fitsIn').textContent`)), 'no Real note');
   const pick = await p.ev('LIVE.pick');
   await p.ev(`document.querySelector('#fitsIn tbody tr[data-fr^="h100|qwen38|"]').click()`); await sleep(300);
   assert((await p.ev(`S.machine + '|' + S.model + '|' + LIVE.pick`)) === 'h100|live|' + pick, 'the row changed more than Estimate as');
-  await p.ev(`leaveReal(true)`);
+  await p.ev(`FITS.machine = 'all'; leaveReal(true)`);
 });
 
 await check('History keeps the whole run: after 300 events the load and first prefill lines are still listed', async () => {
@@ -609,7 +674,7 @@ await check('What fits: a row with accepted measurements shows them, with n, the
   for (const lg of ['en', 'es']) {
     await fresh(lg === 'es' ? '?lang=es' : '', 1280, 720);
     const rec = (n, tps, prompt) => ({ issue: n, url: `https://github.com/yago-mendoza/tokenwalk/issues/${n}`, submitted: '2026-10-24', m: { ...measFixture, request: { ...measFixture.request, promptTokens: prompt }, timings: { ollama: { ...measFixture.timings.ollama, prompt_eval_count: prompt } }, derived: { ...measFixture.derived, decodeTps: tps, ttftS: prompt / 100 } } });
-    await p.ev(`setMeasurements(${JSON.stringify([rec(12, 9.04, 6400), rec(15, 11.5, 36), rec(19, 10.1, 7000), { ...rec(21, 40, 36), m: { ...rec(21, 40, 36).m, hardware: { preset: 'rtx4090' } } }])}); fitsOpen(true)`); await sleep(300);
+    await p.ev(`setMeasurements(${JSON.stringify([rec(12, 9.04, 6400), rec(15, 11.5, 36), rec(19, 10.1, 7000), { ...rec(21, 40, 36), m: { ...rec(21, 40, 36).m, hardware: { preset: 'rtx4090' } } }])}); FITS.model = 'm:qwen36'; fitsOpen(true)`); await sleep(300);
     const row = `#fitsIn tr[data-fr="thinkpad|qwen36|Q4_K_M"]`;
     const r = await p.ev(`(() => { const t = document.querySelector('${row}'); return [!!t.querySelector('.mtag'), t.querySelector('.mtag').textContent, t.cells[4].textContent, t.cells[5].textContent, t.querySelector('.c-tps .ms').title, t.querySelector('.c-ttft .ms').title]; })()`);
     assert(r[0] && /×3/.test(r[1]), `${lg}: tag ` + JSON.stringify(r));
@@ -627,7 +692,7 @@ await check('What fits: a row with accepted measurements shows them, with n, the
     assert(g[0] <= g[1] + 1, `${lg}: horizontal scroll ${g}`);
     const o = await overflowIn('#fitsWin *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
     await p.ev(`document.querySelector('#fitsIn tr.mdet').scrollIntoView({ block: 'center' })`); await shotTo(`fits-measured-${lg}`);
-    await p.ev(`setMeasurements([]); fitsOpen(false)`);
+    await p.ev(`setMeasurements([]); FITS.model = 'all'; fitsOpen(false)`);
   }
 });
 
