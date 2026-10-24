@@ -17,7 +17,10 @@ function alerts() {
   else if (R.cold) out.push({ id: 'cold', lv: 'caution', title: L('Cold start', 'Arranque en frío'), txt: L(`The model is not in memory: ${S_(R.load)} of loading before anything else.`, `El modelo no está en memoria: ${S_(R.load)} de carga antes de nada.`) });
   if (S.kv === 'q4_0') out.push({ id: 'kvq', lv: 'caution', title: L('KV cache at 4 bits', 'Caché KV a 4 bits'), txt: L('It rounds the context itself, the patient history included; measure answer quality on your own cases before relying on it.', 'Redondea el propio contexto, historia clínica incluida; mide la calidad de las respuestas con tus casos antes de fiarte.') });
   if (S.quant === 'Q2_K') out.push({ id: 'q2', lv: 'caution', title: L('Weights at 2.6 bits', 'Pesos a 2,6 bits'), txt: L('Fast and small, with a visible loss of quality on most models.', 'Rápido y pequeño, con una pérdida de calidad visible en la mayoría de modelos.') });
-  if (MACHINES[S.machine].est) out.push({ id: 'est', lv: 'info', title: L('Estimated machine', 'Máquina estimada'), txt: L('Published bandwidth with an assumed efficiency; only the reference ThinkPad 860M is measured.', 'Ancho de banda publicado con una eficiencia supuesta; solo el ThinkPad 860M de referencia está medido.') });
+  if (MACHINES[S.machine].est) { const p = MACHINES[S.machine], fit = p.estimate === 'family-fit';
+    out.push({ id: 'est', lv: 'info', title: L('Estimated machine', 'Máquina estimada'), txt: fit
+      ? L(`Published specs with factors fitted to published llama.cpp results of its family (${famLabel(p.family)}); only the reference ThinkPad is measured.`, `Especificaciones publicadas con factores ajustados a resultados publicados de llama.cpp de su familia (${famLabel(p.family)}); solo el ThinkPad de referencia está medido.`)
+      : L('Published bandwidth with an assumed efficiency; only the reference ThinkPad 860M is measured.', 'Ancho de banda publicado con una eficiencia supuesta; solo el ThinkPad 860M de referencia está medido.') }); }
   if (!out.some(a => a.lv === 'critical' || a.lv === 'caution')) out.unshift({ id: 'ok', lv: 'nominal', title: L('All nominal', 'Todo normal'), txt: L('It fits, it writes faster than you read and the first token comes quickly.', 'Cabe, escribe más rápido de lo que lees y el primer token llega pronto.') });
   return out;
 }

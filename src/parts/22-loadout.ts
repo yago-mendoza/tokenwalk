@@ -1,15 +1,39 @@
 // @ts-nocheck: DOM-heavy UI, to be typed in a later pass
 // ===== Loadout: machines and models as cards =====
-let LOAD = { tab: 'machine', compare: false, sort: { machine: 'speed', model: 'speed' } };
+let LOAD = { tab: 'machine', compare: false, sort: { machine: 'speed', model: 'speed' }, fam: 'all' };
+// ---- Machines by vendor and family (01c-catalogue.ts), shared with What fits ----
+// A filter is 'all', 'v:<vendor>' or 'f:<family>'. A machine's vendor is its family's (a CPU-only preset is CPU).
+const VENDORS = ['Apple', 'NVIDIA', 'AMD', 'Intel', 'CPU'];
+const famLabel = f => (FAMILIES[f] ? L(FAMILIES[f].label, FAMILIES[f].labelEs) : '');
+const vendorOf = mc => (mc.family && FAMILIES[mc.family] ? FAMILIES[mc.family].vendor : mc.vendor || '');
+const vendorLabel = v => (v === 'CPU' ? L('CPU only', 'Solo CPU') : v);
+function machineMatches(mc, filt) { if (!filt || filt === 'all') return true; const [t, v] = filt.split(':'); return t === 'v' ? vendorOf(mc) === v : mc.family === v; }
+function famFilterOptions(cur) {
+  const ms = Object.values(MACHINES), n = f => ms.filter(mc => machineMatches(mc, f)).length;
+  return `<option value="all">${esc(L(`All (${n('all')})`, `Todas (${n('all')})`))}</option>` + VENDORS.filter(v => n(`v:${v}`)).map(v => {
+    const fams = Object.keys(FAMILIES).filter(f => FAMILIES[f].vendor === v && n(`f:${f}`));
+    return `<optgroup label="${esc(vendorLabel(v))}"><option value="v:${v}" ${cur === `v:${v}` ? 'selected' : ''}>${esc(L(`All ${vendorLabel(v)} (${n(`v:${v}`)})`, `Todo ${vendorLabel(v)} (${n(`v:${v}`)})`))}</option>${fams.length > 1 ? fams.map(f => `<option value="f:${f}" ${cur === `f:${f}` ? 'selected' : ''}>${esc(`${famLabel(f)} (${n(`f:${f}`)})`)}</option>`).join('') : ''}</optgroup>`;
+  }).join('');
+}
+// Where a machine's numbers come from: measured on it (or calibrated by a live run), or an estimate from its family's
+// fit to published benchmarks (or assumed, for a family with none).
+function provOf(k, mc = MACHINES[k]) {
+  if (CALIB[k]) return { cls: 'cal', txt: L('calibrated', 'calibrada'), title: L('Calibrated by a live run on this machine', 'Calibrada con una ejecución real en esta máquina') };
+  if (mc.estimate === 'calibrated' || !mc.est) return { cls: 'cal', txt: L('calibrated', 'calibrada'), title: L('Measured on this machine: the reference', 'Medida en esta máquina: la referencia') };
+  const fc = (typeof TW_CALIBRATION !== 'undefined' && TW_CALIBRATION && TW_CALIBRATION.families[mc.family]) || null;
+  if (mc.estimate === 'family-fit' && fc) return { cls: 'est', txt: L('estimate', 'estimada'), title: L(`Estimate: published specs (${mc.asOf}) with factors fitted to ${fc.rows} published llama.cpp results of its family, ${famLabel(mc.family)}. How close that gets: docs/accuracy.md`, `Estimación: especificaciones publicadas (${mc.asOf}) con factores ajustados a ${fc.rows} resultados publicados de llama.cpp de su familia, ${famLabel(mc.family)}. Qué tan cerca queda: docs/accuracy.md`) };
+  return { cls: 'est', txt: L('estimate', 'estimada'), title: L('Estimate: published bandwidth with an assumed efficiency (no published results for its family)', 'Estimación: ancho de banda publicado con una eficiencia supuesta (sin resultados publicados de su familia)') };
+}
 const flagBtn = () => ''; const flagBtnOld = (tab, k) => { const on = LOAD.flags[tab].includes(k); return `<button type="button" class="flagb" data-flag="${k}" aria-pressed="${on}" title="${esc(on ? L('Remove from the comparison', 'Quitar de la comparación') : L('Flag to compare', 'Marcar para comparar'))}">${ICON('flag', 's')}</button>`; };
 function machineCard(k, mc) {
   const sel = S.machine === k, lk = locked();
-  const bars = [[L('memory', 'memoria'), mc.kind === 'unified' ? mc.ramGB : mc.fastGB, 256, 'GB'], [L('bandwidth', 'ancho de banda'), mc.bw, 3400, 'GB/s'], [L('compute', 'cómputo'), mc.tflops, 400, 'TFLOPS']];
+  const bars = [[L('memory', 'memoria'), mc.kind === 'unified' ? mc.ramGB : mc.fastGB, 768, 'GB'], [L('bandwidth', 'ancho de banda'), mc.bw, 8000, 'GB/s'], [L('compute', 'cómputo'), mc.tflops, 1000, 'TFLOPS']], pv = provOf(k, mc);
   const tps = decodeTokS(mc, MODELS[S.model], S.quant, S.kv, R.prompt), fits = placement(mc, MODELS[S.model], S.quant).fits;
-  return `<div class="card${sel ? ' on' : ''}"><header>${ICON(mc.kind === 'unified' ? 'memory' : 'bolt')}<b>${esc(mc.name)}</b><span class="tagp ${mc.est ? 'est' : 'cal'}">${mc.est ? L('estimated', 'estimado') : L('calibrated', 'calibrado')}</span>${flagBtn('machine', k)}</header>
+  return `<div class="card${sel ? ' on' : ''}"><header>${ICON(mc.kind === 'unified' ? 'memory' : 'bolt')}<b>${esc(mc.name)}</b><span class="tagp ${pv.cls}" title="${esc(pv.title)}">${esc(pv.txt)}</span>${flagBtn('machine', k)}</header>
     <div class="desc">${esc(mc.kind === 'unified' ? L('One board: CPU, GPU and NPU share the soldered memory; the GPU has none of its own.', 'Una placa: CPU, GPU y NPU comparten la memoria soldada; la GPU no tiene propia.') : L('Two boards: system RAM on the motherboard, the GPU and its own VRAM on a separate card over PCIe.', 'Dos placas: la RAM en la placa base, la GPU y su propia VRAM en una tarjeta aparte por PCIe.'))}</div>
     ${bars.map(([l, v, mx, u]) => `<div class="mbar"><span>${esc(l)}</span><i><b style="width:${Math.max(2, Math.min(100, Math.log10(1 + v) / Math.log10(1 + mx) * 100)).toFixed(0)}%"></b></i><em class="num">${dec(v >= 100 ? v.toFixed(0) : v.toFixed(v >= 10 ? 0 : 2))} ${u}</em></div>`).join('')}
     <div class="desc num">${esc(L(`${mc.units} ${mc.unitName} · ${mc.cores} CPU cores`, `${mc.units} ${mc.unitName} · ${mc.cores} núcleos CPU`))}</div>
+    ${mc.family ? `<div class="desc fam" title="${esc(pv.title)}">${esc(famLabel(mc.family))}${mc.asOf ? ` · <span class="nw">${esc(L(`specs ${mc.asOf}`, `especificaciones ${mc.asOf}`))}</span>` : ''}${mc.sources && Object.values(mc.sources)[0] && /^https?:/.test(Object.values(mc.sources)[0]) ? ` · <a href="${esc(Object.values(mc.sources)[0])}" target="_blank" rel="noopener">${esc(L('source', 'fuente'))}</a>` : ''}</div>` : ''}
     <div class="desc">${esc(L(`With ${MODELS[S.model].name}: about ${dec(tps.toFixed(1))} tok/s${fits ? '' : ', does not fit'}`, `Con ${MODELS[S.model].name}: unos ${dec(tps.toFixed(1))} tok/s${fits ? '' : ', no cabe'}`))}</div>
     <button type="button" class="btnp choose" data-m="${k}" ${sel || lk ? 'disabled' : ''} title="${lk ? esc(L('Locked during the run', 'Bloqueado durante la ejecución')) : ''}">${sel ? esc(L('Selected', 'Elegida')) : esc(L('Choose', 'Elegir'))}</button></div>`;
 }
@@ -45,7 +69,7 @@ const SORTS = () => ({
   model: [['speed', L('Fastest here', 'Más rápido aquí')], ['fit', L('Fits first', 'Los que caben primero')], ['read', L('Least read per token', 'Menos leído por token')], ['size', L('Size', 'Tamaño')], ['name', L('Name', 'Nombre')]],
 });
 function sortedKeys(tab) {
-  const all = tab === 'machine' ? MACHINES : MODELS, by = LOAD.sort[tab], ks = Object.keys(all);
+  const all = tab === 'machine' ? MACHINES : MODELS, by = LOAD.sort[tab], ks = Object.keys(all).filter(k => tab !== 'machine' || machineMatches(all[k], LOAD.fam));
   const tpsM = k => decodeTokS(MACHINES[k], MODELS[S.model], S.quant, S.kv, R.prompt), tpsD = k => decodeTokS(R.mc, MODELS[k], S.quant, S.kv, R.prompt), fitD = k => placement(R.mc, MODELS[k], S.quant).fits ? 1 : 0;
   const f = tab === 'machine' ? { speed: k => -tpsM(k), bw: k => -all[k].bw, mem: k => -(all[k].kind === 'unified' ? all[k].ramGB : all[k].fastGB), name: null }[by] : { speed: k => -tpsD(k), fit: k => -fitD(k) * 1e6 - tpsD(k), read: k => all[k].readParams, size: k => -all[k].total, name: null }[by];
   return f ? ks.sort((a, b) => f(a) - f(b)) : ks.sort((a, b) => (all[a].name).localeCompare(all[b].name));
@@ -101,17 +125,18 @@ function compareTable() {
       return `<td class="${k === cur ? 'cur' : ''}${v === best ? ' best' : ''}"><div class="cv num">${esc(out)}</div><i class="cb"><b style="width:${Math.max(2, w(v) * 100).toFixed(1)}%"></b></i></td>`; }).join('')}</tr>`;
   }).join('');
   const lk = locked(), foot = `<tr class="act"><td></td>${keys.map(k => `<td class="${k === cur ? 'cur' : ''}">${k === cur ? `<span class="fit ok">${esc(L('selected', 'elegido'))}</span>` : `<button type="button" class="btnp choose" ${tab === 'machine' ? 'data-m' : 'data-model'}="${k}" ${lk ? 'disabled' : ''}>${esc(L('Choose', 'Elegir'))}</button>`}</td>`).join('')}</tr>`;
-  return `<div class="cmpwrap"><table class="cmp">${head}${body}${foot}</table></div><div class="cmpnote dim">${esc(L('Bars are per row; a long spread uses a log scale. Green marks the best value. Other machines are estimated from the laptop calibration.', 'Las barras son por fila; si la diferencia es enorme la escala es logarítmica. El verde marca el mejor valor. Las demás máquinas son estimaciones a partir de la calibración del portátil.'))}</div>`;
+  return `<div class="cmpwrap"><table class="cmp">${head}${body}${foot}</table></div><div class="cmpnote dim">${esc(L('Bars are per row; a long spread uses a log scale. Green marks the best value. Machines other than the reference ThinkPad are estimates: published specs with factors fitted per family to published benchmarks.', 'Las barras son por fila; si la diferencia es enorme la escala es logarítmica. El verde marca el mejor valor. Las máquinas distintas del ThinkPad de referencia son estimaciones: especificaciones publicadas con factores ajustados por familia a resultados publicados.'))}</div>`;
 }
 function renderLoadout() {
   const el = $('loadout');
   el.innerHTML = `<div class="lh"><span class="zt">${esc(L('Loadout', 'Equipamiento'))}</span><span class="seg"><button type="button" data-lt="machine" aria-pressed="${LOAD.tab === 'machine'}">${ICON('memory', 's')}${esc(L('Machines', 'Máquinas'))}</button><button type="button" data-lt="model" aria-pressed="${LOAD.tab === 'model'}">${ICON('layers', 's')}${esc(L('Models', 'Modelos'))}</button></span>
     <label class="sw"><input type="checkbox" id="cmpT" ${LOAD.compare ? 'checked' : ''}><i></i><span>${esc(L('Compare side by side', 'Comparar lado a lado'))}</span></label><button type="button" class="tbtn" id="loadClose" style="margin-left:auto">${ICON('close', 's')}${esc(L('Back to the console', 'Volver a la consola'))}</button></div>
-    <div class="lb">${setupStrip()}<div class="sortrow"><label class="sortl">${esc(L('Sort by', 'Ordenar por'))}<select id="sortSel">${SORTS()[LOAD.tab].map(([k, l]) => `<option value="${k}" ${LOAD.sort[LOAD.tab] === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label></div>${LOAD.compare ? compareTable() : `<div class="cards">${sortedKeys(LOAD.tab).map(k => LOAD.tab === 'machine' ? machineCard(k, MACHINES[k]) : modelCard(k, MODELS[k])).join('')}</div>`}</div>`;
+    <div class="lb">${setupStrip()}<div class="sortrow"><label class="sortl">${esc(L('Sort by', 'Ordenar por'))}<select id="sortSel">${SORTS()[LOAD.tab].map(([k, l]) => `<option value="${k}" ${LOAD.sort[LOAD.tab] === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>${LOAD.tab === 'machine' ? `<label class="sortl">${esc(L('Show', 'Mostrar'))}<select id="famSel">${famFilterOptions(LOAD.fam)}</select></label>` : ''}</div>${LOAD.compare ? compareTable() : `<div class="cards">${sortedKeys(LOAD.tab).map(k => LOAD.tab === 'machine' ? machineCard(k, MACHINES[k]) : modelCard(k, MODELS[k])).join('')}</div>`}</div>`;
   el.querySelectorAll('[data-lt]').forEach(b => b.addEventListener('click', () => { LOAD.tab = b.dataset.lt; renderLoadout(); }));
   $('cmpT').addEventListener('change', e => { LOAD.compare = e.target.checked; renderLoadout(); });
   $('loadClose').addEventListener('click', () => el.classList.remove('on'));
   $('sortSel').addEventListener('change', e => { LOAD.sort[LOAD.tab] = e.target.value; renderLoadout(); });
+  if ($('famSel')) $('famSel').addEventListener('change', e => { LOAD.fam = e.target.value; renderLoadout(); });
   el.querySelectorAll('.sch').forEach(b => b.addEventListener('click', () => { const g = b.dataset.go; if (g === 'machine' || g === 'model') { LOAD.tab = g; renderLoadout(); } else { el.classList.remove('on'); const acc = document.querySelector(`[data-acc="${g}"]`); if (acc && !acc.classList.contains('open')) acc.querySelector('button').click(); } }));
   el.querySelectorAll('[data-lfix]').forEach(b => b.addEventListener('click', () => { const f = fitGate(); if (!f || locked()) return; pushUndo(); Object.assign(S, f.fixes[+b.dataset.lfix][1]); KEEP.unloaded = false; changed(); renderLoadout(); }));
   el.querySelectorAll('[data-qm]').forEach(r => { const go = () => { if (locked()) return; pushUndo(); S.model = r.dataset.qm; S.quant = r.dataset.q; UI.layer = -1; KEEP.unloaded = false; changed(); renderLoadout(); }; r.addEventListener('click', go); r.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });

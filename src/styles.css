@@ -796,3 +796,6 @@ table.sh-t td { padding: 5px 8px; color: var(--ink); font: 400 11px/1.4 var(--mo
 .sh-act a.tbtn { color: var(--cy); text-decoration: none; }
 .sh-note { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.4; } .sh-note.warn { color: var(--amber); }
 #lvShare { color: var(--dim); } #lvShare:hover { color: var(--cy); }
+/* the machine catalogue: a card's family and spec date, the vendor / family filter */
+.card .desc.fam { color: var(--dim); font-size: 11px; } .card .desc.fam a { color: var(--cy); } .card .desc.fam .nw { white-space: nowrap; }
+#loadout .sortrow { gap: 16px; flex-wrap: wrap; }

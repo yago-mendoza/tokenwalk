@@ -2,7 +2,7 @@
 // ===== What fits: the current request on every machine preset, model and quantization =====
 // Each row is the same cost model run (compute()) with only the machine, the model and the weight format swapped;
 // the request, num_ctx, KV type, sampling and caches stay as they are in Setup.
-const FITS = { sort: { k: 'fit', dir: 1 }, machine: 'all', only: false, rows: null, key: '', open: new Set() };
+const FITS = { sort: { k: 'fit', dir: 1 }, fam: 'all', machine: 'all', only: false, rows: null, key: '', open: new Set() };
 const FIT_RANK = { yes: 0, tight: 1, no: 2 };
 const fitsKey = () => JSON.stringify([{ ...S, machine: 0, model: 0, quant: 0, ram: 0, tflops: 0, mts: 0, bus: 0, vram: 0, vbw: 0 }, isReal() && MODELS.live ? [MODELS.live.name, S.quant] : 0, CALIB, KEEP.unloaded]);
 function fitsRow(mk, mo, q) {
@@ -16,7 +16,7 @@ function fitsRow(mk, mo, q) {
     : r.pl.fastShare < .999 ? (r.pl.ramFits ? 'tight' : 'no') : 'yes';
   const over = (layerMsOf(mc, m) * m.layers) / 1000 / r.mid.seconds, inten = (2 * m.readParams) / (r.mid.bytesGB * 1e9), bal = (mc.tflops * 1e12) / (mc.bw * 1e9) / mc.bwEff;
   const bound = !uni && r.pl.fastShare < .999 ? 'spill' : over > .5 ? 'over' : inten < bal ? 'mem' : 'comp';
-  return { mk, mo, q, mc, m, need, has, fit, ttft: r.ttft, tps: r.tps, bound, cal: mk === 'thinkpad' || !!CALIB[mk] };
+  return { mk, mo, q, mc, m, need, has, fit, ttft: r.ttft, tps: r.tps, bound, cal: provOf(mk).cls === 'cal' };
 }
 function fitsRows() {
   const key = fitsKey(); if (FITS.rows && FITS.key === key) return FITS.rows;
@@ -40,7 +40,8 @@ function fitsSorted(rows) {
 }
 function renderFits() {
   const el = $('fitsIn'), all = fitsRows(), real = isReal(), lk = !real && locked();
-  const rows = fitsSorted(all.filter(r => (FITS.machine === 'all' || r.mk === FITS.machine) && (!FITS.only || r.fit !== 'no')));
+  if (FITS.machine !== 'all' && (!MACHINES[FITS.machine] || !machineMatches(MACHINES[FITS.machine], FITS.fam))) FITS.machine = 'all';
+  const rows = fitsSorted(all.filter(r => machineMatches(MACHINES[r.mk], FITS.fam) && (FITS.machine === 'all' || r.mk === FITS.machine) && (!FITS.only || r.fit !== 'no')));
   const nFit = all.filter(r => r.fit !== 'no').length, ft = FIT_TXT(), bt = BOUND_TXT();
   const ctxN = Math.min(S.ctx, MODELS[S.model].ctxMax), req = `${num(S.sys + S.docs + S.q)} + ${num(S.ans)} tok · num_ctx ${num(ctxN)} · KV ${S.kv} · T ${dec(S.temp.toFixed(2))}${!S.spec && S.mtp ? ' · MTP' : ''}${S.spec ? ` · spec γ${S.gamma}` : ''}${S.cached ? L(' · prefix cached', ' · prefijo en caché') : ''}${S.cold ? L(' · cold', ' · en frío') : ''}`;
   const isCur = r => (real ? r.mk === S.machine && r.mo === S.model : r.mk === S.machine && r.mo === S.model && r.q === S.quant);
@@ -57,7 +58,7 @@ function renderFits() {
     const tpsWhat = measReq(r.mo).mtp ? L('runs with MTP drafting on', 'ejecuciones con borrador MTP') : L('runs without MTP drafting', 'ejecuciones sin borrador MTP');
     const detail = open ? `<tr class="mdet"><td colspan="7"><ul>${ms.list.map(x => `<li><a href="${esc(x.url)}" target="_blank" rel="noopener">#${x.issue}</a> ${measLine(x)}</li>`).join('')}</ul></td></tr>` : '';
     return `<tr class="${isCur(r) ? 'cur' : ''}${ms.n ? ' meas' : ''}" data-fr="${id}" tabindex="0" role="button">
-    <td class="c-machine" title="${esc(r.mc.name)}"><span>${esc(r.mc.short)}</span>${ms.n && !r.cal ? '' : `<small class="${r.cal ? 'cal' : 'est'}">${esc(r.cal ? L('calibrated', 'calibrada') : L('estimate', 'estimada'))}</small>`}${tag}</td>
+    <td class="c-machine" title="${esc(`${r.mc.name}${r.mc.family ? ` · ${famLabel(r.mc.family)}` : ''}`)}"><span>${esc(r.mc.short)}</span>${ms.n && !r.cal ? '' : `<small class="${r.cal ? 'cal' : 'est'}" title="${esc(provOf(r.mk).title)}">${esc(r.cal ? L('calibrated', 'calibrada') : L('estimate', 'estimada'))}</small>`}${tag}</td>
     <td class="c-model">${esc(r.m.name)} <small>${esc(r.q)}</small></td>
     <td class="c-mem num"><span class="mb"><b class="${r.fit}" style="width:${Math.min(100, r.need / Math.max(1e-9, r.has) * 100).toFixed(0)}%"></b></span>${dec(r.need.toFixed(r.need >= 100 ? 0 : 1))} / ${dec(r.has.toFixed(0))} GB</td>
     <td class="c-fit"><span class="fp ${r.fit}">${esc(ft[r.fit])}</span></td>
@@ -67,11 +68,13 @@ function renderFits() {
   const note = real ? `<div class="fw-note">${ICON('info', 's')}${esc(L('Real machine: a row sets only Estimate as; the server’s model stays.', 'Máquina real: una fila cambia solo Estimar como; el modelo del servidor no cambia.'))}</div>`
     : lk ? `<div class="fw-note">${ICON('lock', 's')}${esc(L('Locked while it runs: stop to load a row.', 'Bloqueado mientras corre: detén la ejecución para cargar una fila.'))}</div>` : '';
   el.innerHTML = `<div class="fw-bar"><span class="fw-req num" title="${esc(L('The request every row runs', 'La petición que corre cada fila'))}">${esc(req)}</span>
-      <label class="fw-sel"><span>${esc(L('Machine', 'Máquina'))}</span><select id="fitsMach"><option value="all">${esc(L('All', 'Todas'))}</option>${Object.entries(MACHINES).map(([k, mc]) => `<option value="${k}" ${FITS.machine === k ? 'selected' : ''}>${esc(mc.short)}</option>`).join('')}</select></label>
+      <label class="fw-sel"><span>${esc(L('Family', 'Familia'))}</span><select id="fitsFam">${famFilterOptions(FITS.fam)}</select></label>
+      <label class="fw-sel"><span>${esc(L('Machine', 'Máquina'))}</span><select id="fitsMach"><option value="all">${esc(L('All', 'Todas'))}</option>${VENDORS.map(v => { const ks = Object.keys(MACHINES).filter(k => vendorOf(MACHINES[k]) === v && machineMatches(MACHINES[k], FITS.fam)); return ks.length ? `<optgroup label="${esc(vendorLabel(v))}">${ks.map(k => `<option value="${k}" ${FITS.machine === k ? 'selected' : ''}>${esc(MACHINES[k].short)}</option>`).join('')}</optgroup>` : ''; }).join('')}</select></label>
       <label class="sw"><input type="checkbox" id="fitsOnly" ${FITS.only ? 'checked' : ''}><i></i><span>${esc(L('Only what fits', 'Solo lo que cabe'))}</span></label>
       <span class="fw-cnt num">${esc(L(`${num(rows.length)} rows · ${num(nFit)} of ${num(all.length)} fit`, `${num(rows.length)} filas · caben ${num(nFit)} de ${num(all.length)}`))}</span></div>
     <div class="fw-tbl${lk ? ' lk' : ''}"><table class="fits"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>${note}
     ${nMeas ? `<div class="fw-note ms">${ICON('check', 's')}${esc(L('Cyan: measured on that hardware, the median of accepted real runs comparable to this request. The tag lists each run and its issue.', 'Cian: medido en ese hardware, la mediana de las ejecuciones reales aceptadas comparables con esta petición. La etiqueta lista cada ejecución y su issue.'))}</div>` : ''}`;
+  $('fitsFam').addEventListener('change', e => { FITS.fam = e.target.value; renderFits(); const t = el.querySelector('.fw-tbl'); if (t) t.scrollTop = 0; });
   $('fitsMach').addEventListener('change', e => { FITS.machine = e.target.value; renderFits(); });
   $('fitsOnly').addEventListener('change', e => { FITS.only = e.target.checked; renderFits(); });
   const sortBy = th => { const k = th.dataset.fs, def = FIT_COLS().find(c => c[0] === k)[2]; FITS.sort = FITS.sort.k === k ? { k, dir: -FITS.sort.dir } : { k, dir: def }; renderFits(); };

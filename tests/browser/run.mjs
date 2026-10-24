@@ -24,6 +24,9 @@ async function check(name, fn) {
   } catch (e) { results.push(false); console.log(`FAIL  ${name}\n      ${String(e.message || e).split('\n').join('\n      ')}`); }
 }
 const assert = (c, msg) => { if (!c) throw new Error(msg); };
+const SHOTS = process.env.SHOTS_DIR; // when set, screenshots of the share window and the measured rows are written there
+const shotTo = async name => { if (SHOTS) { await sleep(350); await p.shot(`${SHOTS}/${name}.png`); } };
+const overflowIn = sel => p.ev(`[...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => { if (!e.offsetParent || e.children.length) return false; const cs = getComputedStyle(e); return e.scrollWidth > e.clientWidth + 1 && (cs.textOverflow === 'ellipsis' || cs.overflow === 'hidden' || cs.overflowX === 'hidden'); }).map(e => (e.id || e.className || e.tagName) + ': ' + e.textContent.slice(0, 40))`);
 async function fresh(q = '', w = 1440, h = 900) {
   await p.size(w, h); await p.open(base + q);
   // a Real session left behind by an earlier check would resume on load: forget it and load again
@@ -346,7 +349,8 @@ await check('What fits: opens, sorts, filters, and a row loads the setup (undoab
   const order = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].map(t => { const [m, mo, q] = t.dataset.fr.split('|'), r = FITS.rows.find(x => x.mk === m && x.mo === mo && x.q === q); return [r.fit, r.tps]; })`);
   const rank = { yes: 0, tight: 1, no: 2 };
   for (let i = 1; i < order.length; i++) { const a = order[i - 1], b = order[i]; assert(rank[a[0]] < rank[b[0]] || (rank[a[0]] === rank[b[0]] && a[1] >= b[1]), 'default order broken at ' + i + ': ' + JSON.stringify([a, b])); }
-  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].every(t => /860M/.test(t.cells[0].textContent) ? /calibrated/.test(t.cells[0].textContent) : /estimate/.test(t.cells[0].textContent))`), 'calibrated / estimate marks');
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].every(t => { const k = t.dataset.fr.split('|')[0]; return MACHINES[k].estimate === 'calibrated' ? /calibrated/.test(t.cells[0].textContent) : /estimate/.test(t.cells[0].textContent); })`), 'calibrated / estimate marks');
+  assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].filter(t => /calibrated/.test(t.cells[0].textContent)).every(t => /^thinkpad(Cpu)?\|/.test(t.dataset.fr))`), 'only the ThinkPad presets are calibrated');
   await p.ev(`document.querySelector('#fitsIn th[data-fs=ttft]').click()`); await sleep(150);
   const tt = await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr')].map(t => t.dataset.fr).slice(0, 3).map(id => { const [m, mo, q] = id.split('|'); return FITS.rows.find(r => r.mk === m && r.mo === mo && r.q === q).ttft; })`);
   assert(tt[0] <= tt[1] && tt[1] <= tt[2], 'ttft sort ascending: ' + tt);
@@ -380,6 +384,57 @@ await check('What fits and the new controls: nothing cut, no inner horizontal sc
     await p.ev(`document.getElementById('linkBtn').click()`); await sleep(300);
     const box = await p.ev(`['rstAsk', 'toast'].map(id => { const e = document.getElementById(id), r = e.getBoundingClientRect(); return [id, !e.hidden && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight]; })`);
     for (const b of box) assert(b[1], `${lg}: ${b[0]} hidden or out of the window`);
+  }
+});
+
+await check('What fits with the whole catalogue: vendor and family filters narrow rows and the machine list, both languages, no horizontal scroll', async () => {
+  for (const lg of ['en', 'es']) {
+    await fresh(lg === 'es' ? '?lang=es' : '', 1280, 720);
+    await p.ev(`fitsOpen(true)`); await sleep(300);
+    const fams = await p.ev(`[...document.querySelectorAll('#fitsFam option')].map(o => o.value)`);
+    assert(fams[0] === 'all' && fams.includes('v:Apple') && fams.includes('v:NVIDIA') && fams.includes('f:nvidia-cuda-pro') && fams.includes('v:CPU'), 'family options: ' + fams);
+    for (const f of ['v:Apple', 'f:nvidia-cuda', 'f:amd-rocm-instinct', 'v:CPU']) {
+      await p.ev(`(() => { const s = document.getElementById('fitsFam'); s.value = '${f}'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
+      const g = await p.ev(`(() => { const rows = [...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].map(t => t.dataset.fr.split('|')[0]); const opts = [...document.querySelectorAll('#fitsMach option')].map(o => o.value).filter(v => v !== 'all'); const t = document.querySelector('#fitsIn .fw-tbl'); return [rows.length, rows.every(k => machineMatches(MACHINES[k], '${f}')), opts.every(k => machineMatches(MACHINES[k], '${f}')), opts.length, new Set(rows).size, t.scrollWidth <= t.clientWidth + 1]; })()`);
+      assert(g[0] > 0 && g[1], `${lg} ${f}: rows outside the filter ` + JSON.stringify(g));
+      assert(g[2] && g[3] === g[4], `${lg} ${f}: the machine list does not follow the filter ` + JSON.stringify(g));
+      assert(g[5], `${lg} ${f}: horizontal scroll`);
+    }
+    // a machine picked, then a family it is not in: the machine filter resets instead of showing nothing
+    await p.ev(`(() => { const s = document.getElementById('fitsFam'); s.value = 'all'; s.dispatchEvent(new Event('change')); const m = document.getElementById('fitsMach'); m.value = 'm4max'; m.dispatchEvent(new Event('change')); })()`); await sleep(150);
+    assert((await p.ev(`document.querySelectorAll('#fitsIn tbody tr[data-fr^="m4max|"]').length`)) === 20, 'machine filter m4max');
+    await p.ev(`(() => { const s = document.getElementById('fitsFam'); s.value = 'v:NVIDIA'; s.dispatchEvent(new Event('change')); })()`); await sleep(150);
+    assert(await p.ev(`FITS.machine === 'all' && document.querySelectorAll('#fitsIn tbody tr').length > 20`), 'the machine filter did not reset');
+    await p.ev(`(() => { const c = document.getElementById('fitsOnly'); c.checked = true; c.dispatchEvent(new Event('change')); })()`); await sleep(150);
+    assert(await p.ev(`[...document.querySelectorAll('#fitsIn .fp')].every(f => !f.classList.contains('no'))`), 'only what fits with a family');
+    const o = await overflowIn('#fitsWin *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
+    await p.ev(`(() => { const c = document.getElementById('fitsOnly'); c.checked = false; c.dispatchEvent(new Event('change')); const s = document.getElementById('fitsFam'); s.value = 'all'; s.dispatchEvent(new Event('change')); })()`); await sleep(200);
+    await shotTo(`fits-catalogue-${lg}`);
+    await p.ev(`(() => { const s = document.getElementById('fitsFam'); s.value = 'v:Apple'; s.dispatchEvent(new Event('change')); })()`); await sleep(200);
+    await shotTo(`fits-apple-${lg}`);
+    await p.ev(`FITS.fam = 'all'; FITS.machine = 'all'; FITS.only = false; fitsOpen(false)`);
+  }
+});
+
+await check('Machine catalogue: every preset is a card with its provenance and family, the filter narrows it, both languages', async () => {
+  for (const lg of ['en', 'es']) {
+    await fresh(lg === 'es' ? '?lang=es' : '', 1280, 720);
+    await p.ev(`openLoadout('machine')`); await sleep(400);
+    const n = await p.ev(`document.querySelectorAll('#loadout .card .choose[data-m], #loadout .card .choose:disabled').length`);
+    assert(n === (await p.ev(`Object.keys(MACHINES).length`)), `${lg}: ${n} cards`);
+    const tags = await p.ev(`[...document.querySelectorAll('#loadout .card')].map(c => [c.querySelector('header b').textContent, c.querySelector('.tagp').textContent, !!c.querySelector('.desc.fam')])`);
+    const cal = tags.filter(t => /calibrated|calibrada/.test(t[1])).map(t => t[0]);
+    assert(cal.length === 2 && cal.every(nm => /ThinkPad/.test(nm)), `${lg}: calibrated cards ${JSON.stringify(cal)}`);
+    assert(tags.every(t => t[2]), `${lg}: a card without its family line`);
+    await p.ev(`(() => { const s = document.getElementById('famSel'); s.value = 'f:apple-metal-na'; s.dispatchEvent(new Event('change')); })()`); await sleep(250);
+    const names = await p.ev(`[...document.querySelectorAll('#loadout .card header b')].map(b => b.textContent)`);
+    assert(names.length >= 6 && names.every(nm => /M5|M6/.test(nm)), `${lg}: family filter ${JSON.stringify(names)}`);
+    const o = await overflowIn('#loadout *'); assert(!o.length, `${lg}: overflow ${JSON.stringify(o)}`);
+    await shotTo(`catalogue-m5-${lg}`);
+    await p.ev(`(() => { const s = document.getElementById('famSel'); s.value = 'all'; s.dispatchEvent(new Event('change')); })()`); await sleep(300);
+    const o2 = await overflowIn('#loadout *'); assert(!o2.length, `${lg}: overflow ${JSON.stringify(o2)}`);
+    await shotTo(`catalogue-all-${lg}`);
+    await p.ev(`LOAD.fam = 'all'; document.getElementById('loadClose').click()`);
   }
 });
 
@@ -467,9 +522,6 @@ await check('History keeps the whole run: after 300 events the load and first pr
   await p.ev(`document.querySelector('#log [data-lph="prefill"]').click(); document.getElementById('logClose').click()`);
 });
 
-const SHOTS = process.env.SHOTS_DIR; // when set, screenshots of the share window and the measured rows are written there
-const shotTo = async name => { if (SHOTS) { await sleep(350); await p.shot(`${SHOTS}/${name}.png`); } };
-const overflowIn = sel => p.ev(`[...document.querySelectorAll(${JSON.stringify(sel)})].filter(e => { if (!e.offsetParent || e.children.length) return false; const cs = getComputedStyle(e); return e.scrollWidth > e.clientWidth + 1 && (cs.textOverflow === 'ellipsis' || cs.overflow === 'hidden' || cs.overflowX === 'hidden'); }).map(e => (e.id || e.className || e.tagName) + ': ' + e.textContent.slice(0, 40))`);
 
 await check('Connect window: the agent brief is copied with the origin and the 204 check; the old switch sentence is gone', async () => {
   await fresh('', 1280, 720); await p.ev(mockOllama(true));
@@ -565,7 +617,7 @@ await check('What fits: a row with accepted measurements shows them, with n, the
     assert(/(median of|mediana de) 2/.test(r[5]) && /67 s/.test(r[2]), `${lg}: first token from the two runs near 6,500 tokens: ` + JSON.stringify(r));
     assert((await p.ev(`document.querySelector('${row} .c-ttft .ms').textContent`)).length > 0 && !(await p.ev(`document.querySelector('${row} .c-ttft .ms').classList.contains('none')`)), 'no measured TTFT');
     assert(await p.ev(`!!document.querySelector('#fitsIn tr[data-fr="rtx4090|qwen36|Q4_K_M"] .mtag') && !document.querySelector('#fitsIn tr[data-fr="rtx4090|qwen36|Q4_K_M"] .c-ttft .ms:not(.none)')`), 'the 4090 run (36-token prompt) should show — for first token');
-    assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].filter(t => !t.querySelector('.mtag')).every(t => /860M/.test(t.cells[0].textContent) ? /calibrated|calibrada/.test(t.cells[0].textContent) : /estimate|estimada/.test(t.cells[0].textContent))`), 'unmeasured rows lost their estimate tag');
+    assert(await p.ev(`[...document.querySelectorAll('#fitsIn tbody tr[data-fr]')].filter(t => !t.querySelector('.mtag')).every(t => MACHINES[t.dataset.fr.split('|')[0]].estimate === 'calibrated' ? /calibrated|calibrada/.test(t.cells[0].textContent) : /estimate|estimada/.test(t.cells[0].textContent))`), 'unmeasured rows lost their estimate tag');
     await p.ev(`document.querySelector('${row} .mtag').click()`); await sleep(200);
     assert(await p.ev(`!document.getElementById('fitsWin').hidden && S.machine === 'thinkpad'`), 'the tag click loaded the row or closed the window');
     const links = await p.ev(`[...document.querySelectorAll('#fitsIn tr.mdet a')].map(a => a.href)`);
