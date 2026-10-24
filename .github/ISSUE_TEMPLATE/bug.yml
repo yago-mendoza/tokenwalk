@@ -1,0 +1,35 @@
+name: Bug report
+description: Something in tokenwalk is wrong, broken or misleading.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you saw, what you expected instead. A screenshot helps.
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link to the setup
+      description: The link button in the top bar copies the exact setup (it never includes a real server).
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options: [Simulated, Real machine (Ollama), Real machine (llama-server)]
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and operating system
+      placeholder: Chrome 141, Windows 11
+    validations:
+      required: true
+  - type: input
+    id: window
+    attributes:
+      label: Window size
+      placeholder: 1280x720, full screen

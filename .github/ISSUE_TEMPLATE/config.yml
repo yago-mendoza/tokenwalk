@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How sharing a measurement works
+    url: https://github.com/yago-mendoza/tokenwalk#sharing-a-measurement
+    about: What is sent, how it is reviewed, and the command for people who do not use the web app.
+  - name: Security issue
+    url: https://github.com/yago-mendoza/tokenwalk/security/advisories/new
+    about: Report it privately, not as an issue.
