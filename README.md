@@ -175,10 +175,12 @@ Everything inside a pass: which layer, which matrix, the KV cache filling, the s
 
 Tests: `npm test` runs the cost-model, MTP and live-parsing unit tests (on responses recorded from Ollama, in `tests/fixtures/`) and the browser checks, which include live mode against a mocked server. `npm run test:live` runs one real request against a local Ollama and skips when none answers.
 
-## Roadmap
-
-Typing the UI parts and turning the ordered parts into ES modules.
-
 ## License
 
-MIT
+[MIT](LICENSE), © 2026 Yago Mendoza. Use it, change it, ship it, commercially or not; keep the copyright notice and the license text with any copy or substantial part of it. It comes with no warranty.
+
+- **Code**: everything in this repository, including the single-file build in `dist/`.
+- **Logo and banner** (`docs/assets/`): under the same license; please do not use them to suggest that a fork or another product is the original tokenwalk.
+- **Measurements**: the timings, acceptance rates and recorded server responses in `tests/fixtures/` were measured on one laptop and are shared as they are; cite tokenwalk or the [InfraPhysics article](https://infraphysics.net/blog/bits2bricks/transformers-and-local-inference-from-zero) if you reuse them.
+- **Third-party names**: Qwen, Ollama, llama.cpp, AMD Radeon, ThinkPad and the other product and model names belong to their owners and appear only to describe what the console models; tokenwalk is not affiliated with or endorsed by any of them. No model weights are included or downloaded by this repository.
+- **No runtime dependencies**: the build bundles no third-party code, so there are no other licenses to carry.
