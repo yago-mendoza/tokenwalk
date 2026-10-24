@@ -80,7 +80,7 @@ function bind() {
   $('alertBtn').addEventListener('click', () => { openMon(); $('mbody').scrollTop = 0; });
   $('monBtn').addEventListener('click', () => document.body.classList.toggle('monOpen'));
   $('monClose').addEventListener('click', () => document.body.classList.remove('monOpen'));
-  $('chip').addEventListener('click', () => { if (isReal()) liveOpen(true); else openLoadout('machine'); });
+  $('chip').addEventListener('click', () => { if (isReal()) liveOpen(true); else openLoadout(); });
   document.querySelectorAll('#ztabs button').forEach(b => b.addEventListener('click', () => setZone(b.dataset.z)));
   for (const id2 of ['stream', 'outStream']) $(id2).addEventListener('click', e => { const lt = e.target.closest('[data-ltok]'); if (lt) { const i = +lt.dataset.ltok; UI.liveTok = UI.liveTok === i ? null : i; streamKey = ''; return; } const t = e.target.closest('[data-tok]'); if (!t) return; const i = +t.dataset.tok; UI.logitTok = UI.logitTok === i ? null : i; if (UI.lens !== 'tokens') setLens('tokens'); streamKey = ''; outKey = ''; });
   const tip = $('tip');

@@ -1,5 +1,5 @@
 // @ts-nocheck: DOM-heavy UI, to be typed in a later pass
-// ===== Loadout: machines and models as cards =====
+// ===== Loadout: machines and models as cards, and What fits (28-sweep.ts) as the third tab =====
 let LOAD = { tab: 'machine', compare: false, sort: { machine: 'speed', model: 'speed' }, fam: 'all', mfam: 'all' };
 // ---- Machines by vendor and family (01c-catalogue.ts), shared with What fits ----
 // A filter is 'all', 'v:<vendor>' or 'f:<family>'. A machine's vendor is its family's (a CPU-only preset is CPU).
@@ -151,22 +151,33 @@ function compareTable() {
   const lk = locked(), foot = `<tr class="act"><td></td>${keys.map(k => `<td class="${k === cur ? 'cur' : ''}">${k === cur ? `<span class="fit ok">${esc(L('selected', 'elegido'))}</span>` : `<button type="button" class="btnp choose" ${tab === 'machine' ? 'data-m' : 'data-model'}="${k}" ${lk ? 'disabled' : ''}>${esc(L('Choose', 'Elegir'))}</button>`}</td>`).join('')}</tr>`;
   return `<div class="cmpwrap"><table class="cmp">${head}${body}${foot}</table></div><div class="cmpnote dim">${esc(L('Bars are per row; a long spread uses a log scale. Green marks the best value. Machines other than the reference ThinkPad are estimates: published specs with factors fitted per family to published benchmarks.', 'Las barras son por fila; si la diferencia es enorme la escala es logarítmica. El verde marca el mejor valor. Las máquinas distintas del ThinkPad de referencia son estimaciones: especificaciones publicadas con factores ajustados por familia a resultados publicados.'))}</div>`;
 }
+// Choosing by hand and loading a What fits row are the same step: one undo entry, the machine's own fields with it.
+function loadChoice(mk, mo, q) {
+  if (locked()) return false;
+  pushUndo(); if (mk) { S.machine = mk; Object.assign(S, machineFields(mk)); } if (mo) { S.model = mo; UI.layer = -1; } if (q) S.quant = q;
+  KEEP.unloaded = false; KEEP.idle = 0; changed(); return true;
+}
 function renderLoadout() {
-  const el = $('loadout');
-  el.innerHTML = `<div class="lh"><span class="zt">${esc(L('Loadout', 'Equipamiento'))}</span><span class="seg"><button type="button" data-lt="machine" aria-pressed="${LOAD.tab === 'machine'}">${ICON('memory', 's')}${esc(L('Machines', 'Máquinas'))}</button><button type="button" data-lt="model" aria-pressed="${LOAD.tab === 'model'}">${ICON('layers', 's')}${esc(L('Models', 'Modelos'))}</button></span>
-    <label class="sw"><input type="checkbox" id="cmpT" ${LOAD.compare ? 'checked' : ''}><i></i><span>${esc(L('Compare side by side', 'Comparar lado a lado'))}</span></label><button type="button" class="tbtn" id="loadClose" style="margin-left:auto">${ICON('close', 's')}${esc(L('Back to the console', 'Volver a la consola'))}</button></div>
-    <div class="lb">${setupStrip()}<div class="sortrow"><label class="sortl">${esc(L('Sort by', 'Ordenar por'))}<select id="sortSel">${SORTS()[LOAD.tab].map(([k, l]) => `<option value="${k}" ${LOAD.sort[LOAD.tab] === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>${LOAD.tab === 'machine' ? `<label class="sortl">${esc(L('Show', 'Mostrar'))}<select id="famSel">${famFilterOptions(LOAD.fam)}</select></label>` : `<label class="sortl">${esc(L('Show', 'Mostrar'))}<select id="mfamSel">${modelFilterOptions(LOAD.mfam)}</select></label>`}</div>${LOAD.compare ? compareTable() : `<div class="cards">${sortedKeys(LOAD.tab).map(k => LOAD.tab === 'machine' ? machineCard(k, MACHINES[k]) : modelCard(k, MODELS[k])).join('')}</div>`}</div>`;
+  const el = $('loadout'), real = isReal();
+  // Real: the server's model stays, so only What fits, where a row sets Estimate as; the simulation's tab is kept
+  const fits = real || LOAD.tab === 'fits', tabB = (k, ic, l) => `<button type="button" data-lt="${k}" aria-pressed="${(real ? 'fits' : LOAD.tab) === k}" ${real && k !== 'fits' ? `disabled title="${esc(L('Simulation only: in Real the server’s model stays', 'Solo en simulación: en Real el modelo del servidor no cambia'))}"` : ''}>${ICON(ic, 's')}${esc(l)}</button>`;
+  el.innerHTML = `<div class="lh"><span class="zt">${esc(L('Loadout', 'Equipamiento'))}</span><span class="seg">${tabB('machine', 'memory', L('Machines', 'Máquinas'))}${tabB('model', 'layers', L('Models', 'Modelos'))}${tabB('fits', 'search', L('What fits', 'Qué cabe'))}</span>
+    ${fits ? '' : `<label class="sw"><input type="checkbox" id="cmpT" ${LOAD.compare ? 'checked' : ''}><i></i><span>${esc(L('Compare side by side', 'Comparar lado a lado'))}</span></label>`}<button type="button" class="tbtn" id="loadClose" style="margin-left:auto">${ICON('close', 's')}${esc(L('Back to the console', 'Volver a la consola'))}</button></div>
+    ${fits ? '<div class="lb fitsb"><div class="fw-body" id="fitsIn"></div></div>' : `<div class="lb">${setupStrip()}<div class="sortrow"><label class="sortl">${esc(L('Sort by', 'Ordenar por'))}<select id="sortSel">${SORTS()[LOAD.tab].map(([k, l]) => `<option value="${k}" ${LOAD.sort[LOAD.tab] === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>${LOAD.tab === 'machine' ? `<label class="sortl">${esc(L('Show', 'Mostrar'))}<select id="famSel">${famFilterOptions(LOAD.fam)}</select></label>` : `<label class="sortl">${esc(L('Show', 'Mostrar'))}<select id="mfamSel">${modelFilterOptions(LOAD.mfam)}</select></label>`}</div>${LOAD.compare ? compareTable() : `<div class="cards">${sortedKeys(LOAD.tab).map(k => LOAD.tab === 'machine' ? machineCard(k, MACHINES[k]) : modelCard(k, MODELS[k])).join('')}</div>`}</div>`}`;
   el.querySelectorAll('[data-lt]').forEach(b => b.addEventListener('click', () => { LOAD.tab = b.dataset.lt; renderLoadout(); }));
-  $('cmpT').addEventListener('change', e => { LOAD.compare = e.target.checked; renderLoadout(); });
   $('loadClose').addEventListener('click', () => el.classList.remove('on'));
+  saveLoadout();
+  if (fits) { renderFits(); return; }
+  $('cmpT').addEventListener('change', e => { LOAD.compare = e.target.checked; renderLoadout(); });
   $('sortSel').addEventListener('change', e => { LOAD.sort[LOAD.tab] = e.target.value; renderLoadout(); });
   if ($('famSel')) $('famSel').addEventListener('change', e => { LOAD.fam = e.target.value; renderLoadout(); });
   if ($('mfamSel')) $('mfamSel').addEventListener('change', e => { LOAD.mfam = e.target.value; renderLoadout(); });
   el.querySelectorAll('.sch').forEach(b => b.addEventListener('click', () => { const g = b.dataset.go; if (g === 'machine' || g === 'model') { LOAD.tab = g; renderLoadout(); } else { el.classList.remove('on'); const acc = document.querySelector(`[data-acc="${g}"]`); if (acc && !acc.classList.contains('open')) acc.querySelector('button').click(); } }));
   el.querySelectorAll('[data-lfix]').forEach(b => b.addEventListener('click', () => { const f = fitGate(); if (!f || locked()) return; pushUndo(); Object.assign(S, f.fixes[+b.dataset.lfix][1]); KEEP.unloaded = false; changed(); renderLoadout(); }));
-  el.querySelectorAll('[data-qm]').forEach(r => { const go = () => { if (locked()) return; pushUndo(); S.model = r.dataset.qm; S.quant = r.dataset.q; UI.layer = -1; KEEP.unloaded = false; changed(); renderLoadout(); }; r.addEventListener('click', go); r.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
-  el.querySelectorAll('.choose').forEach(b => b.addEventListener('click', () => { if (locked()) return; pushUndo(); if (b.dataset.m) { S.machine = b.dataset.m; Object.assign(S, machineFields(S.machine)); } if (b.dataset.model) { S.model = b.dataset.model; UI.layer = -1; } KEEP.unloaded = false; changed(); el.classList.remove('on'); }));
+  el.querySelectorAll('[data-qm]').forEach(r => { const go = () => { if (loadChoice(null, r.dataset.qm, r.dataset.q)) renderLoadout(); }; r.addEventListener('click', go); r.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); });
+  el.querySelectorAll('.choose').forEach(b => b.addEventListener('click', () => { if (loadChoice(b.dataset.m, b.dataset.model)) el.classList.remove('on'); }));
 }
+// Opens on the tab asked for, or the one last shown (kept for the browser tab's session, 28-sweep.ts).
 function openLoadout(tab) { LOAD.tab = tab || LOAD.tab; renderLoadout(); $('loadout').classList.add('on'); }
 // The panel drops down from the header just pressed, which never moves; it may run past the column's foot
 // over the Playback zone, so it never has to rise or scroll.

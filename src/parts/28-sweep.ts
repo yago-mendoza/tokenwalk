@@ -1,5 +1,6 @@
 // @ts-nocheck: DOM-heavy UI, to be typed in a later pass
 // ===== What fits: the current request on every machine preset, model and quantization =====
+// The Loadout's third tab (22-loadout.ts renders the tab, renderFits its body); a row loads like Choose does.
 // Each row is the same cost model run (compute()) with only the machine, the model and the weight format swapped;
 // the request, num_ctx, KV type, sampling and caches stay as they are in Setup.
 const FITS = { sort: { k: 'fit', dir: 1 }, fam: 'all', machine: 'all', model: 'all', only: false, rows: null, key: '', open: new Set(), view: [], shown: 0, html: null };
@@ -46,6 +47,7 @@ function fitsSorted(rows) {
 const FIT_PAGE = 400;
 function renderFits(keep = false) {
   const el = $('fitsIn'), all = fitsRows(), real = isReal(), lk = !real && locked();
+  saveLoadout();
   if (FITS.machine !== 'all' && (!MACHINES[FITS.machine] || !machineMatches(MACHINES[FITS.machine], FITS.fam))) FITS.machine = 'all';
   const rows = fitsSorted(all.filter(r => machineMatches(MACHINES[r.mk], FITS.fam) && (FITS.machine === 'all' || r.mk === FITS.machine) && (r.mo === 'live' || modelMatches(r.mo, FITS.model)) && (!FITS.only || r.fit !== 'no')));
   const nFit = all.filter(r => r.fit !== 'no').length, ft = FIT_TXT(), bt = BOUND_TXT();
@@ -74,12 +76,12 @@ function renderFits(keep = false) {
   const body = rows.slice(0, FITS.shown).map(rowHtml).join('') + fitsMoreRow();
   const note = real ? `<div class="fw-note">${ICON('info', 's')}${esc(L('Real machine: a row sets only Estimate as; the server’s model stays.', 'Máquina real: una fila cambia solo Estimar como; el modelo del servidor no cambia.'))}</div>`
     : lk ? `<div class="fw-note">${ICON('lock', 's')}${esc(L('Locked while it runs: stop to load a row.', 'Bloqueado mientras corre: detén la ejecución para cargar una fila.'))}</div>` : '';
-  el.innerHTML = `<div class="fw-bar"><span class="fw-req num" title="${esc(L('The request every row runs', 'La petición que corre cada fila'))}">${esc(req)}</span>
-      <label class="fw-sel"><span>${esc(L('Family', 'Familia'))}</span><select id="fitsFam">${famFilterOptions(FITS.fam)}</select></label>
-      <label class="fw-sel"><span>${esc(L('Machine', 'Máquina'))}</span><select id="fitsMach"><option value="all">${esc(L('All', 'Todas'))}</option>${VENDORS.map(v => { const ks = Object.keys(MACHINES).filter(k => vendorOf(MACHINES[k]) === v && machineMatches(MACHINES[k], FITS.fam)); return ks.length ? `<optgroup label="${esc(vendorLabel(v))}">${ks.map(k => `<option value="${k}" ${FITS.machine === k ? 'selected' : ''}>${esc(MACHINES[k].short)}</option>`).join('')}</optgroup>` : ''; }).join('')}</select></label>
-      <label class="fw-sel"><span>${esc(L('Model', 'Modelo'))}</span><select id="fitsModel">${modelFilterOptions(FITS.model, true)}</select></label>
-      <label class="sw"><input type="checkbox" id="fitsOnly" ${FITS.only ? 'checked' : ''}><i></i><span>${esc(L('Only what fits', 'Solo lo que cabe'))}</span></label>
+  el.innerHTML = `<div class="fw-top"><span class="fw-req num" title="${esc(L('The request every row runs', 'La petición que corre cada fila'))}">${esc(req)}</span>
       <span class="fw-cnt num">${esc(L(`${num(rows.length)} rows · ${num(nFit)} of ${num(all.length)} fit`, `${num(rows.length)} filas · caben ${num(nFit)} de ${num(all.length)}`))}</span></div>
+    <div class="fw-bar"><label class="sortl"><span>${esc(L('Family', 'Familia'))}</span><select id="fitsFam">${famFilterOptions(FITS.fam)}</select></label>
+      <label class="sortl"><span>${esc(L('Machine', 'Máquina'))}</span><select id="fitsMach"><option value="all">${esc(L('All', 'Todas'))}</option>${VENDORS.map(v => { const ks = Object.keys(MACHINES).filter(k => vendorOf(MACHINES[k]) === v && machineMatches(MACHINES[k], FITS.fam)); return ks.length ? `<optgroup label="${esc(vendorLabel(v))}">${ks.map(k => `<option value="${k}" ${FITS.machine === k ? 'selected' : ''}>${esc(MACHINES[k].short)}</option>`).join('')}</optgroup>` : ''; }).join('')}</select></label>
+      <label class="sortl"><span>${esc(L('Model', 'Modelo'))}</span><select id="fitsModel">${modelFilterOptions(FITS.model, true)}</select></label>
+      <label class="sw"><input type="checkbox" id="fitsOnly" ${FITS.only ? 'checked' : ''}><i></i><span>${esc(L('Only what fits', 'Solo lo que cabe'))}</span></label></div>
     <div class="fw-tbl${lk ? ' lk' : ''}"><table class="fits"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>${note}
     ${nMeas ? `<div class="fw-note ms">${ICON('check', 's')}${esc(L('Cyan: measured on that hardware, the median of accepted real runs comparable to this request. The tag lists each run and its issue.', 'Cian: medido en ese hardware, la mediana de las ejecuciones reales aceptadas comparables con esta petición. La etiqueta lista cada ejecución y su issue.'))}</div>` : ''}`;
   $('fitsFam').addEventListener('change', e => { FITS.fam = e.target.value; renderFits(); const t = el.querySelector('.fw-tbl'); if (t) t.scrollTop = 0; });
@@ -109,19 +111,25 @@ function fitsMore(tbl) {
 function fitsLoad(id) {
   const [mk, mo, q] = id.split('|');
   if (isReal()) { S.machine = mk; Object.assign(S, machineFields(mk)); saveReal(); realCfgKey = ''; changed(); fitsOpen(false); return; }
-  if (locked()) return;
-  pushUndo(); S.machine = mk; Object.assign(S, machineFields(mk)); S.model = mo; S.quant = q; UI.layer = -1; KEEP.unloaded = false; KEEP.idle = 0; changed(); fitsOpen(false);
+  if (loadChoice(mk, mo, q)) fitsOpen(false);
 }
-function fitsOpen(on) { $('fitsWin').hidden = !on; if (on) { renderFits(); const t = $('fitsIn').querySelector('.fw-tbl'); if (t) t.scrollTop = 0; } }
+// What fits was once its own window; fitsOpen(true) still opens it, now as the Loadout's tab.
+function fitsOpen(on) { if (on) openLoadout('fits'); else $('loadout').classList.remove('on'); }
+const fitsShown = () => $('loadout').classList.contains('on') && LOAD.tab === 'fits';
 $('fitsOpen').addEventListener('click', () => fitsOpen(true));
-$('fitsClose').addEventListener('click', () => fitsOpen(false)); $('fitsClose').innerHTML = ICON('close', 's'); $('fitsClose').title = L('Close (Esc)', 'Cerrar (Esc)');
-$('fitsWin').querySelector('.scrim').addEventListener('click', () => fitsOpen(false));
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('fitsWin').hidden) { e.stopPropagation(); fitsOpen(false); } }, true);
+// The tab shown and every sort and filter of the Loadout and What fits last for the browser tab's session.
+const LOAD_KEY = 'tw.loadout';
+function saveLoadout() { try { sessionStorage.setItem(LOAD_KEY, JSON.stringify({ tab: LOAD.tab, compare: LOAD.compare, sort: LOAD.sort, fam: LOAD.fam, mfam: LOAD.mfam, fits: { sort: FITS.sort, fam: FITS.fam, machine: FITS.machine, model: FITS.model, only: FITS.only } })); } catch (e) {} }
+try { const v = JSON.parse(sessionStorage.getItem(LOAD_KEY) || 'null'); if (v) {
+  if (['machine', 'model', 'fits'].includes(v.tab)) LOAD.tab = v.tab; LOAD.compare = !!v.compare; Object.assign(LOAD.sort, v.sort || {}); LOAD.fam = v.fam || 'all'; LOAD.mfam = v.mfam || 'all';
+  const f = v.fits || {}; if (f.sort && FIT_COLS().some(c => c[0] === f.sort.k)) FITS.sort = { k: f.sort.k, dir: f.sort.dir < 0 ? -1 : 1 };
+  Object.assign(FITS, { fam: f.fam || 'all', machine: f.machine || 'all', model: f.model || 'all', only: !!f.only });
+} } catch (e) {}
 // The Setup row says how many combinations fit, recomputed a moment after the request settles.
 let fitsValT = 0, fitsValKey = '';
 setInterval(() => {
   const k = fitsKey() + lang; if (k === fitsValKey) return;
-  clearTimeout(fitsValT); fitsValT = setTimeout(() => { fitsValKey = k; const all = fitsCombos(), ok = all.filter(c => fitsMem(...c).fit !== 'no').length; $('vFits').textContent = L(`${num(ok)} of ${num(all.length)} fit`, `caben ${num(ok)} de ${num(all.length)}`); if (!$('fitsWin').hidden) renderFits(); }, 350);
+  clearTimeout(fitsValT); fitsValT = setTimeout(() => { fitsValKey = k; const all = fitsCombos(), ok = all.filter(c => fitsMem(...c).fit !== 'no').length; $('vFits').textContent = L(`${num(ok)} of ${num(all.length)} fit`, `caben ${num(ok)} de ${num(all.length)}`); if (fitsShown()) renderFits(); }, 350);
 }, 400);
 $('fitsOpen').title = L('Every machine preset, model and weight format for this request', 'Cada preset de máquina, modelo y formato de pesos para esta petición');
 

@@ -362,18 +362,18 @@ body.noFoot #wfoot { display: none; }
 #fsTip[hidden] { display: none; } #fsTip > .ic-slot { grid-column: 1 / -1; justify-self: center; } #fsTip .ic { color: var(--amber); width: 24px; height: 24px; } #fsTip > div { grid-column: 1 / -1; margin-bottom: 6px; } #fsTip b { display: block; color: var(--ink); font: 650 13.5px/1.3 var(--sans); margin-bottom: 4px; } #fsTip small { display: block; color: var(--dim); font-size: 11.5px; line-height: 1.4; }
 #fsTip #fsGo { grid-column: 1 / -1; justify-content: center; } #fsTip .tbtn { justify-content: center; font-size: 11px; }
 #fsTip .btnp, #fsTip .tbtn { height: 28px; white-space: nowrap; }
-#chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin { position: fixed; inset: 0; z-index: 58; } #chainWin[hidden], #scaleWin[hidden], #liveWin[hidden], #fitsWin[hidden], #shareWin[hidden] { display: none; }
-:is(#chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .card { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); padding: 0; gap: 0; display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7); overflow: hidden; }
+#chainWin, #scaleWin, #liveWin, #shareWin { position: fixed; inset: 0; z-index: 58; } #chainWin[hidden], #scaleWin[hidden], #liveWin[hidden], #shareWin[hidden] { display: none; }
+:is(#chainWin, #scaleWin, #liveWin, #shareWin) .card { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); padding: 0; gap: 0; display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7); overflow: hidden; }
 #chainWin canvas { display: block; margin: 16px 18px 14px; }
 #scaleWin .card { width: min(1080px, calc(100vw - 40px)); } #scaleWin .sw-body { padding: 16px 18px; } #scaleWin p { margin: 0 0 12px; max-width: 640px; font: 400 13px/1.5 var(--sans); color: var(--mid); }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .scrim { position: absolute; inset: 0; background: rgb(4 4 7 / .5); animation: fadeIn .15s var(--ease); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #shareWin) .scrim { position: absolute; inset: 0; background: rgb(4 4 7 / .5); animation: fadeIn .15s var(--ease); }
 #lesson .card { --lsf: 13px; padding: 0; gap: 0; position: absolute; width: min(680px, calc(100vw - 24px)); max-height: calc(100vh - 72px); display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 6px; background: var(--p1); box-shadow: 0 24px 60px rgb(0 0 0 / .7), 0 0 0 1px rgb(0 0 0 / .6); overflow: hidden; animation: popIn .16s var(--ease); }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band { flex: none; display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 4px 0 12px; color: #17130a; background: repeating-linear-gradient(-45deg, var(--hot) 0 10px, #f0c52a 10px 20px); }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band b { font: 800 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: #17130a; }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band .ic { width: 14px; height: 14px; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #shareWin) .band { flex: none; display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 4px 0 12px; color: #17130a; background: repeating-linear-gradient(-45deg, var(--hot) 0 10px, #f0c52a 10px 20px); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #shareWin) .band b { font: 800 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: #17130a; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #shareWin) .band .ic { width: 14px; height: 14px; }
 #lesson .band .st { font: 700 9.5px/1 var(--mono); padding: 3px 7px; border-radius: 9px; background: rgb(0 0 0 / .82); color: var(--hot); text-transform: uppercase; letter-spacing: .06em; }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band button { margin-left: auto; display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 3px; background: rgb(0 0 0 / .12); color: #17130a; }
-:is(#lesson, #chainWin, #scaleWin, #liveWin, #fitsWin, #shareWin) .band button:hover { background: rgb(0 0 0 / .28); }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #shareWin) .band button { margin-left: auto; display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 3px; background: rgb(0 0 0 / .12); color: #17130a; }
+:is(#lesson, #chainWin, #scaleWin, #liveWin, #shareWin) .band button:hover { background: rgb(0 0 0 / .28); }
 #lesson .lsb { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 250px) minmax(0, 1fr); gap: 0 22px; padding: 16px 18px 10px; }
 #lesson .lsl { min-width: 0; } #lesson .lsr { min-width: 0; }
 @media (max-width: 620px) { #lesson .lsb { grid-template-columns: 1fr; } }
@@ -727,13 +727,17 @@ body.real .rmcard.realonly { display: block; }
 .rmlink:hover { color: var(--cy); } .rmlink:disabled { opacity: .5; cursor: default; }
 
 /* What fits */
-#fitsWin .card { width: min(980px, calc(100vw - 32px)); max-height: calc(100vh - 48px); top: 50%; }
-#fitsWin .fw-body { display: flex; flex-direction: column; min-height: 0; padding: 10px 14px 12px; gap: 8px; }
-.fw-bar { flex: none; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.fw-req { color: var(--mid); font: 400 11px/1.3 var(--mono); padding: 4px 8px; border: 1px solid var(--line); border-radius: 3px; background: var(--p2); }
-.fw-sel { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-size: 11px; } .fw-sel select { height: 24px; font-size: 11.5px; }
+/* the Loadout's third tab: the table scrolls, never the page */
+#loadout .lb.fitsb { display: flex; flex-direction: column; overflow: hidden; padding: 12px 16px 14px; }
+#loadout .fw-body { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 8px; }
+#loadout .seg button:disabled { opacity: .4; cursor: not-allowed; background: transparent; }
+/* the request every row runs and the count, as the other tabs' setup strip; then the filters, as their sort row */
+.fw-top { flex: none; display: flex; align-items: center; gap: 14px; padding: 8px 10px; border: 1px solid var(--line2); border-radius: 6px; background: var(--p2); }
+.fw-req { color: var(--mid); font: 400 11.5px/1.3 var(--mono); }
+.fw-bar { flex: none; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .fw-bar label.sw { font-size: 11.5px; }
-.fw-cnt { margin-left: auto; color: var(--dim); font: 400 11px/1 var(--mono); }
+.fw-cnt { margin-left: auto; color: var(--dim); font: 400 11px/1 var(--mono); white-space: nowrap; }
+#loadout .fw-tbl { background: var(--p1); }
 .fw-tbl { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; border: 1px solid var(--line); border-radius: 3px; }
 table.fits { width: 100%; border-collapse: collapse; font-size: 11.5px; table-layout: auto; }
 table.fits th { position: sticky; top: 0; z-index: 1; background: var(--p2); color: var(--dim); font: 600 9.5px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line2); cursor: pointer; white-space: nowrap; user-select: none; }
