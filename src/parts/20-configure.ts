@@ -19,7 +19,9 @@ function fillSelects() {
   const opt = ([k, mm]) => `<option value="${k}">${esc(mm.name)}${mm.est ? ' *' : ` · ${L('calibrated', 'calibrada')}`}</option>`;
   $('machine').innerHTML = VENDORS.map(v => { const es = Object.entries(MACHINES).filter(([, mm]) => vendorOf(mm) === v); return es.length ? `<optgroup label="${esc(vendorLabel(v))}">${es.map(opt).join('')}</optgroup>` : ''; }).join('')
     + Object.entries(MACHINES).filter(([, mm]) => !VENDORS.includes(vendorOf(mm))).map(opt).join('');
-  $('model').innerHTML = Object.entries(MODELS).map(([k, mm]) => `<option value="${k}">${mm.name}</option>`).join('');
+  const mopt = ([k, mm]) => `<option value="${k}">${esc(mm.name)}</option>`;
+  $('model').innerHTML = modelVendors().map(v => `<optgroup label="${esc(v)}">${Object.entries(MODELS).filter(([k, mm]) => k !== 'live' && mm.vendor === v).map(mopt).join('')}</optgroup>`).join('')
+    + Object.entries(MODELS).filter(([k, mm]) => k === 'live' || !mm.vendor).map(mopt).join('');
   $('quant').innerHTML = Object.entries(QUANTS).map(([k, q]) => `<option value="${k}">${q.label} · ${dec(q.bpw)} bits</option>`).join('');
   $('kv').innerHTML = Object.entries(KV_TYPES).map(([k, q]) => `<option value="${k}">${q.label}</option>`).join('');
 }

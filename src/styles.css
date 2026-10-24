@@ -743,6 +743,7 @@ table.fits .num { font-family: var(--mono); font-size: 11px; } table.fits .c-ttf
 table.fits tbody tr { cursor: pointer; } table.fits tbody tr:hover { background: rgb(255 212 59 / .06); } table.fits tbody tr:focus-visible { outline: 1px solid var(--hot); outline-offset: -1px; }
 table.fits tbody tr.cur { background: rgb(255 212 59 / .1); box-shadow: inset 3px 0 0 var(--hot); }
 .fw-tbl.lk table.fits tbody tr { cursor: default; }
+table.fits tbody tr.more { cursor: default; } table.fits tbody tr.more:hover { background: none; } table.fits tr.more td { color: var(--dim); text-align: center; font-size: 10.5px; padding: 8px; }
 table.fits td small { color: var(--dim); font: 400 10.5px/1 var(--mono); }
 table.fits .c-machine small { margin-left: 6px; font: 700 8.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; } table.fits .c-machine small.cal { color: var(--ok); } table.fits .c-machine small.est { color: var(--faint); }
 table.fits .mb { display: inline-block; width: 44px; height: 5px; margin-right: 8px; vertical-align: 1px; background: rgb(255 255 255 / .07); border-radius: 2px; overflow: hidden; }
@@ -797,5 +798,5 @@ table.sh-t td { padding: 5px 8px; color: var(--ink); font: 400 11px/1.4 var(--mo
 .sh-note { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.4; } .sh-note.warn { color: var(--amber); }
 #lvShare { color: var(--dim); } #lvShare:hover { color: var(--cy); }
 /* the machine catalogue: a card's family and spec date, the vendor / family filter */
-.card .desc.fam { color: var(--dim); font-size: 11px; } .card .desc.fam a { color: var(--cy); } .card .desc.fam .nw { white-space: nowrap; }
+.card .desc.fam { color: var(--dim); font-size: 11px; } .card .desc.fam a { color: var(--cy); } .card .desc.fam .nw { white-space: nowrap; } .card .desc.fam .apx { color: var(--amber); cursor: help; }
 #loadout .sortrow { gap: 16px; flex-wrap: wrap; }
