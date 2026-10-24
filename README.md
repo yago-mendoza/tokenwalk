@@ -62,7 +62,7 @@ One screen, four zones that never scroll: **Setup** on the left, the **Observato
 
 The machine, the model and its quantization, the request in tokens, the engine (`num_ctx`, KV type, `keep_alive`), sampling, and caches and speculation; above them, the context window and how it is shared. Scenarios set everything in one click (the default machine, a dense 27B, an RTX 5090, a model that does not fit, a 128k context, a cold start). A setup that cannot run says so before you press play, and offers fixes that do fit.
 
-**What fits** runs the current request (prompt, answer length, `num_ctx`, KV type, sampling, MTP) on every machine preset, model and quantization in one table: memory needed against what the machine has, whether it fits (yes, tight, no), time to the first token, tokens a second and the bottleneck, fitting rows first. Sort by any column, filter by vendor or family, by machine, or to what fits; a row loads that machine, model and quantization into Setup (Undo takes it back). In Real machine a row sets only *Estimate as*. The header's ↺ restores the defaults (the reference machine and the default request) after asking; in Real machine it restores only the request and sampling.
+**What fits** runs the current request (prompt, answer length, `num_ctx`, KV type, sampling, MTP) on every machine preset, model and quantization in one table: memory needed against what the machine has, whether it fits (yes, tight, no), time to the first token, tokens a second and the bottleneck, fitting rows first. Sort by any column, filter by vendor or family, by machine, by model vendor or model, or to what fits; the table grows a page at a time as it scrolls; a row loads that machine, model and quantization into Setup (Undo takes it back). In Real machine a row sets only *Estimate as*. The header's ↺ restores the defaults (the reference machine and the default request) after asking; in Real machine it restores only the request and sampling.
 
 The address always holds the current setup, and the link button in the top bar copies it: machine (or its edited fields), model, quantization, the request, engine, sampling, caches and MTP, the view, and optionally the current moment. Short keys, only what differs from the defaults; older links still open, and a shared link always opens in Simulated.
 
@@ -132,7 +132,7 @@ There is no framework and nothing at runtime: one HTML page, a canvas, and about
 Nothing here runs a neural network. tokenwalk is a cost model, and it is honest about which of its numbers are which:
 
 - **Calibrated.** The default machine, *ThinkPad · Radeon 860M* (a ThinkPad with a Radeon 860M iGPU, 64 GB of shared LPDDR5X, Qwen3.6 35B-A3B at Q4_K_M under Ollama) is fitted to measured runs: about 76 s to the first token for a 6,500-token prompt, then about 12 tokens a second without MTP drafting (see [Connecting a real server](#connecting-a-real-server) for what drafting changes).
-- **Read from the files.** Layer counts, heads, experts and which layers keep KV come from the GGUF headers.
+- **Read from the files.** For the two Qwen models, layer counts, heads, experts and which layers keep KV come from the GGUF headers; every other model's come from its published configuration (see [Models](#models-and-where-their-numbers-come-from)).
 - **Estimated.** Every other machine (67 presets: Apple M1 to M6, GeForce and datacenter NVIDIA, Radeon, Instinct, Ryzen AI, Arc, CPU servers) is the same formulas with its published bandwidth and compute and a few effective factors fitted per hardware family to published llama.cpp results. The console marks them as estimates; [docs/accuracy.md](docs/accuracy.md) says how close that gets, family by family.
 - **Illustrative.** The answer text, the logits and the values inside a row of weights are made up. Their sizes are not.
 
@@ -168,6 +168,12 @@ EstimateResult = { ttft, total, tps, prefill, decodeTime, load, restore,     // 
 
 [`data/machines.json`](data/machines.json) holds every machine's published specs (bandwidth, FP16 peak, memory, the assumed host of a card, the memory bus), each field with its source and a date, and a dated price as data. The model needs effective values: the share of the bandwidth a decode step reaches (`bwEff`), the arithmetic a prefill reaches (`tflops`), and a fixed cost per layer per pass (`layerMs`, the per-token overhead that keeps a small model from saturating a datacenter GPU). [`tools/fit-families.mjs`](tools/fit-families.mjs) fits them per family (Apple Metal, NVIDIA CUDA, AMD ROCm, AMD Vulkan, Intel SYCL/Vulkan, CPU; NVIDIA and ROCm split into consumer and pro/datacenter, Apple M5 and later on their own) by least squares on log error over [`data/benchmarks.json`](data/benchmarks.json), 174 published rows with their sources, and writes [`data/calibration.json`](data/calibration.json); every preset without a measured calibration takes its family's factors at build time. The reference ThinkPad is never fitted. In [docs/accuracy.md](docs/accuracy.md), across 185 measurements on 42 machines, generation lands within about 5% in the median (7% for a machine held out of its family's fit) and prompt processing within about 9% (15% held out), with the weak spots spelled out.
 
+### Models, and where their numbers come from
+
+Twenty-two models: the app's own four (Qwen3.6 35B-A3B and Qwen3.8 27B read from their GGUF headers on the reference laptop, Llama 3.1 8B, GPT-3 175B) and the catalogue in [`data/ref-models.json`](data/ref-models.json), each built from its Hugging Face `config.json` (the text model) with the URL and the date it was read: Llama 2 7B, Llama 3.2 3B, Llama 3.1 and 3.3 70B; Qwen2.5 7B, 14B and 32B (the dimensions of DeepSeek-R1-Distill-Qwen-32B too); Qwen3 8B, 14B, 32B and 30B-A3B; Gemma 3 4B, 12B and 27B; Mistral Small 3.2 24B; Phi-4 14B; gpt-oss-20b and 120b. Total and per-token weights are counted from the dimensions and checked against the published parameter count. Meta's and Google's repositories are gated, so their dimensions come from an ungated copy of the file (`configCopy`), and the count they give reproduces the official repository's published total exactly. The Loadout's model cards show the family, the date and the source, and filter by vendor and family; *What fits* filters by vendor or model.
+
+Two things the model schema does not express are approximated, and the cards say so: Gemma 3's sliding-window layers (five in six attend over 1,024 tokens) and gpt-oss's (every other layer, 128 tokens) are counted as full attention, so the KV cache is over-counted at long context; and a multimodal checkpoint's vision encoder is left out, as a GGUF keeps it in a separate file. gpt-oss stores its experts in MXFP4 (4.25 bits) in every file, whatever the label; its `expertBpw` keeps them there while the label sets the rest.
+
 ## Layout
 
 ```
@@ -187,8 +193,8 @@ tools/                single-file.mjs, split-legacy.mjs (the port from the origi
                       ingest-measurements.mjs (accepted issues to data/measurements.json); load-model.mjs and
                       baked.mjs (the pure parts in node, the data baked in); bench.mjs, fit-families.mjs, accuracy.mjs
 data/                 measurements.json (accepted measurements), machines.json (the catalogue), benchmarks.json,
-                      bench-hardware.json and ref-models.json (the published results and what they ran on),
-                      calibration.json (the fit); the catalogue and the calibration are baked into the page at build
+                      bench-hardware.json (the published results and what they ran on), ref-models.json (the model
+                      catalogue), calibration.json (the fit); the catalogues and the calibration are baked into the page
 docs/accuracy.md      the estimate against every published row it represents (npm run accuracy)
 .github/              the measurement issue form and the two workflows that check and ingest it
 ```
