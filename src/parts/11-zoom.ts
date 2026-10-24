@@ -112,10 +112,11 @@ function drawZFx(x, W, H) {
 }
 
 // ---- the bottom of the zoom: one number and its bits, and the chain of multiplications that builds every size ----
-// How a format stores one number: its own bits, plus its share of a scale kept once per block.
+// How a format stores one number: its own bits, plus its share of a scale kept once per block (16 bits; MXFP4, the
+// format of gpt-oss's experts, keeps an 8-bit power-of-two scale per 32).
 function numFormat(fmt) {
-  const f = { F16: { own: 16, blk: 0 }, f16: { own: 16, blk: 0 }, Q8_0: { own: 8, blk: 32 }, q8_0: { own: 8, blk: 32 }, Q6_K: { own: 6, blk: 16 }, Q4_K_M: { own: 4, blk: 32 }, q4_0: { own: 4, blk: 32 }, Q2_K: { own: 2, blk: 16 } }[fmt] || { own: 16, blk: 0 };
-  return { ...f, share: f.blk ? 16 / f.blk : 0 };
+  const f = { F16: { own: 16, blk: 0 }, f16: { own: 16, blk: 0 }, Q8_0: { own: 8, blk: 32 }, q8_0: { own: 8, blk: 32 }, Q6_K: { own: 6, blk: 16 }, Q4_K_M: { own: 4, blk: 32 }, q4_0: { own: 4, blk: 32 }, Q2_K: { own: 2, blk: 16 }, MXFP4: { own: 4, blk: 32, sc: 8 } }[fmt] || { own: 16, blk: 0 };
+  return { sc: 16, ...f, share: f.blk ? (f.sc || 16) / f.blk : 0 };
 }
 // The chain for this zoom: each size is a count times the size below it.
 function zChain(lens, f) {
@@ -140,7 +141,7 @@ function drawZChainStrip(x, W, H, lens, f) {
   });
 }
 function drawZNum(x, id, W, H, f, lens) {
-  const isW = lens === 'model', fmt = isW ? S.quant : S.kv, nf = numFormat(fmt), top = 96;
+  const isW = lens === 'model', mx = isW && f.shape && bpwOfShape(f.shape) !== QUANTS[S.quant].bpw, fmt = isW ? (mx ? 'MXFP4' : S.quant) : S.kv, nf = numFormat(fmt), top = 96;
   const rng = rngOf((isW ? (f.r || 0) * 977 + (f.i || 0) : f.t * 131 + f.layer) + 7), bits = Array.from({ length: nf.own }, () => (rng() > .5 ? 1 : 0));
   text(x, isW ? L(`Weight ${num((f.i || 0) + 1)} of row ${num((f.r || 0) + 1)}, ${f.name}, stored as ${fmt}`, `Peso ${num((f.i || 0) + 1)} de la fila ${num((f.r || 0) + 1)}, ${f.name}, guardado en ${fmt}`) : L(`One number of token ${num(f.t + 1)}'s keys at layer ${f.layer + 1}, stored as ${fmt}`, `Un número de las claves del token ${num(f.t + 1)} en la capa ${f.layer + 1}, guardado en ${fmt}`), 24, top - 42, C.ink, 'left', 12, 650);
   // its own bits, one box each, grouped as the format reads them
@@ -152,12 +153,12 @@ function drawZNum(x, id, W, H, f, lens) {
   let y = by + bw + 26;
   if (nf.blk) {
     const sx = bx0, sw = Math.min(16 * 12, W - 160);
-    text(x, L(`plus its share of one 16-bit scale kept for every ${nf.blk} numbers`, `más su parte de una escala de 16 bits que se guarda cada ${nf.blk} números`), sx, y, C.li, 'left', 10.5, 600);
-    for (let i = 0; i < 16; i++) { x.fillStyle = i < 16 / nf.blk * 1 ? C.li : 'rgba(185,162,242,.15)'; x.fillRect(sx + i * (sw / 16), y + 8, sw / 16 - 2, 14); }
-    text(x, L(`16 ÷ ${nf.blk} = ${dec(nf.share.toFixed(2))} bits each`, `16 ÷ ${nf.blk} = ${dec(nf.share.toFixed(2))} bits cada uno`), sx + sw + 10, y + 19, C.li, 'left', 10.5);
+    text(x, L(`plus its share of one ${nf.sc}-bit scale kept for every ${nf.blk} numbers`, `más su parte de una escala de ${nf.sc} bits que se guarda cada ${nf.blk} números`), sx, y, C.li, 'left', 10.5, 600);
+    for (let i = 0; i < nf.sc; i++) { x.fillStyle = i < nf.sc / nf.blk * 1 ? C.li : 'rgba(185,162,242,.15)'; x.fillRect(sx + i * (sw / 16), y + 8, sw / 16 - 2, 14); }
+    text(x, L(`${nf.sc} ÷ ${nf.blk} = ${dec(nf.share.toFixed(2))} bits each`, `${nf.sc} ÷ ${nf.blk} = ${dec(nf.share.toFixed(2))} bits cada uno`), sx + sw + 10, y + 19, C.li, 'left', 10.5);
     y += 44;
   }
-  const tot = isW ? QUANTS[S.quant].bpw : nf.own + nf.share, val = isW ? (rng() * 2 - 1) * .12 : (rng() * 2 - 1) * 1.4;
+  const tot = isW ? bpwOfShape(f.shape) : nf.own + nf.share, val = isW ? (rng() * 2 - 1) * .12 : (rng() * 2 - 1) * 1.4;
   text(x, L(`${dec(tot.toFixed(2))} bits = ${dec((tot / 8).toFixed(3))} bytes for this one number`, `${dec(tot.toFixed(2))} bits = ${dec((tot / 8).toFixed(3))} bytes para este número`), 24, y + 6, C.hot, 'left', 13, 700);
   text(x, nf.own === 16 ? L(`read back as about ${dec(val.toFixed(4))} · 8 bits make a byte · value illustrative`, `se lee como unos ${dec(val.toFixed(4))} · 8 bits son un byte · valor ilustrativo`) : L(`read back as level × scale ≈ ${dec(val.toFixed(4))} · 8 bits make a byte · value illustrative`, `se lee como nivel × escala ≈ ${dec(val.toFixed(4))} · 8 bits son un byte · valor ilustrativo`), 24, y + 24, C.dim, 'left', 10.5);
   if (isW && fmt.startsWith('Q') && QUANTS[S.quant].bpw > tot - 1e-9) {} // K-quants also carry minimums; bpw already includes them
@@ -187,7 +188,7 @@ function zFacts(x, X, Y, w, rows) {
 }
 function wrapLines(x, s2, w, font) { x.font = font; const out = []; let cur = ''; for (const wd of String(s2).split(' ')) { const t = cur ? cur + ' ' + wd : wd; if (x.measureText(t).width > w && cur) { out.push(cur); cur = wd; } else cur = t; } if (cur) out.push(cur); return out; }
 function drawZMat(x, id, W, H, f, st) {
-  const [nm, cin, cout] = f.shape, q = QUANTS[S.quant], pre = st.seg && st.seg.k === 'prefill', ntok = pre ? st.seg.to - st.seg.from : 1;
+  const [nm, cin, cout] = f.shape, q = { bpw: bpwOfShape(f.shape) }, pre = st.seg && st.seg.k === 'prefill', ntok = pre ? st.seg.to - st.seg.from : 1;
   const side = Math.min(250, W * .3), top = 74, X0 = 46, boxW = W - X0 - side - 150, boxH = H - top - 110;
   const k = Math.min(boxW / cin, boxH / cout), mw = Math.max(60, cin * k), mh = Math.max(40, cout * k), Y0 = top;
   // x: the input column, drawn across the top because the matrix takes it along its width
@@ -223,7 +224,7 @@ function drawZMat(x, id, W, H, f, st) {
   setCap('model', L('Click a row to see the one dot product it costs. Out, or Esc, goes back.', 'Pulsa una fila para ver el producto escalar que cuesta. Salir, o Esc, vuelve.'));
 }
 function drawZRow(x, id, W, H, f, st) {
-  const [nm, cin, cout] = f.shape, r = f.r, q = QUANTS[S.quant], pre = st.seg && st.seg.k === 'prefill', ntok = pre ? st.seg.to - st.seg.from : 1;
+  const [nm, cin, cout] = f.shape, r = f.r, q = { bpw: bpwOfShape(f.shape) }, fmtW = q.bpw === QUANTS[S.quant].bpw ? S.quant : 'MXFP4', pre = st.seg && st.seg.k === 'prefill', ntok = pre ? st.seg.to - st.seg.from : 1;
   const side = Math.min(250, W * .3), lx = 24, avail = W - lx - side - 80, cw = Math.max(9, Math.min(20, Math.floor(avail / 48))), nc = Math.min(cin, Math.floor(avail / cw) - 1);
   const top = 84, gap = 50, wY = top, aY = wY + gap, pY = aY + gap, sY = pY + gap;
   // Which part of the row is done: the band this row sits in, and inside it a sweep that moves only while playing.
@@ -254,7 +255,7 @@ function drawZRow(x, id, W, H, f, st) {
   text(x, L(`y[${num(r + 1)}] = Σ w·x = ${dec(sum.toFixed(3))}`, `y[${num(r + 1)}] = Σ w·x = ${dec(sum.toFixed(3))}`), sumX + 10, sY + 19, C.hot, 'left', 11.5, 700);
   const nd = done >= nc ? (st.where === 'now' ? Math.round(cin * (lit - band)) : cin) : done;
   const hp = textWrap(x, L(`${num(Math.min(cin, nd))} of ${num(cin)} products added · values illustrative, sizes exact`, `${num(Math.min(cin, nd))} de ${num(cin)} productos sumados · valores ilustrativos, tamaños exactos`), lx, sY + 48, avail, C.dim, 9.5);
-  if (blk) textWrap(x, L(`Ticks over w: every ${blk} weights share one scale, which is part of the ${dec(q.bpw)} bits per weight of ${S.quant}.`, `Marcas sobre w: cada ${blk} pesos comparten una escala, que es parte de los ${dec(q.bpw)} bits por peso de ${S.quant}.`), lx, sY + 50 + hp, avail, C.dim, 9.5);
+  if (blk) textWrap(x, L(`Ticks over w: every ${blk} weights share one scale, which is part of the ${dec(q.bpw)} bits per weight of ${fmtW}.`, `Marcas sobre w: cada ${blk} pesos comparten una escala, que es parte de los ${dec(q.bpw)} bits por peso de ${fmtW}.`), lx, sY + 50 + hp, avail, C.dim, 9.5);
   const rb = cin * q.bpw / 8, fpb = 2 * ntok / (q.bpw / 8), bal = machineBalance();
   const fy = zFacts(x, W - side, top - 8, side - 8, [
     [L('Multiplies and adds', 'Multiplicaciones y sumas'), `${num(cin)} + ${num(cin)} = ${num(2 * cin)} FLOP`],
@@ -284,8 +285,8 @@ function drawZExpert(x, id, W, H, f, st, n) {
   const one = mats.reduce((s2, m2) => s2 + bytesOf(m2), 0);
   zFacts(x, W - side, top - 30, side - 8, [
     [L('One expert', 'Un experto'), B(one)],
-    [L('Experts in this layer', 'Expertos en esta capa'), `${R.m.experts} + ${R.m.sharedExperts}`],
-    [L('Read per token', 'Leídos por token'), `${R.m.expertsUsed} + ${R.m.sharedExperts} · ${B(one * (R.m.expertsUsed + R.m.sharedExperts))}`],
+    [L('Experts in this layer', 'Expertos en esta capa'), R.m.sharedExperts ? `${R.m.experts} + ${R.m.sharedExperts}` : `${R.m.experts}`],
+    [L('Read per token', 'Leídos por token'), `${activeTxt(R.m).replace('+', ' + ')} · ${B(one * (R.m.expertsUsed + R.m.sharedExperts))}`],
     [L('Stored', 'Guardados'), B(one * (R.m.experts + R.m.sharedExperts))],
     [L('Share read per token', 'Parte leída por token'), pct((R.m.expertsUsed + R.m.sharedExperts) / (R.m.experts + R.m.sharedExperts)), C.cy],
   ]);

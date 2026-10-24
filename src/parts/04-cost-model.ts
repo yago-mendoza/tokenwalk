@@ -6,7 +6,12 @@ function compute() {
 }
 
 // ===== Bytes and time inside a step =====
-const bytesOf = s => (s[1] * s[2] * QUANTS[S.quant].bpw) / 8;
+// Bits per weight of one matrix: the label's, except a routed expert's in a model that stores them at their own width
+// (expertBpw: gpt-oss's MXFP4 experts).
+const bpwOfShape = s => (R && R.m.expertBpw && R.sh.expert && R.sh.expert.includes(s) ? R.m.expertBpw : QUANTS[S.quant].bpw);
+const bytesOf = s => (s[1] * s[2] * bpwOfShape(s)) / 8;
+// Experts a token reads per layer, as a label: routed + shared (just the routed count when there is no shared one).
+const activeTxt = m => (m.sharedExperts ? `${m.expertsUsed}+${m.sharedExperts}` : `${m.expertsUsed}`);
 function layerInfo(i) {
   const { m, sh, kinds } = R, kind = kinds[i], mixer = kind === 'attn' ? sh.attn : sh.delta || sh.attn;
   const mixBytes = mixer.reduce((s, x) => s + bytesOf(x), 0);
@@ -37,8 +42,8 @@ function opsOf(i, seg) {
   if (sh.expert) {
     ops.push({ id: 'router', kind: 'mat', shape: sh.router, bytes: bytesOf(sh.router) });
     const chosen = seg && seg.k === 'prefill' ? null : chosenExperts(decodeTok, i);
-    if (chosen) { for (const e of chosen) ops.push({ id: `expert ${e}`, kind: 'expert', e, bytes: li.one }); ops.push({ id: 'shared expert', kind: 'expert', e: -1, bytes: li.one }); }
-    else ops.push({ id: 'experts', kind: 'expertsAll', bytes: li.one * (expertsTouched(m, seg.to - seg.from) + 1) });
+    if (chosen) { for (const e of chosen) ops.push({ id: `expert ${e}`, kind: 'expert', e, bytes: li.one }); if (m.sharedExperts) ops.push({ id: 'shared expert', kind: 'expert', e: -1, bytes: li.one }); }
+    else ops.push({ id: 'experts', kind: 'expertsAll', bytes: li.one * (expertsTouched(m, seg.to - seg.from) + m.sharedExperts) });
   } else if (sh.mlp) for (const s of sh.mlp) ops.push({ id: s[0], kind: 'mat', shape: s, bytes: bytesOf(s) });
   const tot = ops.reduce((s, o) => s + o.bytes, 0);
   let acc = 0; for (const o of ops) { o.a = acc / tot; acc += o.bytes; o.b = acc / tot; }

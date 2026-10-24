@@ -125,7 +125,7 @@ function drawSystem(n, dt) {
   const wGBall = R.weights, top = 28;
   const layerRangeOf = (w0, wGB) => st.lr >= 0 ? [w0 + (st.lr / m.layers) * wGB, w0 + ((st.lr + 1) / m.layers) * wGB] : null;
   const util = st.util, units = mc.units;
-  const gpuSub = cpuOnly ? L('unused here', 'sin uso aquí') : st.phase === 'prefill' ? L(`busy ${pct(util)}`, `ocupada ${pct(util)}`) : st.decoding ? L(`waiting on memory, ${pct(util)} busy`, `esperando a memoria, ${pct(util)} ocupada`) : L('idle', 'inactiva');
+  const gpuSub = cpuOnly ? L('unused here', 'sin uso aquí') : st.phase === 'prefill' ? L(`busy ${pct(util)}`, `ocupada ${pct(util)}`) : st.decoding ? L(`waiting on memory, ${pct(util)} busy`, `esperando memoria · ${pct(util)}`) : L('idle', 'inactiva');
   const cpuSub = cpuOnly ? (st.phase && st.phase !== 'load' ? L(`computing ${pct(util)}`, `calculando ${pct(util)}`) : L('idle', 'inactiva')) : st.phase ? L('orchestrating', 'orquestando') : L('idle', 'inactiva');
   let links = {};
   if (mc.kind === 'unified') {
@@ -297,12 +297,12 @@ function drawModel(n) {
   // lilac weights, yellow the KV cache, teal the fixed state), the running one lit, the done ones filled.
   { const fy = iy + 20, fw = availW, nodes = [];
     nodes.push({ id: 'x', lab: 'x', src: 'tok' });
-    for (const o of ops) { if (o.kind === 'expert') { if (!nodes.some(q => q.id === 'experts')) nodes.push({ id: 'experts', lab: L(`experts ${R.m.expertsUsed}+${R.m.sharedExperts}`, `expertos ${R.m.expertsUsed}+${R.m.sharedExperts}`), src: 'w', a: o.a, b: ops.filter(q => q.kind === 'expert').slice(-1)[0].b }); continue; }
+    for (const o of ops) { if (o.kind === 'expert') { if (!nodes.some(q => q.id === 'experts')) nodes.push({ id: 'experts', lab: L(`experts ${activeTxt(R.m)}`, `expertos ${activeTxt(R.m)}`), src: 'w', a: o.a, b: ops.filter(q => q.kind === 'expert').slice(-1)[0].b }); continue; }
       nodes.push({ id: o.id, lab: o.kind === 'kv' ? L('attention', 'atención') : o.kind === 'state' ? L('state', 'estado') : o.kind === 'expertsAll' ? L('experts', 'expertos') : o.id.replace(/^(attn_|ffn_|ssm_)/, ''), src: o.kind === 'kv' ? 'kv' : o.kind === 'state' ? 'st' : 'w', a: o.a, b: o.b }); }
     nodes.push({ id: 'x2', lab: 'x′', src: 'tok' });
     const col = { tok: C.cy, w: C.li, kv: C.hot, st: '#3fd6c0' }, gap = 9; x.font = `700 9.5px ${FONT}`;
     let want = nodes.map(q => x.measureText(q.lab).width + 12), sumW = want.reduce((a2, v) => a2 + v, 0);
-    if (sumW > fw - gap * (nodes.length - 1)) { const SH = { output: 'out', router: L('route', 'ruta'), gate: 'gate', [L('attention', 'atención')]: 'attn', [L('state', 'estado')]: L('state', 'est.') }; nodes.forEach(q => { q.lab = SH[q.lab] || (q.id === 'experts' ? `${R.m.expertsUsed}+${R.m.sharedExperts}` : q.lab); }); want = nodes.map(q => x.measureText(q.lab).width + 12); sumW = want.reduce((a2, v) => a2 + v, 0); }
+    if (sumW > fw - gap * (nodes.length - 1)) { const SH = { output: 'out', router: L('route', 'ruta'), gate: 'gate', [L('attention', 'atención')]: 'attn', [L('state', 'estado')]: L('state', 'est.') }; nodes.forEach(q => { q.lab = SH[q.lab] || (q.id === 'experts' ? activeTxt(R.m) : q.lab); }); want = nodes.map(q => x.measureText(q.lab).width + 12); sumW = want.reduce((a2, v) => a2 + v, 0); }
     const sc2 = Math.min(1.6, (fw - gap * (nodes.length - 1)) / sumW);
     let fx = ix + 8;
     nodes.forEach((q, i) => {
@@ -328,24 +328,25 @@ function drawModel(n) {
     outlineSel(x, sel, sx2, sy2, 62, 12); hit(id, [sx2 - 2, sy2 - 2, 120, 40], sel);
   }
   if (sh.expert) {
-    const gx = ix + iw - expertsW, gy = baseY + 4;
-    const cs = Math.max(4, Math.floor(Math.min(expertsW || 150, 150, (iy + ih - gy - 74) ) / 16));
+    // every expert of the layer as one cell, 16 to a row (8 when there are fewer than 64), the shared one below
+    const E = m.experts, perRow = E >= 64 ? 16 : 8, rows = Math.ceil(E / perRow), gx = ix + iw - expertsW, gy = baseY + 4;
+    const cs = Math.max(4, Math.floor(Math.min((expertsW || 150) / perRow, 150 / 16, (iy + ih - gy - 74) / rows)));
     const prefillSeg = n.seg && n.seg.k === 'prefill' && n.layer >= 0;
     const tok = n.seg && (n.seg.k === 'decode' || n.seg.k === 'round') ? n.seg.tok : 0;
     const chosen = new Set(chosenExperts(tok, focus)), touched = prefillSeg ? expertsTouched(m, n.seg.to - n.seg.from) : 0;
-    textFit(x, prefillSeg ? L(`${num(touched)} of 256 experts touched by this chunk`, `${num(touched)} de 256 expertos tocados por este bloque`) : L(`${R.m.experts} experts · ${R.m.expertsUsed}+${R.m.sharedExperts} read`, `${R.m.experts} expertos · ${R.m.expertsUsed}+${R.m.sharedExperts} leídos`), gx, gy - 6, W - gx - 4, C.mid, 'left', 9.5);
-    for (let e = 0; e < 256; e++) {
-      const ex = gx + (e % 16) * cs, ey = gy + Math.floor(e / 16) * cs, on = prefillSeg ? rngOf(e * 7 + 1)() < touched / 256 : chosen.has(e);
+    textFit(x, prefillSeg ? L(`${num(touched)} of ${E} experts touched by this chunk`, `${num(touched)} de ${E} expertos tocados por este bloque`) : L(`${E} experts · ${activeTxt(R.m)} read`, `${E} expertos · ${activeTxt(R.m)} leídos`), gx, gy - 6, W - gx - 4, C.mid, 'left', 9.5);
+    for (let e = 0; e < E; e++) {
+      const ex = gx + (e % perRow) * cs, ey = gy + Math.floor(e / perRow) * cs, on = prefillSeg ? rngOf(e * 7 + 1)() < touched / E : chosen.has(e);
       const opE = ops.find(o => o.e === e), pr = opE ? Math.max(0, Math.min(1, (lp - opE.a) / (opE.b - opE.a))) : 0;
       fillKind(x, 'weights', ex, ey, cs - 1, cs - 1, on ? (pr > 0 || prefillSeg ? 1 : .55) : .14);
       if (on && pr > 0 && pr < 1) { x.save(); x.shadowColor = C.cy; x.shadowBlur = 8; x.strokeStyle = C.cy; x.strokeRect(ex + .5, ey + .5, cs - 2, cs - 2); x.restore(); }
       const sel = { k: 'expert', layer: focus, e }; outlineSel(x, sel, ex, ey, cs - 1, cs - 1); hit(id, [ex, ey, cs, cs], sel);
     }
-    const shY = gy + 16 * cs + 6, sel = { k: 'expert', layer: focus, e: -1 };
-    fillKind(x, 'weights', gx, shY, cs * 3 - 1, cs - 1, progOf('shared expert') > 0 ? 1 : .6); outlineSel(x, sel, gx, shY, cs * 3 - 1, cs - 1); hit(id, [gx, shY, cs * 3, cs], sel);
-    textFit(x, L('Shared', 'Compartido'), gx + cs * 3 + 5, shY + cs - 1, Math.max(30, W - (gx + cs * 3 + 5) - 2), C.dim, 'left', 9.5);
+    const shY = gy + rows * cs + 6, sel = { k: 'expert', layer: focus, e: -1 };
+    if (m.sharedExperts) { fillKind(x, 'weights', gx, shY, cs * 3 - 1, cs - 1, progOf('shared expert') > 0 ? 1 : .6); outlineSel(x, sel, gx, shY, cs * 3 - 1, cs - 1); hit(id, [gx, shY, cs * 3, cs], sel);
+      textFit(x, L('Shared', 'Compartido'), gx + cs * 3 + 5, shY + cs - 1, Math.max(30, W - (gx + cs * 3 + 5) - 2), C.dim, 'left', 9.5); }
     // one expert to the same scale as the matrices on the left
-    let ex2 = gx; const ey2 = shY + cs + 18;
+    let ex2 = gx; const ey2 = (m.sharedExperts ? shY + cs : shY) + 18;
     textFit(x, L('Expert · to scale', 'Experto · a escala'), gx, ey2 - 5, Math.max(40, W - gx - 2), C.mid, 'left', 9.5);
     for (const s of sh.expert) { const w = Math.max(3, s[1] * k), h = Math.max(3, s[2] * k); fillKind(x, 'weights', ex2, ey2, w, h, .7); ex2 += w + 6; }
   }
