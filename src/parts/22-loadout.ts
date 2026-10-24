@@ -174,7 +174,8 @@ function renderTlScale() {
 function renderUndo() { renderTlScale(); const r = $('redoBtn'); if (r) { r.disabled = !REDO.length || locked(); r.title = REDO.length ? L('Redo (Ctrl+Shift+Z)', 'Rehacer (Ctrl+Mayús+Z)') : L('Nothing to redo', 'Nada que rehacer'); } const b = $('undoBtn'), n = isReal() ? REAL_UNDO.length : UNDO.length; if (r && isReal()) r.disabled = true; b.disabled = !n || locked() || (isReal() && LIVE.running); b.title = n ? L('Undo the last configuration change', 'Deshacer el último cambio de configuración') : L('Nothing to undo', 'Nada que deshacer'); }
 let stopArm = 0;
 function stopEdit() {
-  if (P.t > 0 && P.t < R.total && performance.now() - stopArm > 3000) { stopArm = performance.now(); $('stopEdit').innerHTML = `${ICON('warning', 's')}<span>${esc(L('Discard this run? Click again', '¿Descartar esta ejecución? Haz clic otra vez'))}</span>`; setTimeout(() => { if (performance.now() - stopArm >= 2900) applyText(); }, 3100); return; }
+  if (P.t > 0 && P.t < R.total && performance.now() - stopArm > 3000) { stopArm = performance.now(); $('stopEdit').innerHTML = `${ICON('warning', 's')}<span>${esc(L('Discard run', 'Descartar'))}</span>`; $('lock').classList.add('armed'); $('lock').querySelector('small').textContent = L('Click again to discard this run and edit.', 'Pulsa otra vez para descartar la ejecución y editar.'); setTimeout(() => { if (performance.now() - stopArm >= 2900) { $('lock').classList.remove('armed'); applyText(); } }, 3100); return; }
+  $('lock').classList.remove('armed');
   stopArm = 0; P.on = false; P.anim = null; stopAt(0); UI.stale = false; applyText();
 }
 const HINTS = {
