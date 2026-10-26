@@ -4,17 +4,17 @@
 // here, so "See it in" is the same everywhere; following a link flashes the thing where it lands.
 const isPart = (...ids) => sel => sel.k === 'part' && ids.includes(sel.id);
 const ENTITY = {
-  weights: () => ({ in: { system: isPart('weights'), model: q => q.k === 'layer' || q.k === 'mat', memory: isPart('weights') }, cfg: 'model' }),
-  kv: () => ({ in: { system: isPart('kv'), model: q => q.k === 'kvlayer', memory: q => isPart('kv')(q) || q.k === 'kvbin' || q.k === 'kvtok' }, ctx: q => q.k === 'ctxseg', cfg: 'engine' }),
-  state: () => ({ in: { system: isPart('state'), model: q => q.k === 'state' || (q.k === 'layer' && R.kinds[q.i] !== 'attn'), memory: isPart('state') } }),
+  weights: () => ({ in: { system: isPart('weights'), model: q => q.k === 'layer' || q.k === 'mat', memory: isPart('weights'), flow: q => q.k === 'flow' && q.kind === 'weight' }, cfg: 'model' }),
+  kv: () => ({ in: { system: isPart('kv'), flow: q => q.k === 'flow' && q.kind === 'kv', model: q => q.k === 'kvlayer', memory: q => isPart('kv')(q) || q.k === 'kvbin' || q.k === 'kvtok' }, ctx: q => q.k === 'ctxseg', cfg: 'engine' }),
+  state: () => ({ in: { system: isPart('state'), flow: q => q.k === 'flow' && q.kind === 'state', model: q => q.k === 'state' || (q.k === 'layer' && R.kinds[q.i] !== 'attn'), memory: isPart('state') } }),
   apps: () => ({ in: { system: isPart('sys'), memory: isPart('sys') }, cfg: 'machine' }),
   ram: () => ({ in: { system: isPart('ram', 'sys', 'weights', 'kv', 'state', 'buf', 'free'), memory: q => q.k === 'part' }, cfg: 'machine' }),
   gpu: () => ({ in: { system: q => isPart('gpu', 'chip')(q) || q.k === 'cu' || (q.k === 'inst' && q.id === 'intensity') }, cfg: 'machine' }),
   cpu: () => ({ in: { system: q => isPart('cpu')(q) || q.k === 'core' }, cfg: 'machine' }),
   ssd: () => ({ in: { system: isPart('ssd') }, time: 'load', cfg: 'engine' }),
-  layer: a => ({ in: { model: q => q.k === 'layer' && q.i === a.i, system: isPart('weights') } }),
-  mat: a => ({ in: { model: q => q.k === 'mat' && q.name === a.name && q.layer === a.layer }, cfg: 'model' }),
-  expert: a => ({ in: { model: q => q.k === 'expert' && q.e === a.e } }),
+  layer: a => ({ in: { model: q => q.k === 'layer' && q.i === a.i, system: isPart('weights'), flow: q => q.k === 'flow' && q.kind === 'pillar' } }),
+  mat: a => ({ in: { model: q => q.k === 'mat' && q.name === a.name && q.layer === a.layer, flow: q => q.k === 'flow' && q.kind === 'weight' && q.name === a.name }, cfg: 'model' }),
+  expert: a => ({ in: { model: q => q.k === 'expert' && q.e === a.e, flow: q => q.k === 'flow' && q.kind === 'egrid' } }),
   prompt: a => ({ in: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === a.kind, memory: q => q.k === 'kvbin' && tokKind((q.b + .5) * q.per) === a.kind && q.b * q.per < tokensInCache(P.t) }, ctx: q => q.k === 'ctxseg' && q.id === a.kind, time: 'prefill', cfg: 'request' }),
   answer: () => ({ in: { tokens: 'all', memory: q => q.k === 'kvbin' && tokKind((q.b + .5) * q.per) === 'ans' && q.b * q.per < tokensInCache(P.t) }, ctx: q => q.k === 'ctxseg' && q.id === 'ans', time: 'decode', cfg: 'samp' }),
   token: a => ({ in: { tokens: a.i, memory: q => q.k === 'kvtok' && q.t === R.prompt + a.i }, time: 'decode', cfg: 'samp' }),
@@ -35,6 +35,7 @@ function entityOf(sel) {
     case 'kvlayer': case 'kvbin': return ['kv', {}];
     case 'kvtok': return sel.t >= R.prompt ? ['token', { i: sel.t - R.prompt }] : ['prompt', { kind: tokKind(sel.t) }];
     case 'state': return ['state', {}];
+    case 'flow': return sel.kind === 'weight' ? (sel.name === 'token_embd' || sel.name === 'output' ? ['weights', {}] : ['mat', { name: sel.name, layer: FL.layer }]) : sel.kind === 'kv' ? ['kv', {}] : sel.kind === 'state' ? ['state', {}] : sel.kind === 'egrid' ? ['expert', { e: -1 }] : sel.kind === 'pillar' ? ['layer', { i: FL.layer }] : sel.kind === 'logits' ? ['answer', {}] : null;
     case 'ctxseg': return sel.id === 'free' ? ['ctxfree', {}] : sel.id === 'ans' ? ['answer', {}] : ['prompt', { kind: sel.id }];
     case 'pchip': return ['prompt', { kind: tokKind(sel.i * sel.per) }];
     case 'tok': case 'cand': return ['token', { i: sel.i }];
@@ -45,18 +46,21 @@ function entityOf(sel) {
     default: return null;
   }
 }
-const LENS_NAME = () => ({ system: L('System', 'System'), model: L('Model', 'Model'), memory: L('Memory', 'Memory'), tokens: L('Tokens', 'Tokens') });
+const LENS_NAME = () => ({ system: L('System', 'System'), model: L('Model', 'Model'), memory: L('Memory', 'Memory'), tokens: L('Tokens', 'Tokens'), flow: L('Flow', 'Flujo') });
 const SECTION_NAME = () => ({ machine: L('Machine', 'Máquina'), model: L('Model', 'Modelo'), request: L('Request', 'Petición'), engine: L('Engine', 'Motor'), samp: L('Sampling', 'Muestreo'), adv: L('Caches', 'Cachés') });
 // The "See it in" row of an explainer, built from the entity's table row.
 function gotoHtml(sel) {
-  const e = entityOf(sel); if (!e) return '';
-  const row = ENTITY[e[0]](e[1]); UI.gotoRow = { row, key: e };
-  const lenses = ['system', 'model', 'memory', 'tokens'].filter(l => row.in && row.in[l]);
   const bt = (k: string, label: string, ic: string, here?: boolean) => `<button type="button" data-go="${k}" ${here ? 'aria-current="true"' : ''}>${ICON(ic, 's')}<span>${esc(label)}</span></button>`;
+  // a tensor or an operation in Flow opens in the deep timeline, at that very operation
+  const xpb = sel.k === 'flow' && !isReal() && flXpTarget(sel) ? bt('xp', L('Explore: when, how long', 'Explorar: cuándo, cuánto'), 'expand') : '';
+  const e = entityOf(sel); if (!e) { UI.gotoRow = null; return xpb ? `<div class="lsgo"><span class="lbl">${esc(L('See it in', 'Verlo en'))}</span><span class="chips">${xpb}</span></div>` : ''; }
+  const row = ENTITY[e[0]](e[1]); UI.gotoRow = { row, key: e };
+  const lenses = ['system', 'model', 'memory', 'tokens', 'flow'].filter(l => row.in && row.in[l]);
   const ln = LENS_NAME(), sn = SECTION_NAME();
   const parts = lenses.map(l => bt('lens:' + l, ln[l], 'eye', l === UI.lens));
   if (row.ctx) parts.push(bt('ctx', L('Context window', 'Ventana de contexto'), 'notes'));
   if (row.time) parts.push(bt('time', L('Timeline', 'Línea de tiempo'), 'eq'));
+  if (xpb) parts.push(xpb);
   return `<div class="lsgo"><span class="lbl">${esc(L('See it in', 'Verlo en'))}</span><span class="chips">${parts.join('')}</span></div>`;
 }
 // The change-it action sits under the values it would change, in the explainer's left column.
@@ -75,7 +79,7 @@ const WIKI = {
   inst: { bw: ['memory-bandwidth', 'memory-bound'], place: ['vram', 'unified-memory'], spec: ['speculative-decoding'], prefix: ['prefix-caching'], intensity: ['roofline-model', 'memory-bound'], compute: ['roofline-model'], ttft: ['prefill', 'latency'], tps: ['throughput', 'decoding-step'], fit: ['model-memory-footprint'], kv: ['kv-cache'], ctx: ['context-window'], keep: ['keep-alive'] },
   alert: { ram: ['model-memory-footprint'], spill: ['vram'], gpusplit: ['vram'], ctx: ['context-window'], trunc: ['context-window'], kvfull: ['kv-cache'], kvq: ['kv-cache-quantization'], cold: ['keep-alive'], keep: ['keep-alive'], slow: ['memory-bound'], slowish: ['memory-bound'], ttft: ['prefill'], spec: ['speculative-decoding'], est: ['roofline-model'] },
   trend: { bw: ['memory-bandwidth'], tpt: ['memory-bound', 'kv-cache'], kvt: ['kv-cache'], gen: ['decoding-step'] },
-  lens: { system: ['unified-memory', 'integrated', 'memory-bandwidth'], model: ['transformer', 'attention', 'gated-deltanet', 'mixture-of-experts'], memory: ['kv-cache', 'model-memory-footprint'], tokens: ['tokenizer', 'logits', 'sampling'] },
+  lens: { system: ['unified-memory', 'integrated', 'memory-bandwidth'], model: ['transformer', 'attention', 'gated-deltanet', 'mixture-of-experts'], memory: ['kv-cache', 'model-memory-footprint'], tokens: ['tokenizer', 'logits', 'sampling'], flow: ['transformer', 'gqa', 'residual-stream', 'feed-forward-network'] },
   samp: ['sampling', 'temperature', 'top-k', 'top-p'],
 };
 function wikiFor(sel) {
@@ -96,25 +100,27 @@ function wikiHtml(sel) {
 }
 
 function goTo(where) {
+  if (where === 'xp') { flOpenXp(flXpTarget(UI.sel)); return; }
   const g = UI.gotoRow; if (!g) return; const row = g.row;
   select(null);
   if (where.startsWith('lens:')) {
     const l = where.slice(5); if (ZOOM[l] && ZOOM[l].length) zoomTo(l, 0); setLens(l);
-    const m = row.in[l]; UI.flash = { canvas: { system: 'cSystem', model: 'cModel', memory: 'cMemory', tokens: 'cPrompt' }[l], match: typeof m === 'function' ? m : null, tok: m, t0: performance.now() };
+    const m = row.in[l]; UI.flash = { canvas: { system: 'cSystem', model: 'cModel', memory: 'cMemory', tokens: 'cPrompt', flow: 'cFlow' }[l], match: typeof m === 'function' ? m : null, tok: m, t0: performance.now() };
     if (l === 'tokens') { streamKey = ''; }
   } else if (where === 'ctx') { if (matchMedia('(max-width: 760px)').matches) setZone('cfg'); UI.flash = { canvas: 'cCtx', match: row.ctx, t0: performance.now() }; }
   else if (where === 'time') { UI.tlHl = row.time; UI.flash = { canvas: 'cTime', match: null, t0: performance.now() }; setTimeout(() => { if (UI.tlHl === row.time) UI.tlHl = null; }, 1600); }
   else if (where.startsWith('cfg:')) { const acc = document.querySelector(`[data-acc="${where.slice(4)}"]`); if (acc) { if (!acc.classList.contains('open')) acc.querySelector('button').click(); if (matchMedia('(max-width: 760px)').matches) setZone('cfg'); acc.classList.remove('flash'); void acc.offsetWidth; acc.classList.add('flash'); } }
 }
-const LENS_CV = { system: 'cSystem', model: 'cModel', memory: 'cMemory', tokens: 'cPrompt' };
+const LENS_CV = { system: 'cSystem', model: 'cModel', memory: 'cMemory', tokens: 'cPrompt', flow: 'cFlow' };
 function brushEntity(e) { if (!e) { UI.brush = null; return; } const row = ENTITY[e[0]](e[1]), m = row.in && row.in[UI.lens]; UI.brush = typeof m === 'function' ? { canvas: LENS_CV[UI.lens], match: m } : null; }
 // Legend hover: each item outlines exactly the marks it names in the current view (not the whole entity behind it).
 const P_ = (...ids) => q => q.k === 'part' && ids.includes(q.id);
 const LEGEND_MATCH = {
-  weights: { system: P_('weights'), model: q => q.k === 'layer' || q.k === 'mat' || q.k === 'gcol', memory: P_('weights') },
-  kv: { system: P_('kv'), model: q => q.k === 'kvlayer', memory: q => P_('kv')(q) || q.k === 'kvbin' },
+  weights: { system: P_('weights'), model: q => q.k === 'layer' || q.k === 'mat' || q.k === 'gcol', memory: P_('weights'), flow: q => q.k === 'flow' && q.kind === 'weight' },
+  kv: { system: P_('kv'), model: q => q.k === 'kvlayer', memory: q => P_('kv')(q) || q.k === 'kvbin', flow: q => q.k === 'flow' && q.kind === 'kv' },
   kvres: { system: P_('kv'), memory: q => P_('kv')(q) || q.k === 'kvbin' }, kvby: { memory: q => q.k === 'kvbin' || q.k === 'kvtok' },
-  state: { system: P_('state'), model: q => q.k === 'state', memory: P_('state') },
+  state: { system: P_('state'), model: q => q.k === 'state', memory: P_('state'), flow: q => q.k === 'flow' && q.kind === 'state' },
+  fl_act: { flow: q => q.k === 'flow' && (q.kind === 'act' || q.kind === 'logits') }, fl_prec: { flow: q => q.k === 'flow' && q.kind === 'weight' },
   flight: { system: P_('bus', 'link'), model: q => q.k === 'mat' }, busy: { system: q => q.k === 'cu' || q.k === 'core' },
   sys: { system: P_('sys'), memory: P_('sys') }, free: { memory: P_('free') },
   token: { tokens: q => q.k === 'pchip' }, tk_sys: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'sys' }, tk_docs: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'docs' }, tk_q: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'q' },

@@ -164,7 +164,7 @@ function inspHtml(d) {
     `<p><b>${esc(L('what', 'qué es'))}</b> ${esc(d.what)}</p>` + (d.why ? `<p><b>${esc(L('why it matters', 'por qué importa'))}</b> ${esc(d.why)}</p>` : '') + (d.moves ? `<p><b>${esc(L('what moves it', 'qué lo mueve'))}</b> ${esc(d.moves)}</p>` : '');
 }
 // The view that best shows a selection. Clicks inside the stage keep their view; clicks elsewhere bring the view along.
-const STAGE_CV = ['cSystem', 'cModel', 'cMemory', 'cPrompt', 'cCand', 'ruler'];
+const STAGE_CV = ['cSystem', 'cModel', 'cMemory', 'cPrompt', 'cCand', 'ruler', 'cFlow'];
 const LENS_OF_ID = { fit: 'memory', ram: 'memory', kv: 'memory', kvfull: 'memory', kvq: 'memory', ctx: 'memory', prefix: 'memory', cold: 'system', keep: 'system', bw: 'system', compute: 'system', intensity: 'system', bound: 'system', place: 'system', gpusplit: 'system', spill: 'system', slow: 'system', slowish: 'system', tps: 'system', ttft: 'system', spec: 'model', est: 'system', trunc: 'tokens' };
 function lensFor(sel) {
   switch (sel.k) {

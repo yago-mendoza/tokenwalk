@@ -19,7 +19,7 @@ const PARAMS: [string, string, string, ...string[]][] = [
   ['ram', 'ram', 'n'], ['tf', 'tflops', 'n', 'tflops'], ['mts', 'mts', 'n'], ['bus', 'bus', 'n'], ['vr', 'vram', 'n', 'vram'], ['vb', 'vbw', 'n', 'vbw'],
 ];
 const MACHINE_FIELDS = ['ram', 'tflops', 'mts', 'bus', 'vram', 'vbw'];
-const LENSES = ['system', 'model', 'memory', 'tokens'];
+const LENSES = ['system', 'model', 'memory', 'tokens', 'flow'];
 const SCALES = ['request', 'token', 'layer', 'op'];
 // Ranges a value from the address must fall in; anything else is ignored.
 const RANGE: Record<string, [number, number]> = {

@@ -151,12 +151,12 @@ function frame(t0) {
     // the deep timeline, once it covers the screen, is all that is drawn
     if (xpFrame(dt)) { requestAnimationFrame(frame); return; }
     if (UI.follow && n.layer >= 0 && n.seg && UI.layer !== n.layer) UI.layer = n.layer; // follow moves Model's focus, never the selection (which would open an explainer every frame)
-    if (UI.lens === 'system') drawSystem(n, dt); else if (UI.lens === 'model') drawModel(n); else if (UI.lens === 'memory') drawMemory(n); else drawTokens(n);
+    if (UI.lens === 'system') drawSystem(n, dt); else if (UI.lens === 'model') drawModel(n); else if (UI.lens === 'memory') drawMemory(n); else if (UI.lens === 'flow') drawFlow(n, dt); else drawTokens(n);
     if (isReal()) drawRealTimeline(); else drawTimeline(n); drawCtx(n); renderOutput(n);
     renderRun(n); renderKpis(n);
     if (t0 - slowT > 250) { slowT = t0; drawRuler(n); renderAlerts(); renderGate(); renderChoice(); renderUndo(); renderJump(); renderDetails(); renderTrends(); renderLive(); if (!$('logPop').hidden) renderLog(n); }
     renderInspector(); renderThumbs(n); renderCap();
-    const tl = UI.lens === 'tokens'; $('lensCap').style.display = tl ? 'none' : ''; $('stage').classList.toggle('tok', tl);
+    const tl = UI.lens === 'tokens'; $('lensCap').style.display = tl || UI.lens === 'flow' ? 'none' : ''; $('stage').classList.toggle('tok', tl);
     if (P.anim && performance.now() - P.anim.start > P.anim.dur + 300) P.anim = null;
   } catch (e) { if (window.__errs.length < 20) { window.__errs.push(String(e && e.stack || e)); console.error(e); } }
   requestAnimationFrame(frame);

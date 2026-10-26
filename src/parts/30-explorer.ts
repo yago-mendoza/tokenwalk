@@ -603,7 +603,8 @@ function xPanel() {
   let h = `<section class="xp-lv"><h3>${esc(lt)}</h3><p>${linkify(esc(lp))}</p>${ref ? `<p class="xp-ref">${esc(ref[1])} ≈ <b>${esc(xT(ref[2]))}</b> ${esc(L('in this run', 'en esta ejecución'))}</p>` : ''}</section>`;
   if (it) {
     const w = xWhat(it, j);
-    h += `<section class="xp-it${XP.hov ? '' : ' sel'}"><header><b>${esc(w.title)}</b><em>${esc(w.tag)}</em></header><dl>${w.facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>${w.what ? `<h5>${esc(L('What it does', 'Qué hace'))}</h5><p>${linkify(esc(w.what))}</p>` : ''}${w.why ? `<h5>${esc(L('Why it takes this long', 'Por qué tarda esto'))}</h5><p>${linkify(esc(w.why))}</p>` : ''}</section>`;
+    const fl = !XP.real && !XP.hov && (it.k === 'seg' || it.k === 'layer' || it.k === 'op') ? `<button type="button" class="tbtn xp-fl" data-flow="1">${ICON('grid', 's')}<span>${esc(L('See in Flow: what shape, where it goes', 'Ver en Flujo: qué forma, adónde va'))}</span></button>` : '';
+    h += `<section class="xp-it${XP.hov ? '' : ' sel'}"><header><b>${esc(w.title)}</b><em>${esc(w.tag)}</em></header>${fl}<dl>${w.facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>${w.what ? `<h5>${esc(L('What it does', 'Qué hace'))}</h5><p>${linkify(esc(w.what))}</p>` : ''}${w.why ? `<h5>${esc(L('Why it takes this long', 'Por qué tarda esto'))}</h5><p>${linkify(esc(w.why))}</p>` : ''}</section>`;
   } else h += `<section class="xp-it empty"><p>${esc(L('Point at a bar to read what it is. Click to keep it here; double-click to zoom to it.', 'Señala una barra para leer qué es. Clic para fijarla aquí; doble clic para ampliarla.'))}</p></section>`;
   h += `<section class="xp-lg"><h5>${esc(L('On screen', 'En pantalla'))}</h5><ul id="xpLeg"></ul></section>`;
   h += `<section class="xp-note"><p>${esc(XP.real ? L('Real mode: every time here was measured by this browser as the server streamed. The server does not report layers, bytes or FLOPs, so there is nothing to zoom into below a token and no occupancy.', 'Modo real: cada tiempo de aquí lo midió este navegador según el servidor enviaba. El servidor no informa de capas, bytes ni FLOPs, así que no hay nada que ampliar por debajo de un token ni ocupación.')
@@ -660,6 +661,7 @@ function applyXpText() {
   $('xpX').addEventListener('click', xpClose); $('xpFit').addEventListener('click', () => xFit());
   $('xpNow').addEventListener('click', () => { const s = XP.t1 - XP.t0; xGo(P.t - s * .45, P.t + s * .45, 420); });
   $('xpCrumbs').addEventListener('click', e => { const b = e.target.closest('button[data-u]'); if (!b) return; const n = XP.focus[+b.dataset.u]; if (n) xGo(n.a, n.b); });
+  $('xpIn').addEventListener('click', e => { if (e.target.closest('[data-flow]')) flFromXp(XP.sel); });
   $('xpGrip').addEventListener('click', () => { const p = $('xpPanel'), on = !p.classList.contains('open'); p.classList.toggle('open', on); $('xpGrip').setAttribute('aria-expanded', on); });
   const cv = $('xpCv'), pts = new Map(), loc = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
   const hover = (px, py) => { XP.px = px; XP.py = py; const h = xHit(px, py); if (h.n !== XP.hov || h.j !== XP.hj) { XP.hov = h.n; XP.hj = h.j; } cv.style.cursor = XP.drag ? 'grabbing' : h.n ? 'pointer' : 'grab'; XP.dirty = true; };

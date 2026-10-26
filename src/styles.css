@@ -876,3 +876,39 @@ body.xpOn #lesson { z-index: 80; }
   #xpIn { flex: 1 1 auto; min-height: 0; overflow: hidden; }
   #xpIn dl { grid-template-columns: 1fr 1fr; }
 }
+
+/* ===== Flow lens (31-view-flow.ts): the canvas, then the walk card and the camera tools over it ===== */
+#cFlow { touch-action: none; user-select: none; -webkit-user-select: none; outline: none; }
+#flowUi { display: none; position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none; padding: 0 10px 10px; flex-direction: column; gap: 6px; align-items: stretch; }
+#flowUi.on { display: flex; }
+body[data-lens="flow"] #stage::after { display: none; }
+#flNote { align-self: flex-start; font: 400 11px/1.3 var(--sans); color: var(--dim); padding: 3px 8px; border-radius: 3px; background: rgb(7 7 10 / .8); }
+#flNote:empty { display: none; }
+#flCard { pointer-events: auto; display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px; align-items: stretch; gap: 0; max-width: 720px; border: 1px solid var(--line2); border-radius: 6px; background: rgb(13 13 17 / .94); box-shadow: 0 8px 24px rgb(0 0 0 / .45); }
+#flCard .ib { width: 30px; height: auto; border-radius: 0; color: var(--mid); }
+#flCard .ib:hover { color: var(--hot); background: var(--p2); }
+#flCard .ib .ic { width: 16px; height: 16px; }
+#flPrev { border-right: 1px solid var(--line) !important; border-radius: 6px 0 0 6px !important; } #flNext { border-left: 1px solid var(--line) !important; border-radius: 0 6px 6px 0 !important; }
+#flStep { padding: 8px 12px 9px; min-width: 0; }
+#flStep b { font: 650 13px/1.3 var(--sans); color: var(--ink); }
+#flStep .n { margin-left: 8px; font: 500 10.5px/1 var(--mono); color: var(--dim); }
+#flStep p { margin: 3px 0 0; font: 400 12.5px/1.45 var(--sans); color: var(--mid); }
+#flStep p.fx { font: 600 11px/1.4 var(--mono); color: var(--dim); overflow-wrap: anywhere; }
+#flStep p.fx i { font-style: normal; }
+#flStep p.fx i.x { text-decoration: line-through; text-decoration-color: rgb(255 255 255 / .8); text-decoration-thickness: 1.5px; }
+#flStep .term { color: inherit; }
+#flTools { pointer-events: auto; display: flex; gap: 4px; align-self: flex-end; order: -1; }
+#flTools .tbtn { height: 26px; font-size: 11px; border-color: var(--line2); background: rgb(13 13 17 / .9); }
+#flTools .tbtn[aria-pressed="true"] { color: var(--hot); border-color: rgb(255 212 59 / .45); }
+#flScale span { font: 600 11px/1 var(--mono); }
+#xpIn .xp-fl { height: 26px; margin: 0 0 10px; font-size: 11px; border-color: var(--line2); color: var(--ink); }
+#xpIn .xp-fl:hover { border-color: var(--hot); }
+@media (max-width: 760px) {
+  #flowUi { padding: 0 6px 6px; gap: 5px; }
+  #flCard { max-width: none; grid-template-columns: 40px minmax(0, 1fr) 40px; }
+  #flCard .ib { width: 40px; }
+  #flStep { padding: 7px 10px 8px; }
+  #flStep p { font-size: 12px; }
+  #flTools .tbtn span { display: none; } #flTools .tbtn { width: 32px; justify-content: center; padding: 0; } #flScale span { display: inline !important; }
+  #flScale { width: auto !important; padding: 0 7px !important; }
+}

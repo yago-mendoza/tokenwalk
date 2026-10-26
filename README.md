@@ -70,18 +70,35 @@ The address always holds the current setup, and the link button in the top bar c
 
 <p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/loadout-problem.webp" width="900" alt="A setup that does not fit, with fixes"><br><sub>A setup that cannot run says so before you press play, with one-click fixes.</sub></p>
 
-### Observatory: four views of the same instant
+### Observatory: five views of the same instant
 
 - **System**: the board to scale: memory chips and their cells, the SSD, the CPU, NPU and the GPU's compute units, and the bytes moving over the bus.
 - **Model**: a grid with tokens across and layers up, where attention rows keep their keys and values and DeltaNet rows fold everything into one fixed state; or one layer's matrices to scale, with its operations in order and the experts this token woke.
 - **Memory**: the whole RAM with every part named, then the KV cache as a grid, then a magnifier on single tokens.
 - **Tokens**: the prompt as it is read, the answer as it is written, and for any word, how it was chosen.
+- **Flow**: one pass as tensors to scale, left to right: what shape the data has at each step, where it goes, and why the dimensions fit. See [Flow](#flow-shapes-and-why-they-fit).
 
 <p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/model-grid.webp" width="900" alt="The Model view as a grid during decode"><br><sub>The grid during decode: the KV cache is the left side of every attention row.</sub></p>
 
 <p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/model-matrices.webp" width="900" alt="The matrices of one layer to scale"><br><sub>One layer: what it reads, in what order, and which experts this token woke.</sub></p>
 
 <p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/memory.webp" width="900" alt="The Memory view"><br><sub>From 64 GB down to one token, in three steps on one screen.</sub></p>
+
+### Flow: shapes, and why they fit
+
+Every tensor of one pass is a rectangle: its height is the tokens the pass carries (a prefill chunk is a tall block, a decode step one row), its width the numbers per token, on a log₂ scale the view states (each doubling adds one notch). Each dimension keeps one colour on every edge where it appears: hidden width, query heads, KV heads, head size, feed-forward width, experts, vocabulary, tokens. A matrix product is drawn the classic way, the weight above its result and the input to its left, so the inner dimension shows twice at the same length and is gone from the result; the step card writes it out with that dimension crossed out. Weights are shaded by bits per weight (Q4_K_M, Q8_0, MXFP4 experts…), never by values.
+
+Attention reads the cache as a slab as wide as the context, inside the dashed room `num_ctx` reserved, with a diagram of how the query heads share the KV heads; a prefill chunk shows its causal mask. Hybrid models draw DeltaNet and attention as two lanes and dim the one the current layer does not use; a mixture of experts lights the experts the token chose (illustrative: the console does not run the router, only how many is real). Under the strip, each tensor's lifetime runs from the operation that makes it to the last that reads it; the KV cache and the DeltaNet state end in an arrow. The layer frame is striped by where it lives (VRAM, system RAM, shared memory), so an offloaded model shows which layers stayed on the CPU side.
+
+The camera follows the playhead; `←` `→` walk one pass step by step with one sentence each (Shift keeps the usual layer steps), drag or pinch to move, wheel to zoom, and `log₂ / linear` switches the scale. Click a tensor for the explainer: shape, size and precision, what makes and reads it, how long it lives and where. **Explore** opens the same operation in the deep timeline, and the deep timeline's panel has *See in Flow* for the way back. Everything comes from the model's configuration (`flowSpec`, `src/parts/01f-flow.ts`, tested in `tests/unit/flow.test.mjs`).
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/flow-scores.webp" width="900" alt="The Flow view on the scores step of an attention layer"><br><sub>The scores of one head during decode: the query, the cached keys as a slab as wide as the context, and 16 query heads grouped onto 2 KV heads.</sub></p>
+
+### Deep timeline
+
+**Explore** (⤢, on the Playback bar) grows the timeline into the whole screen: the request on one axis of time, every bar opening into what it is made of as you zoom, from the request down to the rows of one matrix. Bars are as long as the cost model makes them (bytes over bandwidth or FLOPs over compute, plus the fixed cost per layer), and two strips underneath show the share of memory bandwidth and compute each slice uses. Click a bar for what it does and why it takes that long; wheel, pinch or double-click to zoom, `0` to see it all, `Esc` to close.
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/deep-timeline.webp" width="900" alt="The deep timeline zoomed into the experts of one layer"><br><sub>One decode round zoomed to the experts of one layer, with the occupancy strips and the explanation.</sub></p>
 
 ### Monitor
 
@@ -182,9 +199,10 @@ Two things the model schema does not express are approximated, and the cards say
 index.html            the markup
 src/styles.css        the look
 src/parts/00-*.ts …   the script, in order: data and formulas, language, state, the request computed,
-                      sampling, playback, history, drawing kit, entities, the four views, zoom,
+                      sampling, playback, history, drawing kit, entities, the views, zoom,
                       explainers, alerts, timeline, monitor, run, configure, loadout, glossary, wiring,
-                      the real-server connection and the Simulated / Real machine mode
+                      the real-server connection and the Simulated / Real machine mode, the deep timeline
+                      (30-explorer) and Flow (01f-flow, the pure shapes; 31-view-flow, the view)
 src/globals.d.ts      types shared by the parts
 src/core/types.ts     the cost model's config, data and result types
 tests/unit/           the cost model (and its equivalence with the pre-refactor one), the catalogue schema, the fit,
