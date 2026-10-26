@@ -3,6 +3,7 @@
 // Thing icons (weights, KV cell, expert, state, token, CU, bytes in flight) are drawn for this page on the
 // same 24 px grid so the set reads as one family; the legend, the inspector and the lenses reuse them.
 const ICONS = {
+  expand: 'M14 3h7v7h-2V6.41l-5.29 5.3-1.42-1.42L17.59 5H14V3zM3 14h2v3.59l5.29-5.3 1.42 1.42L6.41 19H10v2H3v-7z',
   play: 'M8 5v14l11-7z',
   pause: 'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
   skip: 'M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z',

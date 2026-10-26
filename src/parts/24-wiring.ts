@@ -148,6 +148,8 @@ function frame(t0) {
     advance(dt, now());
     if (isReal()) { const et = realEstT(); if (et !== null) P.t = et; }
     const n = now();
+    // the deep timeline, once it covers the screen, is all that is drawn
+    if (xpFrame(dt)) { requestAnimationFrame(frame); return; }
     if (UI.follow && n.layer >= 0 && n.seg && UI.layer !== n.layer) UI.layer = n.layer; // follow moves Model's focus, never the selection (which would open an explainer every frame)
     if (UI.lens === 'system') drawSystem(n, dt); else if (UI.lens === 'model') drawModel(n); else if (UI.lens === 'memory') drawMemory(n); else drawTokens(n);
     if (isReal()) drawRealTimeline(); else drawTimeline(n); drawCtx(n); renderOutput(n);

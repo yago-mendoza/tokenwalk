@@ -26,13 +26,25 @@ const REQUESTS = [
   { name: 'calibrated, overrides', set: { ram: 32, tflops: 3.3, mts: 6400, bus: 256, vram: 12, vbw: 700, ans: 60 }, keep: false, calib: mk => ({ [mk]: { bw: 0.8, fl: 1.7 } }) },
 ];
 
+// Fields added after the refactor, for the deep timeline's occupancy (FLOPs and KV written per pass, the bytes a load or
+// restore reads, the two achieved bandwidths): the legacy function never had them, so they are left out of the comparison.
+const ADDED_SEG = ['flops', 'kvOut', 'draftGB', 'draftFlops'], ADDED = ['bwFast', 'bwSlow', 'diskGBs'];
+// Copies stay in the model's own realm (it is loaded in a vm context), so deepStrictEqual still compares prototypes.
+const same = o => Object.setPrototypeOf({ ...o }, Object.getPrototypeOf(o));
+const legacyShape = r => {
+  const o = same(r); for (const k of ADDED) delete o[k];
+  o.segs = r.segs.map(s => { const q = same(s); for (const k of ADDED_SEG) delete q[k]; if (s.k === 'load' || s.k === 'restore') delete q.bytes; return q; });
+  o.chunk = r.chunk && o.segs[r.segs.indexOf(r.chunk)]; o.segs = Object.setPrototypeOf(o.segs, Object.getPrototypeOf(r.segs));
+  return o;
+};
+
 test('estimate() gives exactly what compute() gave, for every machine, model, weight format and request', () => {
   let n = 0;
   for (const mk of Object.keys(M.MACHINES)) for (const mo of Object.keys(M.MODELS)) for (const q of Object.keys(M.QUANTS)) for (const r of REQUESTS) {
     const S = { ...base(mk), model: mo, quant: q, ...r.set }, KEEP = { idle: 0, unloaded: r.keep }, CALIB = typeof r.calib === 'function' ? r.calib(mk) : r.calib;
     const old = M.legacyCompute(S, KEEP, CALIB);
     const now = M.estimate(M.configFromState(S, { unloaded: KEEP.unloaded, calib: CALIB, machines: M.MACHINES }), { models: M.MODELS, shapes: M.SHAPES });
-    assert.deepStrictEqual(now, old, `${mk} · ${mo} · ${q} · ${r.name}`);
+    assert.deepStrictEqual(legacyShape(now), old, `${mk} · ${mo} · ${q} · ${r.name}`);
     n++;
   }
   assert.ok(n >= 7 * 4 * 5 * REQUESTS.length, `only ${n} combinations`);
@@ -73,4 +85,21 @@ test('the micro-batch size changes prefill only, and 512 is the default', () => 
   assert.equal(u512.ttft, d.ttft);
   assert.ok(u2k.ttft < d.ttft, 'fewer, larger chunks pay the per-pass overhead fewer times');
   assert.equal(u2k.segs.filter(s => s.k === 'prefill').length, Math.ceil(6500 / 2048));
+});
+
+test('the occupancy fields agree with the costs they come from', () => {
+  for (const mk of Object.keys(M.MACHINES)) for (const r of REQUESTS) {
+    const S = { ...base(mk), ...r.set }, CALIB = typeof r.calib === 'function' ? r.calib(mk) : r.calib;
+    const e = M.estimate(M.configFromState(S, { unloaded: r.keep, calib: CALIB, machines: M.MACHINES }), { models: M.MODELS, shapes: M.SHAPES });
+    for (const s of e.segs) {
+      // prefill: its arithmetic at the effective rate is exactly the matmul and attention terms of its time
+      if (s.k === 'prefill') assert.ok(Math.abs(s.flops / e.flopsEff - (s.matmul + s.attn)) < 1e-9 * s.d, `${mk} ${r.name} prefill flops`);
+      // decode and verification are timed on the weights' arithmetic, not attention's: at long contexts the FLOPs can exceed the pass
+      if (s.k === 'prefill' || s.k === 'decode' || s.k === 'round') { assert.ok(s.flops > 0 && s.kvOut > 0, `${mk} ${r.name} ${s.k} fields`);
+        assert.ok(s.flops >= 2 * e.m.readParams * (s.k === 'round' ? 2 : 1), `${mk} ${r.name} ${s.k} flops`); }
+      if (s.k === 'round') assert.ok(s.draftGB > 0 && s.draftFlops > 0);
+      if (s.k === 'load' || s.k === 'restore') assert.ok(Math.abs(s.bytes / e.diskGBs - s.d) < 1e-9, `${mk} ${r.name} ${s.k} bytes`);
+    }
+    assert.ok(e.bwFast > 0 && e.bwSlow > 0);
+  }
 });

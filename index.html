@@ -218,7 +218,7 @@ html.tw-gated, html.tw-gated body { overflow: hidden; }
   <div id="shareWin" hidden><div class="scrim"></div><article class="card" role="dialog" aria-labelledby="shareT"><header class="band"><span data-ic="share"></span><b id="shareT" data-t="shareT"></b><button type="button" id="shareClose"></button></header><div class="sh-body" id="shareIn"></div></article></div>
   <div id="chainWin" hidden><div class="scrim"></div><article class="card" role="dialog"><header class="band"><span data-ic="token"></span><b data-t="chainT"></b><button type="button" id="chainClose"></button></header><canvas id="cChainBig"></canvas></article></div>
   <section id="run" class="zone">
-    <div class="zh"><span class="zn">2</span><span class="zt" data-t="zRun"></span><div class="now" id="nowLine"><span data-ic="info"></span><span id="nowTxt"></span></div><div id="nowFix"></div><span class="tlsl" data-t="tlScaleL"></span><div id="tlScale" role="group"></div><button type="button" class="tbtn" id="logBtn" aria-expanded="false"></button></div>
+    <div class="zh"><span class="zn">2</span><span class="zt" data-t="zRun"></span><div class="now" id="nowLine"><span data-ic="info"></span><span id="nowTxt"></span></div><div id="nowFix"></div><span class="tlsl" data-t="tlScaleL"></span><div id="tlScale" role="group"></div><button type="button" class="tbtn" id="xpOpen" aria-haspopup="dialog" aria-controls="xp"></button><button type="button" class="tbtn" id="logBtn" aria-expanded="false"></button></div>
     <div id="logPop" hidden><header><span class="lbl" data-t="logT"></span><small id="logScale"></small><button type="button" class="ib" id="logClose"></button></header><ol id="log"></ol></div>
     <div id="runBody">
       <div id="transport">
@@ -236,13 +236,18 @@ html.tw-gated, html.tw-gated body { overflow: hidden; }
         </div>
       </div>
       <div id="trackCol">
-        <div id="posRow"><div id="track"></div><div id="counter"><div class="big" id="cntBig"></div><div class="sm" id="cntSm"></div></div></div>
+        <div id="posRow"><button type="button" id="xpOpen2" aria-haspopup="dialog" aria-controls="xp"></button><div id="track"></div><div id="counter"><div class="big" id="cntBig"></div><div class="sm" id="cntSm"></div></div></div>
         <div id="tlWrap"><canvas id="cTime"></canvas><div id="tlPeek" hidden></div></div>
       </div>
     </div>
   </section>
 </div>
 
+<!-- The deep timeline: the bottom bar grown to the whole screen, zoomable from the request down to the rows of a matrix (30-explorer.ts). -->
+<div id="xp" hidden role="dialog" aria-modal="true" aria-labelledby="xpT">
+  <header id="xpBar"><b id="xpT"></b><ol id="xpCrumbs"></ol><div id="xpScale"></div><button type="button" class="tbtn" id="xpNow"></button><button type="button" class="tbtn" id="xpFit"></button><button type="button" class="ib" id="xpX"></button></header>
+  <div id="xpBody"><div id="xpCv" tabindex="0"><canvas id="cXp"></canvas></div><aside id="xpPanel"><button type="button" id="xpGrip" aria-expanded="false"><i></i><span id="xpGripT"></span></button><div id="xpIn"></div></aside></div>
+</div>
 <div id="settings" role="dialog" aria-label="Settings"></div>
 <div id="loadout" role="dialog" aria-label="Loadout"></div>
 <div id="help"><div class="hole"></div><div class="card"><h4><span class="n" id="hN"></span><span id="hT"></span></h4><p id="hP"></p><nav><span class="dots" id="hD"></span><button type="button" id="hBack"></button><button type="button" class="go" id="hNext"></button></nav></div></div>

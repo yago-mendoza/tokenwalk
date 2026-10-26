@@ -235,6 +235,9 @@ export interface Segment {
   mem?: number; matmul?: number; attn?: number; bytes?: number;
   /** decode / round: first token index, context length, tokens accepted (round), draft and verify time, s. */
   tok?: number; ctx?: number; acc?: number; draftT?: number; verifyT?: number; mtp?: boolean;
+  /** prefill / decode / round: FLOPs of the pass (round: the verification), KV appended, GB; round: one draft step's bytes, GB, and FLOPs.
+   *  load / restore: bytes is what is read from disk, GB. */
+  flops?: number; kvOut?: number; draftGB?: number; draftFlops?: number;
   [key: string]: any;
 }
 
@@ -319,6 +322,10 @@ export interface EstimateResult {
   /** Effective bandwidth for this placement, GB/s, and effective FLOP/s for prefill. */
   bwEff: number;
   flopsEff: number;
+  /** Achieved bandwidth of the fast memory (VRAM, or unified RAM) and of system RAM for weights a card could not hold, GB/s; disk reads, GB/s. */
+  bwFast: number;
+  bwSlow: number;
+  diskGBs: number;
   /** Memory: weights, KV reserved, recurrent state, buffers, GB. */
   weights: number;
   kvRes: number;

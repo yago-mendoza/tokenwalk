@@ -61,11 +61,14 @@ function estimate(cfg: EstimateConfig, data: EstimateData): EstimateResult {
   const flopsEff = mc.tflops * 1e12 * (m.moe ? moeComputeOf(mc) : 1);
   const bwEff = mc.bw * mc.bwEff * pl.fastShare + mc.hostBw * 0.6 * (1 - pl.fastShare);
   const cold = cfg.cold, disk = mc.diskGBs || 2, overhead = (layerMsOf(mc, m) * m.layers) / 1000;
+  // Arithmetic and KV writes per pass, for occupancy: two FLOPs per weight read per token carried, attention four per
+  // query dimension per context token at every attention layer; each token carried appends its keys and values (GB).
+  const attnF = (n: number, ctxAvg: number) => 4 * m.kvLayers * m.qHeads * m.headDim * n * ctxAvg, kvOut = (n: number) => (kvBytesPerToken(m, kv) * n) / GB;
   const segs: Segment[] = []; let t = 0;
   const load = cold ? fileGB(m, q) / disk : 0;
-  if (load > 0) { segs.push({ k: 'load', a: t, d: load }); t += load; }
+  if (load > 0) { segs.push({ k: 'load', a: t, d: load, bytes: fileGB(m, q) }); t += load; }
   const restore = cfg.diskCache && !cfg.prefixCached && prefixLen > 0 ? kvGB(m, kv, prefixLen) / disk : 0;
-  if (restore > 0) { segs.push({ k: 'restore', a: t, d: restore, n: prefixLen }); t += restore; }
+  if (restore > 0) { segs.push({ k: 'restore', a: t, d: restore, n: prefixLen, bytes: kvGB(m, kv, prefixLen) }); t += restore; }
   const ttftStart = t;
   let done = startAt, ci = 0; const nChunks = Math.ceil(Math.max(0, prompt - startAt) / ub);
   while (done < prompt) {
@@ -73,7 +76,7 @@ function estimate(cfg: EstimateConfig, data: EstimateData): EstimateResult {
     const bytes = passReadGB(m, q, c), mem = bytes / bwEff, matmul = (2 * m.readParams * c) / flopsEff;
     const attn = (4 * m.kvLayers * m.qHeads * m.headDim * c * (done + c / 2)) / flopsEff;
     const d = Math.max(mem, matmul) + attn + overhead;
-    segs.push({ k: 'prefill', a: t, d, from: done, to: done + c, i: ci++, n: nChunks, mem, matmul, attn, bytes });
+    segs.push({ k: 'prefill', a: t, d, from: done, to: done + c, i: ci++, n: nChunks, mem, matmul, attn, bytes, flops: 2 * m.readParams * c + attnF(c, done + c / 2), kvOut: kvOut(c) });
     t += d; done += c;
   }
   const ttft = t, firstDecode = segs.length;
@@ -91,13 +94,13 @@ function estimate(cfg: EstimateConfig, data: EstimateData): EstimateResult {
       const n = Math.min(a + 1, ans - i), ctxNow = prompt + i;
       const vBytes = passReadGB(m, q, k + 1) + kvGB(m, kv, ctxNow);
       const verifyT = Math.max(vBytes / bwEff, (2 * m.readParams * (k + 1)) / (mc.tflops * 1e12)) + overhead;
-      segs.push({ k: 'round', a: t, d: k * draftT + verifyT, tok: i, n, acc: a, ctx: ctxNow, bytes: vBytes, draftT, verifyT, mtp: true });
+      segs.push({ k: 'round', a: t, d: k * draftT + verifyT, tok: i, n, acc: a, ctx: ctxNow, bytes: vBytes, draftT, verifyT, mtp: true, flops: 2 * m.readParams * (k + 1) + attnF(k + 1, ctxNow), kvOut: kvOut(n), draftGB: mtpDraftGB(m, q), draftFlops: 2 * ((m.readParams - m.vocab * m.hidden) / m.layers + m.vocab * m.hidden) });
       t += k * draftT + verifyT; i += n; rounds++; acc += a;
     }
     const plain = decodeStep(mc, m, q, kv, prompt + ans / 2);
     specInfo = { kind: 'mtp', k, alpha, draftT, rounds, perRound: ans / rounds, speedup: (ans / (t - ttft)) * plain.seconds, accRate: acc / (rounds * k), plainTps: 1 / plain.seconds };
   } else if (!spec) {
-    for (let i = 0; i < ans; i++) { const st = decodeStep(mc, m, q, kv, prompt + i); segs.push({ k: 'decode', a: t, d: st.seconds, tok: i, ctx: prompt + i, bytes: st.bytesGB }); t += st.seconds; }
+    for (let i = 0; i < ans; i++) { const st = decodeStep(mc, m, q, kv, prompt + i); segs.push({ k: 'decode', a: t, d: st.seconds, tok: i, ctx: prompt + i, bytes: st.bytesGB, flops: 2 * m.readParams + attnF(1, prompt + i), kvOut: kvOut(1) }); t += st.seconds; }
   } else {
     const { gamma, alpha } = spec;
     const draftT = (DRAFT.params * bpwOf(q)) / 8 / GB / bwEff + (mc.layerMs * DRAFT.layers) / 1000;
@@ -108,7 +111,7 @@ function estimate(cfg: EstimateConfig, data: EstimateData): EstimateResult {
       const n = Math.min(a + 1, ans - i), ctxNow = prompt + i;
       const vBytes = passReadGB(m, q, gamma + 1) + kvGB(m, kv, ctxNow);
       const verifyT = Math.max(vBytes / bwEff, (2 * m.readParams * (gamma + 1)) / (mc.tflops * 1e12)) + overhead;
-      segs.push({ k: 'round', a: t, d: gamma * draftT + verifyT, tok: i, n, acc: a, ctx: ctxNow, bytes: vBytes, draftT, verifyT });
+      segs.push({ k: 'round', a: t, d: gamma * draftT + verifyT, tok: i, n, acc: a, ctx: ctxNow, bytes: vBytes, draftT, verifyT, flops: 2 * m.readParams * (gamma + 1) + attnF(gamma + 1, ctxNow), kvOut: kvOut(n), draftGB: (DRAFT.params * bpwOf(q)) / 8 / GB, draftFlops: 2 * DRAFT.params });
       t += gamma * draftT + verifyT; i += n; rounds++; acc += a;
     }
     const plain = decodeStep(mc, m, q, kv, prompt + ans / 2);
@@ -119,7 +122,7 @@ function estimate(cfg: EstimateConfig, data: EstimateData): EstimateResult {
   return {
     mc, m, sh, kinds, ctx, prompt, promptFull, truncated: promptFull > room, prefixLen, startAt, segs, firstDecode, load, restore, cold,
     ttft, ttftStart, total, decodeTime, tps, mid, pl, specInfo, newTokens: prompt - startAt, prefill: ttft - ttftStart,
-    chunk: segs.find(s => s.k === 'prefill'), bwEff, flopsEff,
+    chunk: segs.find(s => s.k === 'prefill'), bwEff, flopsEff, bwFast: mc.bw * mc.bwEff, bwSlow: mc.hostBw * 0.6, diskGBs: disk,
     weights: fileGB(m, q), kvRes: kvGB(m, kv, ctx), state: m.stateMB / 1000, buf: buffersGB(m),
   };
 }
