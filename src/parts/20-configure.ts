@@ -77,7 +77,7 @@ function renderMmode() { const h = [['grid', L('Grid', 'Cuadrícula')], ['stack'
 function setLens(l) { UI.lens = l; document.body.dataset.lens = l; if (legendLens !== l) buildLegend(); renderZbar(); document.querySelectorAll('#stage [data-lens]').forEach(el => el.classList.toggle('on', el.dataset.lens === l)); renderLensSeg(); writeUrl(); }
 function renderLensSeg() {
   // One lens switcher: each tab carries a live miniature of its view.
-  const LENS_Q = { system: L('Where the bytes travel: memory, chips and the wires between them', 'Por dónde viajan los bytes: memoria, chips y los cables entre ellos'), model: L('How a token climbs the layers, and what each layer reads', 'Cómo sube un token por las capas y qué lee cada capa'), memory: L('What fills the memory, and how the KV cache grows', 'Qué llena la memoria y cómo crece la caché KV'), tokens: L('What goes in, what comes out, and how each word is chosen', 'Qué entra, qué sale y cómo se elige cada palabra'), flow: L('What shape the data is, where it flows, and why the dimensions fit', 'Qué forma tienen los datos, por dónde fluyen y por qué encajan las dimensiones') };
+  const LENS_Q = { system: L('Where the bytes travel: memory, chips and the wires between them', 'Por dónde viajan los bytes: memoria, chips y los cables entre ellos'), model: L('How a token climbs the layers, and what each layer reads', 'Cómo sube un token por las capas y qué lee cada capa'), memory: L('What fills the memory, and how the KV cache grows', 'Qué llena la memoria y cómo crece la caché KV'), tokens: L('What goes in, what comes out, and how each word is chosen', 'Qué entra, qué sale y cómo se elige cada palabra'), flow: L('One layer as a circuit: what each part does, and which one runs now', 'Una capa como un circuito: qué hace cada parte y cuál corre ahora') };
   $('lensSeg').innerHTML = LENS_DEF.map(([k, ic, l]) => `<button type="button" data-l="${k}" aria-pressed="${UI.lens === k}" title="${esc(LENS_Q[k])}"><canvas class="lt"></canvas><span>${esc(l())}</span></button>`).join('');
   $('lensSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => setLens(b.dataset.l)));
 
@@ -89,8 +89,7 @@ function renderThumbs(n) {
     const b = $('lensSeg').querySelector(`[data-l="${k}"]`); if (!b) continue; const cv = b.querySelector('canvas'), x = fit(cv, 34, 18);
     x.globalAlpha = k === UI.lens ? 1 : .55;
     if (k === 'tokens') { const g = generatedAt(P.t); for (let i = 0; i < Math.min(18, g); i++) chipRound(x, 2 + (i % 6) * 5.4, 2 + Math.floor(i / 6) * 5.4, 4, C.hot); continue; }
-    if (k === 'flow') { // a miniature of the strip: tensors widening and narrowing, each with its weight above
-      const sizes = [[3, 8], [6, 10], [3, 6], [7, 11], [3, 8]]; let X = 1; for (const [w, h] of sizes) { x.fillStyle = flPrecCol(5); x.fillRect(X, 1, w, h - 3); x.fillStyle = DIMC.d; x.fillRect(X, h - 1, w, 1.2); x.fillStyle = '#3a3a48'; x.fillRect(X, h + .8, w, 3); X += w + 1.6; } continue; }
+    if (k === 'flow') { x.fillStyle = '#5590f0'; x.fillRect(3, 1, 2.4, 16); for (const [y, w] of [[2, 22], [10, 18]]) { x.fillStyle = '#5e5e78'; x.fillRect(5, y + 2.5, 3, 1); x.fillStyle = '#2c2843'; x.fillRect(8, y, w, 6); x.fillStyle = flStripe(4.9); x.fillRect(8, y, 1.6, 6); } continue; }
     const src = { system: 'cSystem', model: 'cModel', memory: 'cMemory' }[k];
     if (k !== UI.lens) { if (k === 'system') drawSystem(n, 0); if (k === 'model') drawModel(n); if (k === 'memory') drawMemory(n); }
     const s = $(src); if (s.width) x.drawImage(s, 0, 0, s.width, s.height, 0, 0, cv.clientWidth, cv.clientHeight);
@@ -107,7 +106,7 @@ const LEGEND = [
   ['token', () => L('token', 'token'), () => L('Square: a prompt token; round: a generated token', 'Cuadrado: token del prompt; redondo: token generado')],
 ];
 const LEGEND_IN = {
-  weights: 'system model memory flow', kv: 'system model flow', kvres: 'system memory flow', state: 'system model memory flow', flight: 'system model', busy: 'system model flow', fl_act: 'flow', fl_prec: 'flow', fl_dim: 'flow', fl_life: 'flow', sys: 'system memory', token: 'system model tokens',
+  weights: 'system model memory', fl_w: 'flow', kv: 'system model flow', kvres: 'system memory', state: 'system model memory flow', flight: 'system model', busy: 'system model', fl_now: 'flow', sys: 'system memory', token: 'system model tokens',
   kvby: 'memory', free: 'memory', hw_storage: 'system', hw_ram: 'system', hw_vram: 'system', hw_proc: 'system', hw_link: 'system', tk_sys: 'tokens', tk_docs: 'tokens', tk_q: 'tokens', tk_ans: 'tokens', unread: 'tokens', cached: 'tokens memory',
 };
 const LEGEND_X = [
@@ -123,10 +122,8 @@ const LEGEND_X = [
   ['hw_vram', () => L('VRAM or HBM', 'VRAM o HBM'), () => L('Outline: memory on the graphics card', 'Contorno: memoria en la tarjeta gráfica')],
   ['hw_proc', () => L('processors', 'procesadores'), () => L('Outline: CPU, GPU, NPU and the memory controller', 'Contorno: CPU, GPU, NPU y el controlador de memoria')],
   ['hw_link', () => L('links', 'enlaces'), () => L('Wires between parts: memory bus, PCIe', 'Cables entre piezas: bus de memoria, PCIe')],
-  ['fl_act', () => L('tensor in flight', 'tensor en vuelo'), () => L('Activations: one row per token the pass carries, 32-bit floats in the compute buffers', 'Activaciones: una fila por token de la pasada, flotantes de 32 bits en los búferes de cálculo')],
-  ['fl_prec', () => L('lighter: more bits', 'más claro: más bits'), () => L('Weights are violet, lighter for more bits per weight (Q2_K to F16). Never coloured by their values: those are not in the data', 'Los pesos son violeta, más claros cuantos más bits por peso (de Q2_K a F16). Nunca coloreados por sus valores: no están en los datos')],
-  ['fl_dim', () => L('dimension colours', 'colores de dimensión'), () => L('Each side of a tensor wears its dimension’s colour: tokens, hidden width, heads, KV heads, head size, feed-forward width, experts, vocabulary. The key is at the top of the view', 'Cada lado de un tensor lleva el color de su dimensión: tokens, ancho oculto, cabezas, cabezas KV, tamaño de cabeza, ancho feed-forward, expertos, vocabulario. La clave está arriba de la vista')],
-  ['fl_life', () => L('lifetime', 'vida'), () => L('Bars under the stream: from the operation that makes a tensor to the last one that reads it; an arrow means it outlives the pass', 'Barras bajo el flujo: de la operación que crea un tensor a la última que lo lee; una flecha significa que sobrevive a la pasada')],
+  ['fl_w', () => L('holds weights', 'guarda pesos'), () => L('A violet edge marks a box that reads weights from memory; lighter for more bits per weight (Q2_K to F16)', 'Un borde violeta marca una caja que lee pesos de memoria; más claro cuantos más bits por peso (de Q2_K a F16)')],
+  ['fl_now', () => L('running now', 'en curso'), () => L('The step the playhead is in: cyan during prefill, yellow during decode. The wires into it move', 'El paso en el que está el cabezal: cian en el prefill, amarillo en el decode. Los cables que entran en él se mueven')],
   ['cached', () => L('prefix cache', 'prefijo en caché'), () => L('Cyan underline: tokens whose KV was kept from an earlier request, so no prefill', 'Subrayado cian: tokens cuya KV se guardó de una petición anterior, sin prefill')],
 ];
 let legendLens = '';
@@ -139,16 +136,14 @@ function buildLegend() {
     if (['weights', 'kv', 'kvres', 'state', 'sys'].includes(k)) fillKind(x, k, 0, 0, 22, 12);
     else if (k === 'flight') { x.fillStyle = C.hot; for (const [a, b] of [[4, 6], [10, 6]]) { x.beginPath(); x.arc(a, b, 1.7, 0, 7); x.fill(); } x.strokeStyle = C.hot; x.beginPath(); x.arc(17, 6, 2.6, 0, 7); x.stroke(); }
     else if (k === 'busy') glowRect(x, 5, 2, 12, 8, true);
+    else if (k === 'fl_w') { x.fillStyle = '#2c2843'; x.fillRect(0, 1, 22, 10); x.strokeStyle = '#5e5e78'; x.strokeRect(.5, 1.5, 21, 9); x.fillStyle = flStripe(4.9); x.fillRect(1.5, 2.5, 3, 7); }
+    else if (k === 'fl_now') { x.fillStyle = 'rgba(255,212,59,.18)'; x.fillRect(1, 1, 20, 10); x.strokeStyle = C.hot; x.lineWidth = 1.6; x.strokeRect(1.5, 1.5, 19, 9); x.lineWidth = 1; }
     else if (k === 'token') { chipSq(x, 1, 2, 8, C.li); chipRound(x, 12, 2, 8, C.hot); }
     else if (k === 'kvby') ['sys', 'docs', 'q', 'ans'].forEach((t, i) => fillKind(x, 'kv_' + t, i * 5.5, 0, 5, 12));
     else if (k === 'free') fillKind(x, 'free', 0, 0, 22, 12);
     else if (k.startsWith('hw_')) { x.strokeStyle = HW[k.slice(3)]; x.lineWidth = 1.5; if (k === 'hw_link') { x.beginPath(); x.moveTo(1, 6); x.lineTo(21, 6); x.stroke(); } else x.strokeRect(1.75, 1.75, 18.5, 8.5); x.lineWidth = 1; }
     else if (k.startsWith('tk_')) { for (let i = 0; i < 3; i++) chipSq(x, 1 + i * 7, 3, 6, TOKCOL[k.slice(3)]); }
     else if (k === 'unread') { x.globalAlpha = .28; for (let i = 0; i < 3; i++) chipSq(x, 1 + i * 7, 3, 6, TOKCOL.docs); x.globalAlpha = 1; }
-    else if (k === 'fl_act') { x.fillStyle = '#16161f'; x.fillRect(0, 2, 22, 8); x.strokeStyle = '#3c3c4a'; x.strokeRect(.5, 2.5, 21, 7); x.fillStyle = DIMC.d; x.fillRect(0, 0, 22, 1.6); x.fillStyle = DIMC.n; x.fillRect(0, 2, 1.6, 8); }
-    else if (k === 'fl_prec') { for (let i = 0; i < 4; i++) { x.fillStyle = flPrecCol([2.63, 4.9, 8.5, 16][i]); x.fillRect(i * 5.5, 0, 5, 12); } }
-    else if (k === 'fl_dim') { ['d', 'H', 'Hkv', 'dh', 'F', 'E', 'V'].forEach((q, i) => { x.fillStyle = DIMC[q]; x.fillRect(i * 3.2, 3, 2.6, 6); }); }
-    else if (k === 'fl_life') { x.fillStyle = '#8a8a9a'; x.fillRect(2, 5, 14, 2); x.fillRect(1, 3, 2, 6); x.fillRect(15, 3, 2, 6); }
     else if (k === 'cached') { for (let i = 0; i < 3; i++) chipSq(x, 1 + i * 7, 2, 6, TOKCOL.docs); x.fillStyle = C.cy; x.fillRect(1, 9.5, 20, 1.5); }
   });
 }
@@ -157,7 +152,7 @@ function buildLegend() {
 const HELP = [
   ['#cfg', 1, () => L('Setup', 'Configuración'), () => L('Pick a scenario or open a section to set the machine, the model and the request. It locks while a run is going.', 'Elige un escenario o abre una sección para fijar la máquina, el modelo y la petición. Se bloquea mientras corre.')],
   ['#run', 2, () => L('Playback', 'Ejecución'), () => L('Play, pause, step one token or one layer, set the speed. The clock is simulated time; the track says where the run is.', 'Reproduce, pausa, avanza un token o una capa, ajusta la velocidad. El reloj es tiempo simulado; la pista dice dónde va.')],
-  ['#watch', 3, () => L('Observatory', 'Observatorio'), () => L('One lens at a time: the computer, the model, the memory, the tokens, and Flow, the shapes the data takes. The thumbnails switch lens.', 'Una lente cada vez: el ordenador, el modelo, la memoria, los tokens y Flujo, las formas que toman los datos. Las miniaturas cambian de lente.')],
+  ['#watch', 3, () => L('Observatory', 'Observatorio'), () => L('One lens at a time: the computer, the model, the memory, the tokens, and Flow, one layer drawn as a circuit. The thumbnails switch lens.', 'Una lente cada vez: el ordenador, el modelo, la memoria, los tokens y Flujo, una capa dibujada como un circuito. Las miniaturas cambian de lente.')],
   ['#legend', 4, () => L('Legend', 'Leyenda'), () => L('What this view draws: each colour and texture means one thing everywhere, and the list changes with the view. Hover an item for its definition.', 'Lo que dibuja esta vista: cada color y textura significa una sola cosa en todas partes, y la lista cambia con la vista. Pasa el ratón por un elemento para su definición.')],
   ['#kpis', 5, () => L('Monitor', 'Monitor'), () => L('Four numbers that matter, with health colours, and one line saying what limits the run now.', 'Cuatro números que importan, con colores de estado, y una línea que dice qué limita la ejecución ahora.')],
   ['#mbody', 6, () => L('Alerts and instruments', 'Alertas e instrumentos'), () => L('Hover anything to see its name; click it, here or in any view, and an explainer opens: what it is, what it holds now and why it matters.', 'Pasa el ratón por cualquier cosa para ver su nombre; haz clic, aquí o en cualquier vista, y se abre una explicación: qué es, qué guarda ahora y por qué importa.')],

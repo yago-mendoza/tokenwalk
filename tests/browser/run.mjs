@@ -741,6 +741,36 @@ await check('What fits: a row with accepted measurements shows them, with n, the
   }
 });
 
+await check('Flow draws one layer as a circuit from the model, and the address line names every level at its own speed', async () => {
+  await fresh('?mo=qwen36');
+  await p.ev(`setLang('en'); setLens('flow'); const s = R.segs.find(s => s.k === 'prefill' && s.i === 2); stopAt(s.a + s.d * .5)`); await sleep(500);
+  const pre = await p.ev(`document.getElementById('addr').innerText.replace(/\\s+/g, ' ')`);
+  assert(/PREFILL/.test(pre) && /chunk 3 ?\/13/.test(pre) && /together/.test(pre) && /layer \d+ ?\/40/.test(pre), 'prefill address: ' + pre);
+  await p.ev(`(() => { const s = R.segs.filter(s => s.k === 'decode' || s.k === 'round')[10]; const sp = layerSpan(s, R.kinds.indexOf('attn')); stopAt(sp[0] + (sp[1] - sp[0]) * .3); })()`); await sleep(500);
+  const dec = await p.ev(`document.getElementById('addr').innerText.replace(/\\s+/g, ' ')`);
+  assert(/DECODE/.test(dec) && /token \d+ ?\/300/.test(dec) && /(row|KV token|state head|expert|matri)/.test(dec), 'decode address: ' + dec);
+  const ids = await p.ev(`FL.items.map(i => i.id).join()`);
+  for (const id of ['embed', 'q', 'k', 'v', 'scores', 'softmax', 'mix', 'o', 'kvK', 'kvV', 'router', 'grid', 'eg', 'eu', 'ed', 'esum', 'head', 'sample', 'pillar']) assert(ids.split(',').includes(id), `Qwen3.6 attention layer lacks ${id}`);
+  assert(await p.ev(`FL.cards.map(c => c.title).join()`) === 'Attention,Experts', 'section titles');
+  // every box's text fits inside it, in both languages
+  for (const lg of ['en', 'es']) { await p.ev(`setLang('${lg}')`); await sleep(400); const over = await p.ev(`(() => { const c = document.getElementById('cFlow').getContext('2d'), out = []; for (const it of FL.items) { if (!it.title || it.kind === 'chip' || it.kind === 'ebox' || it.kind === 'grid' || it.round || it.inner) continue; c.font = '650 13.5px ' + SANS; const w = c.measureText(it.title).width; c.font = '500 12px ' + FONT; const w2 = it.lane ? 0 : c.measureText(it.sub || '').width; if (Math.max(w, w2) > it.w - 12) out.push(it.id); } return out; })()`); assert(!over.length, `${lg}: text wider than its box: ${over}`); }
+  await p.ev(`setLang('en')`);
+  // a dense model: a plain feed-forward network, no router
+  await fresh('?mo=llama8b&m=rtx4090'); await p.ev(`setLens('flow'); stopAt(R.ttft + 0.05)`); await sleep(500);
+  const ld = (await p.ev(`FL.items.map(i => i.id).join()`)).split(',');
+  assert(ld.includes('fg') && ld.includes('fu') && ld.includes('fd') && !ld.includes('router'), 'Llama feed-forward: ' + ld);
+  // playing fast: the fine levels give their rate instead of digits that would flicker
+  await p.ev(`UI.scale = 'request'; UI.speed = 'fit'; setPlaying(true)`); await sleep(1200);
+  const fast = await p.ev(`[...document.querySelectorAll('#addr .ad-s.fast .rt')].map(e => e.textContent).join(' | ')`);
+  await p.ev(`setPlaying(false)`); await sleep(300);
+  assert(/≈/.test(fast), 'no level shows its rate while playing fast: ' + fast);
+  assert(!(await p.ev(`document.querySelectorAll('#addr .ad-s.fast').length`)), 'digits stay muted after pausing');
+  // a level opens the deep timeline at that element
+  await p.ev(`setLens('model'); document.querySelector('#addr [data-k=layer]').click()`); await sleep(900);
+  assert(await p.ev(`XP.on && XP.sel && XP.sel.k === 'layer'`), 'the layer level did not open the explorer at a layer');
+  await p.ev(`xpClose()`); await sleep(700);
+});
+
 if (SHOT) {
   await fresh('?view=model'); await p.ev(`P.t = R.ttft + 8; setPlaying(false)`); await sleep(900);
   await p.shot('docs/screenshot.png'); console.log('wrote docs/screenshot.png');

@@ -166,7 +166,7 @@ function renderRealRun() {
   if ($('stepDur').dataset.k !== sd) { $('stepDur').dataset.k = sd; $('stepDur').innerHTML = sd; }
   const txt = MODE.lost ? L('Lost the server: Retry, or go back to the simulation.', 'Se perdió el servidor: Reintenta, o vuelve a la simulación.') : LIVE.running ? (n ? L(`Writing: ${LIVE.pick} has sent ${num(n)} of at most ${num(LIVE.maxTok)} tokens.`, `Escribiendo: ${LIVE.pick} ha enviado ${num(n)} de como mucho ${num(LIVE.maxTok)} tokens.`) : L(`Waiting for the first token: ${LIVE.pick} is loading and reading the prompt.`, `Esperando el primer token: ${LIVE.pick} está cargando y leyendo el prompt.`))
     : run ? L('Done. Press Send to run the same request again.', 'Hecho. Pulsa Enviar para repetir la misma petición.') : L('Real machine: press Send to run this request on the server.', 'Máquina real: pulsa Enviar para ejecutar esta petición en el servidor.');
-  if ($('nowTxt').dataset.k !== txt) { $('nowTxt').dataset.k = txt; $('nowTxt').innerHTML = esc(txt); } $('nowLine').classList.remove('stale');
+  if ($('nowTxt').dataset.k !== txt) { $('nowTxt').dataset.k = txt; $('nowTxt').innerHTML = esc(txt); } $('nowLine').classList.remove('stale'); renderAddr(null);
   const ph = LIVE.running ? (n ? 'decode' : 'wait') : run ? 'done' : 'idle';
   const tiles = [['wait', 'layers', L('LOAD + PREFILL', 'CARGA + PREFILL'), ph === 'wait' ? '…' : first !== null ? S_(first) : ''], ['decode', 'token', 'DECODE', `${num(n)}/${num(LIVE.maxTok)}`], ['done', 'check', L('DONE', 'FIN'), run ? S_(run.totalS || el) : '']];
   const ord = { idle: -1, wait: 0, decode: 1, done: 2 }[ph];

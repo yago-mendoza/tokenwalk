@@ -120,7 +120,7 @@ const LEGEND_MATCH = {
   kv: { system: P_('kv'), model: q => q.k === 'kvlayer', memory: q => P_('kv')(q) || q.k === 'kvbin', flow: q => q.k === 'flow' && q.kind === 'kv' },
   kvres: { system: P_('kv'), memory: q => P_('kv')(q) || q.k === 'kvbin' }, kvby: { memory: q => q.k === 'kvbin' || q.k === 'kvtok' },
   state: { system: P_('state'), model: q => q.k === 'state', memory: P_('state'), flow: q => q.k === 'flow' && q.kind === 'state' },
-  fl_act: { flow: q => q.k === 'flow' && (q.kind === 'act' || q.kind === 'logits') }, fl_prec: { flow: q => q.k === 'flow' && q.kind === 'weight' },
+  fl_w: { flow: q => q.k === 'flow' && q.kind === 'weight' },
   flight: { system: P_('bus', 'link'), model: q => q.k === 'mat' }, busy: { system: q => q.k === 'cu' || q.k === 'core' },
   sys: { system: P_('sys'), memory: P_('sys') }, free: { memory: P_('free') },
   token: { tokens: q => q.k === 'pchip' }, tk_sys: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'sys' }, tk_docs: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'docs' }, tk_q: { tokens: q => q.k === 'pchip' && tokKind(q.i * q.per) === 'q' },

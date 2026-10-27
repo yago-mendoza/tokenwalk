@@ -55,6 +55,7 @@ function renderRun(n) {
   } else sd = L(`whole request <b>${TT(R.total)}</b> · first token at <b>${TT(R.ttft)}</b>`, `petición completa <b>${TT(R.total)}</b> · primer token a <b>${TT(R.ttft)}</b>`);
   if ($('stepDur').dataset.k !== sd) { $('stepDur').dataset.k = sd; $('stepDur').innerHTML = sd; }
   const [txt, stale] = nowText(n); if ($('nowTxt').dataset.k !== txt) { $('nowTxt').dataset.k = txt; $('nowTxt').innerHTML = linkify(esc(txt)); } $('nowLine').classList.toggle('stale', stale);
+  renderAddr(n);
   renderTrack(n);
   const lk = locked();
   $('cfg').classList.toggle('locked', lk);

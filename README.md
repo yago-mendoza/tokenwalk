@@ -76,7 +76,7 @@ The address always holds the current setup, and the link button in the top bar c
 - **Model**: a grid with tokens across and layers up, where attention rows keep their keys and values and DeltaNet rows fold everything into one fixed state; or one layer's matrices to scale, with its operations in order and the experts this token woke.
 - **Memory**: the whole RAM with every part named, then the KV cache as a grid, then a magnifier on single tokens.
 - **Tokens**: the prompt as it is read, the answer as it is written, and for any word, how it was chosen.
-- **Flow**: one pass as tensors to scale, left to right: what shape the data has at each step, where it goes, and why the dimensions fit. See [Flow](#flow-shapes-and-why-they-fit).
+- **Flow**: one layer drawn as a circuit, from the token in to the token out: what each part does, which one runs now, and the shapes it works on. See [Flow](#flow-one-layer-as-a-circuit).
 
 <p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/model-grid.webp" width="900" alt="The Model view as a grid during decode"><br><sub>The grid during decode: the KV cache is the left side of every attention row.</sub></p>
 
@@ -84,15 +84,28 @@ The address always holds the current setup, and the link button in the top bar c
 
 <p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/memory.webp" width="900" alt="The Memory view"><br><sub>From 64 GB down to one token, in three steps on one screen.</sub></p>
 
-### Flow: shapes, and why they fit
+### Flow: one layer as a circuit
 
-Every tensor of one pass is a rectangle: its height is the tokens the pass carries (a prefill chunk is a tall block, a decode step one row), its width the numbers per token, on a log₂ scale the view states (each doubling adds one notch). Each dimension keeps one colour on every edge where it appears: hidden width, query heads, KV heads, head size, feed-forward width, experts, vocabulary, tokens. A matrix product is drawn the classic way, the weight above its result and the input to its left, so the inner dimension shows twice at the same length and is gone from the result; the step card writes it out with that dimension crossed out. Weights are shaded by bits per weight (Q4_K_M, Q8_0, MXFP4 experts…), never by values.
+The classic picture of a transformer block, made exact for the model you chose. A thick residual stream runs down the left, from the embedding to the output head. Each part of the layer branches off it, does its work and is added back at a ⊕: first **Attention** (or **Gated DeltaNet**, in a hybrid layer), then the **Feed-forward** network or the **Experts**. Every part is a named box with one line under it, the file's tensor name or what the step does, and each section has a title and a sentence that says what it is for.
 
-Attention reads the cache as a slab as wide as the context, inside the dashed room `num_ctx` reserved, with a diagram of how the query heads share the KV heads; a prefill chunk shows its causal mask. Hybrid models draw DeltaNet and attention as two lanes and dim the one the current layer does not use; a mixture of experts lights the experts the token chose (illustrative: the console does not run the router, only how many is real). Under the strip, each tensor's lifetime runs from the operation that makes it to the last that reads it; the KV cache and the DeltaNet state end in an arrow. The layer frame is striped by where it lives (VRAM, system RAM, shared memory), so an offloaded model shows which layers stayed on the CPU side.
+- **Attention**: Norm, then the Q, K and V projections (each bar as wide as its output, so grouped-query attention shows as K and V much narrower than Q), the scores against the cache, softmax, the weighted sum of the values and the output projection. The KV cache of the layer is a block of its own above them, filled as far as the context goes inside the room `num_ctx` reserved; K and V are written into it and read back by the scores and the weighted sum.
+- **Gated DeltaNet**: the q k v and gate projections, the state update and read against a fixed-size state (its own block, the same size at every token), the output gate and the output projection. A chip in the header jumps to a layer of the other kind.
+- **Experts**: Norm, the router, the grid of every expert with the ones this token chose lit (and the shared one beside it), one expert opened into its three matrices (gate, up, down) and the weighted sum. A dense model shows a plain feed-forward network with the same three matrices (two in GPT-3).
+- **Around the layer**: the pile of layers on the left (attention and DeltaNet in their colours, offloaded layers marked), the frame's title with where its weights live (VRAM, system RAM, shared memory), and below it the final norm, the output head, sampling and the next token.
 
-The camera follows the playhead; `←` `→` walk one pass step by step with one sentence each (Shift keeps the usual layer steps), drag or pinch to move, wheel to zoom, and `log₂ / linear` switches the scale. Click a tensor for the explainer: shape, size and precision, what makes and reads it, how long it lives and where. **Explore** opens the same operation in the deep timeline, and the deep timeline's panel has *See in Flow* for the way back. Everything comes from the model's configuration (`flowSpec`, `src/parts/01f-flow.ts`, tested in `tests/unit/flow.test.mjs`).
+What runs now is lit in the phase's colour, cyan during prefill and yellow during decode, with a *now* tag and moving wires into it; the step card at the bottom says what it does and writes its matrix product out with the shared dimension crossed out. Shapes, each number in its dimension's colour, appear on the boxes of the current step, everywhere once you zoom in, or always with **Shapes**. Boxes that read weights carry a violet edge, lighter for more bits per weight. On a desktop the whole layer stays in view; on a phone the sections stack and the camera frames the one that runs.
 
-<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/flow-scores.webp" width="900" alt="The Flow view on the scores step of an attention layer"><br><sub>The scores of one head during decode: the query, the cached keys as a slab as wide as the context, and 16 query heads grouped onto 2 KV heads.</sub></p>
+`←` `→` walk one pass step by step (Shift keeps the usual layer steps); drag or pinch to move, wheel to zoom, `0` for the whole pass. Click a part for the explainer: shape, size and precision, what makes and reads it, how long it lives and where. **Explore** opens the same operation in the deep timeline, and the deep timeline's panel has *See in Flow* for the way back. Everything comes from the model's configuration (`flowSpec`, `src/parts/01f-flow.ts`, tested in `tests/unit/flow.test.mjs`).
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/flow-circuit.webp" width="900" alt="The Flow view during decode: the residual stream down the left, the attention section with its KV cache block and the scores step lit, the experts section with the grid of 256 experts and one expert opened, and the output head below"><br><sub>One decode layer of Qwen3.6 35B-A3B, on the scores step.</sub></p>
+
+### The address line
+
+The Playback header always says where the run is, at every level at once, from any view: the phase, the chunk or the token (and the MTP round when there is one), the layer and its kind, the operation inside the layer, and the row of the matrix it is reading (or the cached token of a KV read, the head of a DeltaNet state, the expert of a chunk). Each level has its own number and a thin bar, and none depends on the timeline's scale; the level that matches the scale is outlined. In prefill there is no token-by-token order inside a chunk, and the line says so: the whole chunk passes each layer together.
+
+Each level changes at its own speed. When one changes faster than the eye can follow at the current playback rate, its digits give way to its rate on the simulated machine (*rows ≈ 35 M/s*); paused or slow, the exact numbers come back. Click a level to open that element in the deep timeline, or in Flow when Flow is the view. During a load it shows the weights read so far; in Real machine, the tokens streamed and the last measured gap, since a server reports no layers. On a phone it wraps and the coarsest levels go first.
+
+<p align="center"><img src="https://cdn.infraphysics.net/articles/6290417/figures/address-line.webp" width="900" alt="The address line in prefill, in decode while paused, and in decode while playing fast with the row level showing its rate"><br><sub>Prefill, decode paused, and decode playing at the layer scale: the rows change too fast to read, so they show their rate.</sub></p>
 
 ### Deep timeline
 
@@ -202,7 +215,7 @@ src/parts/00-*.ts …   the script, in order: data and formulas, language, state
                       sampling, playback, history, drawing kit, entities, the views, zoom,
                       explainers, alerts, timeline, monitor, run, configure, loadout, glossary, wiring,
                       the real-server connection and the Simulated / Real machine mode, the deep timeline
-                      (30-explorer) and Flow (01f-flow, the pure shapes; 31-view-flow, the view)
+                      (30-explorer), Flow (01f-flow, the pure shapes; 31-view-flow, the circuit) and the address line (32-address)
 src/globals.d.ts      types shared by the parts
 src/core/types.ts     the cost model's config, data and result types
 tests/unit/           the cost model (and its equivalence with the pre-refactor one), the catalogue schema, the fit,
